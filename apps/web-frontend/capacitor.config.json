@@ -1,0 +1,13 @@
+{
+    "appId": "com.stellariumlabs.stellaweb",
+    "appName": "Stella",
+    "webDir": "dist",
+    "bundledWebRuntime": false,
+    "server": {
+        "androidScheme": "https"
+    },
+    "android": {
+        "allowMixedContent": true,
+        "webContentsDebuggingEnabled": true
+    }
+}

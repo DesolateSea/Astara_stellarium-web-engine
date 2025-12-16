@@ -50,7 +50,7 @@ build:
 	docker run -it $(DOCKER_MOUNTS) stellarium-web-dev yarn run build
 
 start:
-	cd dist && python3 -m http.server 8080
+	cd dist && python3 -m http.server 7070
 
 i18n:
 	python3 ./tools/update-i18n-en.py
