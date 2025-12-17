@@ -12,20 +12,10 @@ module.exports = {
       .test(/stellarium-web-engine\.wasm$/)
       .type('javascript/auto')
       .use('file-loader')
-        .loader('file-loader')
-        .options({name: '[name].[hash:8].[ext]', outputPath: 'js'})
-        .end()
-    config.plugin('copy')
-      .tap(([pathConfigs]) => {
-         const to = pathConfigs[0].to
-         pathConfigs[0].force = true // so the original `/public` folder keeps priority
-         // add other locations.
-         pathConfigs.unshift({
-           from: '../skydata',
-           to: to + '/skydata',
-         })
-         return [pathConfigs]
-       })
+      .loader('file-loader')
+      .options({ name: '[name].[hash:8].[ext]', outputPath: 'js' })
+      .end()
+
   },
 
   pluginOptions: {

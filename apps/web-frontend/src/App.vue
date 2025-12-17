@@ -233,8 +233,9 @@ export default {
             that.$store.commit('setAutoDetectedLocation', loc)
           }, (error) => { console.log(error) })
 
-          that.$stel.setFont('regular', process.env.BASE_URL + 'fonts/Roboto-Regular.ttf', 1.38)
-          that.$stel.setFont('bold', process.env.BASE_URL + 'fonts/Roboto-Bold.ttf', 1.38)
+          const baseUrl = window.Capacitor ? '' : process.env.BASE_URL
+          that.$stel.setFont('regular', baseUrl + 'fonts/Roboto-Regular.ttf', 1.38)
+          that.$stel.setFont('bold', baseUrl + 'fonts/Roboto-Bold.ttf', 1.38)
           that.$stel.core.constellations.show_only_pointed = false
 
           that.setStateFromQueryArgs()
@@ -248,8 +249,10 @@ export default {
 
           if (!that.dataSourceInitDone) {
             // Set all default data sources
+            // In Capacitor, use relative paths without BASE_URL since assets are served from WebView
+            const baseUrl = window.Capacitor ? '' : process.env.BASE_URL
             const core = that.$stel.core
-            core.stars.addDataSource({ url: process.env.BASE_URL + 'skydata/stars' })
+            core.stars.addDataSource({ url: baseUrl + 'skydata/stars' })
 
             // Allow to specify a custom path for sky culture data
             if (that.$route.query.sc) {
@@ -257,18 +260,18 @@ export default {
               core.skycultures.addDataSource({ url: that.$route.query.sc, key: key })
               core.skycultures.current_id = key
             } else {
-              core.skycultures.addDataSource({ url: process.env.BASE_URL + 'skydata/skycultures/western', key: 'western' })
+              core.skycultures.addDataSource({ url: baseUrl + 'skydata/skycultures/western', key: 'western' })
             }
 
-            core.dsos.addDataSource({ url: process.env.BASE_URL + 'skydata/dso' })
-            core.landscapes.addDataSource({ url: process.env.BASE_URL + 'skydata/landscapes/guereins', key: 'guereins' })
-            core.milkyway.addDataSource({ url: process.env.BASE_URL + 'skydata/surveys/milkyway' })
-            core.minor_planets.addDataSource({ url: process.env.BASE_URL + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
-            core.planets.addDataSource({ url: process.env.BASE_URL + 'skydata/surveys/sso/moon', key: 'moon' })
-            core.planets.addDataSource({ url: process.env.BASE_URL + 'skydata/surveys/sso/sun', key: 'sun' })
-            core.planets.addDataSource({ url: process.env.BASE_URL + 'skydata/surveys/sso/moon', key: 'default' })
-            core.comets.addDataSource({ url: process.env.BASE_URL + 'skydata/CometEls.txt', key: 'mpc_comets' })
-            core.satellites.addDataSource({ url: process.env.BASE_URL + 'skydata/tle_satellite.jsonl.gz', key: 'jsonl/sat' })
+            core.dsos.addDataSource({ url: baseUrl + 'skydata/dso' })
+            core.landscapes.addDataSource({ url: baseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
+            core.milkyway.addDataSource({ url: baseUrl + 'skydata/surveys/milkyway' })
+            core.minor_planets.addDataSource({ url: baseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
+            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/moon', key: 'moon' })
+            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/sun', key: 'sun' })
+            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/moon', key: 'default' })
+            core.comets.addDataSource({ url: baseUrl + 'skydata/CometEls.txt', key: 'mpc_comets' })
+            core.satellites.addDataSource({ url: baseUrl + 'skydata/tle_satellite.jsonl.gz', key: 'jsonl/sat' })
           }
         })
       } catch (e) {
