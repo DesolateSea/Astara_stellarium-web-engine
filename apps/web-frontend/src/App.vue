@@ -214,6 +214,35 @@ export default {
   mounted: function () {
     var that = this
 
+    // DEBUG: Load and display all files from manifest
+    function showAllFiles () {
+      var baseUrl = window.Capacitor ? '' : '/'
+      console.log('=== FILE STRUCTURE ===')
+      console.log('Base URL: ' + baseUrl)
+      console.log('Capacitor: ' + !!window.Capacitor)
+
+      fetch(baseUrl + 'file-manifest.json')
+        .then(function (response) {
+          if (!response.ok) {
+            console.log('[X] file-manifest.json not found')
+            return null
+          }
+          return response.json()
+        })
+        .then(function (manifest) {
+          if (!manifest) return
+          console.log('Total files: ' + manifest.totalFiles)
+          manifest.files.forEach(function (f) {
+            console.log('  ' + f)
+          })
+          console.log('=== END FILE STRUCTURE ===')
+        })
+        .catch(function (e) {
+          console.log('Error: ' + e.message)
+        })
+    }
+    showAllFiles()
+
     for (const i in this.$stellariumWebPlugins()) {
       const plugin = this.$stellariumWebPlugins()[i]
       if (plugin.onAppMounted) {
@@ -233,7 +262,9 @@ export default {
             that.$store.commit('setAutoDetectedLocation', loc)
           }, (error) => { console.log(error) })
 
-          const baseUrl = window.Capacitor ? '' : process.env.BASE_URL
+          // Determine base URL: '/' for absolute paths
+          const baseUrl = '/'
+          console.log('Base URL for fonts:', baseUrl, 'Capacitor:', !!window.Capacitor)
           that.$stel.setFont('regular', baseUrl + 'fonts/Roboto-Regular.ttf', 1.38)
           that.$stel.setFont('bold', baseUrl + 'fonts/Roboto-Bold.ttf', 1.38)
           that.$stel.core.constellations.show_only_pointed = false
@@ -249,10 +280,13 @@ export default {
 
           if (!that.dataSourceInitDone) {
             // Set all default data sources
-            // In Capacitor, use relative paths without BASE_URL since assets are served from WebView
-            const baseUrl = window.Capacitor ? '' : process.env.BASE_URL
+            // Determine base URL: '/' for both Capacitor and web for absolute paths
+            const baseUrl = '/'
+            console.log('Base URL for skydata:', JSON.stringify(baseUrl), 'Capacitor:', !!window.Capacitor)
             const core = that.$stel.core
-            core.stars.addDataSource({ url: baseUrl + 'skydata/stars' })
+            const starsUrl = baseUrl + 'skydata/stars'
+            console.log('Stars URL:', JSON.stringify(starsUrl))
+            core.stars.addDataSource({ url: starsUrl })
 
             // Allow to specify a custom path for sky culture data
             if (that.$route.query.sc) {
