@@ -178,4 +178,4 @@ env.Program(target='build/stellarium-web-engine', source=sources)
 
 # Ugly hack to run makeasset before each compilation
 from subprocess import call
-call('./tools/make-assets.py')
+call(['python3', './tools/make-assets.py'])
