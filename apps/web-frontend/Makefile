@@ -30,7 +30,7 @@ update-engine-debug:
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
 
-DOCKER_MOUNTS := -v "$(PWD):/app" -v "$(PWD)/../test-skydata:/skydata" $(EXTRA_DOCKER_MOUNTS)
+DOCKER_MOUNTS := -v "$(PWD):/app" -v "$(PWD)/public/skydata:/skydata" $(EXTRA_DOCKER_MOUNTS)
 
 setup: Dockerfile Dockerfile.jsbuild
 	# Build docker image for compilation with emscripten
