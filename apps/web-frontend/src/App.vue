@@ -220,7 +220,6 @@ export default {
     window.fetch = function (input, init) {
       let url = input
       if (typeof input === 'string' && url.endsWith('/properties')) {
-        console.log('[Fix] Redirecting properties fetch to properties.txt')
         url = url + '.txt'
       }
       return originalFetch(url, init)
@@ -229,40 +228,10 @@ export default {
     const originalOpen = XMLHttpRequest.prototype.open
     XMLHttpRequest.prototype.open = function (method, url, ...args) {
       if (typeof url === 'string' && url.endsWith('/properties')) {
-        console.log('[Fix] Redirecting properties XHR to properties.txt')
         url = url + '.txt'
       }
       return originalOpen.call(this, method, url, ...args)
     }
-
-    // DEBUG: Load and display all files from manifest
-    function showAllFiles () {
-      var baseUrl = window.Capacitor ? '' : '/'
-      console.log('=== FILE STRUCTURE ===')
-      console.log('Base URL: ' + baseUrl)
-      console.log('Capacitor: ' + !!window.Capacitor)
-
-      fetch(baseUrl + 'file-manifest.json')
-        .then(function (response) {
-          if (!response.ok) {
-            console.log('[X] file-manifest.json not found')
-            return null
-          }
-          return response.json()
-        })
-        .then(function (manifest) {
-          if (!manifest) return
-          console.log('Total files: ' + manifest.totalFiles)
-          manifest.files.forEach(function (f) {
-            console.log('  ' + f)
-          })
-          console.log('=== END FILE STRUCTURE ===')
-        })
-        .catch(function (e) {
-          console.log('Error: ' + e.message)
-        })
-    }
-    showAllFiles()
 
     for (const i in this.$stellariumWebPlugins()) {
       const plugin = this.$stellariumWebPlugins()[i]
@@ -305,30 +274,6 @@ export default {
             const dataBaseUrl = '/'
             const core = that.$stel.core
             const starsUrl = dataBaseUrl + 'skydata/stars'
-
-            // DEBUG: Probe the properties file directly
-            console.log('[DEBUG] Probing stars properties at:', starsUrl + '/properties')
-            fetch(starsUrl + '/properties.txt')
-              .then(r => {
-                console.log('[DEBUG] properties.txt fetch status:', r.status)
-                return r.text()
-              })
-              .then(text => console.log('[DEBUG] properties.txt FULL content:', text))
-              .catch(e => console.error('[DEBUG] properties.txt fetch failed:', e))
-            fetch(starsUrl + '/properties?v=' + Date.now())
-              .then(r => {
-                console.log('[DEBUG] Properties fetch status:', r.status)
-                return r.text()
-              })
-              .then(text => {
-                console.log('[DEBUG] Properties FULL content:', text)
-                if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html')) {
-                  console.error('[DEBUG] CRITICAL: Received HTML instead of INI/Properties data!')
-                } else if (text.indexOf('type') === -1 || text.indexOf('stars') === -1) {
-                  console.error('[DEBUG] CRITICAL: Content does not look like a star survey properties file!')
-                }
-              })
-              .catch(e => console.error('[DEBUG] Properties probe failed:', e))
 
             console.log('Stars URL:', JSON.stringify(starsUrl))
             core.stars.addDataSource({ url: starsUrl })
