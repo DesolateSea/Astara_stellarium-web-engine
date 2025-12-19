@@ -198,9 +198,10 @@ export default {
       this.$stel.core.observer.elevation = loc.alt
 
       // At startup, we need to wait for the location to be set before deciding which
-      // startup time to set so that it's night time.
+      // startup time to set. Using actual current time for realistic day/night.
       if (!this.startTimeIsSet) {
-        this.$stel.core.observer.utc = swh.getTimeAfterSunset(this.$stel)
+        // Use actual current time instead of sunset time
+        this.$stel.core.observer.utc = new Date().getMJD()
         this.startTimeIsSet = true
       }
       // Init of time and date is complete
@@ -214,34 +215,24 @@ export default {
   mounted: function () {
     var that = this
 
-    // DEBUG: Load and display all files from manifest
-    function showAllFiles () {
-      var baseUrl = window.Capacitor ? '' : '/'
-      console.log('=== FILE STRUCTURE ===')
-      console.log('Base URL: ' + baseUrl)
-      console.log('Capacitor: ' + !!window.Capacitor)
-
-      fetch(baseUrl + 'file-manifest.json')
-        .then(function (response) {
-          if (!response.ok) {
-            console.log('[X] file-manifest.json not found')
-            return null
-          }
-          return response.json()
-        })
-        .then(function (manifest) {
-          if (!manifest) return
-          console.log('Total files: ' + manifest.totalFiles)
-          manifest.files.forEach(function (f) {
-            console.log('  ' + f)
-          })
-          console.log('=== END FILE STRUCTURE ===')
-        })
-        .catch(function (e) {
-          console.log('Error: ' + e.message)
-        })
+    // Monkey patch fetch and XHR to handle extensionless 'properties' file on Android
+    // The Android AssetLoader fails to find files without extensions, returning index.html instead.
+    const originalFetch = window.fetch
+    window.fetch = function (input, init) {
+      let url = input
+      if (typeof input === 'string' && url.endsWith('/properties')) {
+        url = url + '.txt'
+      }
+      return originalFetch(url, init)
     }
-    showAllFiles()
+
+    const originalOpen = XMLHttpRequest.prototype.open
+    XMLHttpRequest.prototype.open = function (method, url, ...args) {
+      if (typeof url === 'string' && url.endsWith('/properties')) {
+        url = url + '.txt'
+      }
+      return originalOpen.call(this, method, url, ...args)
+    }
 
     for (const i in this.$stellariumWebPlugins()) {
       const plugin = this.$stellariumWebPlugins()[i]
@@ -280,11 +271,11 @@ export default {
 
           if (!that.dataSourceInitDone) {
             // Set all default data sources
-            // Determine base URL: '/' for both Capacitor and web for absolute paths
-            const baseUrl = '/'
-            console.log('Base URL for skydata:', JSON.stringify(baseUrl), 'Capacitor:', !!window.Capacitor)
+            // Determine base URL: '/' for both web and Capacitor (since we use https://localhost)
+            const dataBaseUrl = '/'
             const core = that.$stel.core
-            const starsUrl = baseUrl + 'skydata/stars'
+            const starsUrl = dataBaseUrl + 'skydata/stars'
+
             console.log('Stars URL:', JSON.stringify(starsUrl))
             core.stars.addDataSource({ url: starsUrl })
 
@@ -294,18 +285,18 @@ export default {
               core.skycultures.addDataSource({ url: that.$route.query.sc, key: key })
               core.skycultures.current_id = key
             } else {
-              core.skycultures.addDataSource({ url: baseUrl + 'skydata/skycultures/western', key: 'western' })
+              core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
             }
 
-            core.dsos.addDataSource({ url: baseUrl + 'skydata/dso' })
-            core.landscapes.addDataSource({ url: baseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
-            core.milkyway.addDataSource({ url: baseUrl + 'skydata/surveys/milkyway' })
-            core.minor_planets.addDataSource({ url: baseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
-            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/moon', key: 'moon' })
-            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/sun', key: 'sun' })
-            core.planets.addDataSource({ url: baseUrl + 'skydata/surveys/sso/moon', key: 'default' })
-            core.comets.addDataSource({ url: baseUrl + 'skydata/CometEls.txt', key: 'mpc_comets' })
-            core.satellites.addDataSource({ url: baseUrl + 'skydata/tle_satellite.jsonl.gz', key: 'jsonl/sat' })
+            core.dsos.addDataSource({ url: dataBaseUrl + 'skydata/dso' })
+            core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
+            core.milkyway.addDataSource({ url: dataBaseUrl + 'skydata/surveys/milkyway' })
+            core.minor_planets.addDataSource({ url: dataBaseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'moon' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/sun', key: 'sun' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'default' })
+            core.comets.addDataSource({ url: dataBaseUrl + 'skydata/CometEls.txt', key: 'mpc_comets' })
+            core.satellites.addDataSource({ url: dataBaseUrl + 'skydata/tle_satellite.jsonl.gz', key: 'jsonl/sat' })
           }
         })
       } catch (e) {
