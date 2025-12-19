@@ -198,9 +198,10 @@ export default {
       this.$stel.core.observer.elevation = loc.alt
 
       // At startup, we need to wait for the location to be set before deciding which
-      // startup time to set so that it's night time.
+      // startup time to set. Using actual current time for realistic day/night.
       if (!this.startTimeIsSet) {
-        this.$stel.core.observer.utc = swh.getTimeAfterSunset(this.$stel)
+        // Use actual current time instead of sunset time
+        this.$stel.core.observer.utc = new Date().getMJD()
         this.startTimeIsSet = true
       }
       // Init of time and date is complete
