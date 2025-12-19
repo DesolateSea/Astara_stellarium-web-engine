@@ -66,3 +66,7 @@ build-apk:
 
 open-android:
 	npx cap open android
+
+install-apk:
+	adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
