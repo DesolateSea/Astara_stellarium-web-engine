@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <v-dialog v-model="dialogVisible" max-width="400" transition="dialog-top-transition">
+  <v-dialog v-model="dialogVisible" max-width="400" transition="dialog-top-transition" content-class="settings-dialog">
     <v-card v-if="dialogVisible" class="settings-panel">
       <!-- Main Settings View -->
       <div v-if="currentView === 'main'">
@@ -182,14 +182,14 @@
 
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Star Brightness</v-list-item-title>
-              <v-list-item-subtitle>{{ starBrightness.toFixed(1) }}</v-list-item-subtitle>
+              <v-list-item-title>Limit Magnitude</v-list-item-title>
+              <v-list-item-subtitle>{{ limitMagnitude.toFixed(1) }}</v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action class="slider-action">
               <v-slider
-                v-model="starBrightness"
-                :min="0.5"
-                :max="4"
+                v-model="limitMagnitude"
+                :min="1"
+                :max="12"
                 :step="0.1"
                 hide-details
               ></v-slider>
@@ -210,7 +210,8 @@ export default {
       startupTime: 'At night',
       startupTimeOptions: ['At night', 'Current time', 'Last used'],
       customLat: 0,
-      customLng: 0
+      customLng: 0,
+      limitMagnitude: 9.0
     }
   },
   computed: {
@@ -238,19 +239,6 @@ export default {
     currentLocation: function () {
       return this.$store.state.currentLocation
     },
-    starBrightness: {
-      get: function () {
-        if (this.$stel && this.$stel.core && this.$stel.core.stars) {
-          return this.$stel.core.stars.hints_mag_offset || 2.0
-        }
-        return 2.0
-      },
-      set: function (val) {
-        if (this.$stel && this.$stel.core && this.$stel.core.stars) {
-          this.$stel.core.stars.hints_mag_offset = val
-        }
-      }
-    },
     formatLatitude: function () {
       const lat = this.currentLocation.lat
       const deg = Math.floor(Math.abs(lat))
@@ -271,6 +259,11 @@ export default {
     dialogVisible: function (val) {
       if (!val) {
         this.currentView = 'main'
+      }
+    },
+    limitMagnitude: function (val) {
+      if (this.$stel && this.$stel.core) {
+        this.$stel.core.star_linear_scale = val
       }
     }
   },
@@ -359,5 +352,13 @@ export default {
 .coord-input >>> input {
   text-align: right;
   color: white !important;
+}
+</style>
+
+<style>
+/* Global styles for dialog positioning at top */
+.settings-dialog {
+  align-self: flex-start !important;
+  margin-top: 0 !important;
 }
 </style>
