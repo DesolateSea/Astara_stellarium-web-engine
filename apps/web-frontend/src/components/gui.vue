@@ -20,6 +20,8 @@
   <selected-object-info style="position: absolute; top: 48px; left: 0px; width: 380px; max-width: calc(100vw - 12px); margin: 6px" class="get-click"></selected-object-info>
   <progress-bars style="position: absolute; bottom: 54px; right: 12px;"></progress-bars>
   <bottom-bar style="position:absolute; width: 100%; justify-content: center; bottom: 0; display:flex; margin-bottom: 0px" class="get-click"></bottom-bar>
+  <search-panel class="get-click"></search-panel>
+  <settings-panel class="get-click"></settings-panel>
 </div>
 
 </template>
@@ -35,6 +37,8 @@ import ViewSettingsDialog from '@/components/view-settings-dialog.vue'
 import PlanetsVisibility from '@/components/planets-visibility.vue'
 import LocationDialog from '@/components/location-dialog.vue'
 import ObservingPanel from '@/components/observing-panel.vue'
+import SearchPanel from '@/components/search-panel.vue'
+import SettingsPanel from '@/components/settings-panel.vue'
 
 export default {
   data: function () {
@@ -70,7 +74,7 @@ export default {
       return res
     }
   },
-  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ProgressBars, ObservingPanel }
+  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ProgressBars, ObservingPanel, SearchPanel, SettingsPanel }
 }
 </script>
 
