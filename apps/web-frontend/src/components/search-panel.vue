@@ -124,14 +124,37 @@ export default {
       this.dialogVisible = false
     },
     sourceClicked: function (source) {
-      let obj = swh.skySource2SweObj(source)
-      if (!obj) {
-        obj = this.$stel.createObj(source.model, source)
-        this.$selectionLayer.add(obj)
+      const $stel = this.$stel
+      if (!$stel) {
+        this.closePanel()
+        return
       }
+
+      // Try to get the object from the engine
+      let obj = null
+      const name = source.names && source.names[0] ? source.names[0] : source.match
+
+      // Try different lookup strategies based on source type
+      if (source.model === 'jpl_sso' || source.types.includes('Pla') || source.types.includes('Sun') || source.types.includes('Moo')) {
+        // Planet/Moon/Sun
+        obj = $stel.getObj('NAME ' + name)
+      } else if (source.model === 'constellation' || source.types.includes('Con')) {
+        // Constellation
+        obj = $stel.getObj('CON western ' + name)
+        if (!obj) {
+          obj = $stel.getObj(name)
+        }
+      } else {
+        // Stars and other objects
+        obj = $stel.getObj(name)
+      }
+
       if (obj) {
-        swh.setSweObjAsSelection(obj)
+        // Select the object and point/lock to it
+        $stel.core.selection = obj
+        $stel.pointAndLock(obj)
       }
+
       this.closePanel()
     },
     showFavorites: function () {
