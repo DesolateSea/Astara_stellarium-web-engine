@@ -212,6 +212,12 @@ export default {
 .menu-trigger {
   background: transparent !important;
   color: white !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.menu-trigger .v-icon {
+  font-size: 36px !important;
 }
 
 .compass-container {
@@ -292,7 +298,7 @@ export default {
 }
 
 .time-display {
-  font-size: 18px;
+  font-size: 28px;
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
