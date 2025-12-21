@@ -201,7 +201,11 @@ export default {
 
         const needle = this.$refs.compassNeedle
         if (needle) {
-          needle.style.transform = 'translate(-50%, -50%) rotate(' + smoothHeading + 'deg)'
+          // Counter-rotate by azimuthDegrees to compensate for container rotation
+          const azimuth = this.$store.state.stel?.observer?.yaw || 0
+          const azimuthDeg = (azimuth * 180 / Math.PI) % 360
+          const finalRotation = smoothHeading + azimuthDeg
+          needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'
         }
         this.rafId = requestAnimationFrame(update)
       }
