@@ -278,15 +278,49 @@ const swh = {
   },
 
   lookupSkySourceByName: function (name) {
-    return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/name/' + name)
-      .then(function (response) {
-        if (!response.ok) {
-          throw response.body
+    const ENABLE_API_LOOKUP = false
+
+    if (ENABLE_API_LOOKUP) {
+      return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/name/' + name)
+        .then(function (response) {
+          if (!response.ok) {
+            throw response.body
+          }
+          return response.json()
+        }, err => {
+          console.warn('API lookup failed for ' + name + ', trying local implementation.', err)
+          return this._lookupSkySourceLocal(name)
+        })
+    } else {
+      return this._lookupSkySourceLocal(name)
+    }
+  },
+
+  _lookupSkySourceLocal: function (name) {
+    const $stel = Vue.prototype.$stel
+    if ($stel) {
+      const obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
+      if (obj) {
+        const ss = obj.jsonData || {}
+        ss.names = ss.names || obj.designations() || [name]
+        ss.culturalNames = obj.culturalDesignations()
+
+        // Ensure model/types for proper icon display if missing
+        if (!ss.types || !ss.types.length) {
+          const t = obj.getInfo('type')
+          ss.types = t ? [t] : ['Star']
         }
-        return response.json()
-      }, err => {
-        throw err.response.body
-      })
+        if (!ss.model) {
+          const type = ss.types[0]
+          if (['Sun', 'Moo', 'Pla'].includes(type)) ss.model = 'jpl_sso'
+          else if (type === 'Star') ss.model = 'star'
+          else ss.model = 'dso' // fallback
+        }
+
+        return Promise.resolve(ss)
+      }
+    }
+    return Promise.reject(new Error('Object not found locally: ' + name))
   },
 
   querySkySources: function (str, limit) {
@@ -448,57 +482,6 @@ const swh = {
     const $stel = Vue.prototype.$stel
     $stel.core.selection = obj
     $stel.pointAndLock(obj)
-  },
-
-  // Get data for a SkySource from wikipedia
-  getSkySourceSummaryFromWikipedia: function (ss) {
-    let title
-    if (ss.model === 'jpl_sso') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase()
-      if (['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'neptune', 'pluto'].indexOf(title) > -1) {
-        title = title + '_(planet)'
-      }
-      if (ss.types[0] === 'Moo') {
-        title = title + '_(moon)'
-      }
-    }
-    if (ss.model === 'mpc_asteroid') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase()
-    }
-    if (ss.model === 'constellation') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase() + '_(constellation)'
-    }
-    if (ss.model === 'dso') {
-      for (const i in ss.names) {
-        if (ss.names[i].startsWith('M ')) {
-          title = 'Messier_' + ss.names[i].substr(2)
-          break
-        }
-        if (ss.names[i].startsWith('NGC ')) {
-          title = ss.names[i]
-          break
-        }
-        if (ss.names[i].startsWith('IC ')) {
-          title = ss.names[i]
-          break
-        }
-      }
-    }
-    if (ss.model === 'star') {
-      for (const i in ss.names) {
-        if (ss.names[i].startsWith('* ')) {
-          title = this.cleanupOneSkySourceName(ss.names[i])
-          break
-        }
-      }
-    }
-    if (!title) return Promise.reject(new Error("Can't find wikipedia compatible name"))
-
-    return fetch('https://en.wikipedia.org/w/api.php?action=query&redirects&prop=extracts&exintro&exlimit=1&exchars=300&format=json&origin=*&titles=' + title,
-      { headers: { 'Content-Type': 'application/json; charset=UTF-8' } })
-      .then(response => {
-        return response.json()
-      })
   },
 
   getGeolocation: function () {

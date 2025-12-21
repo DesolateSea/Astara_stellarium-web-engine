@@ -34,7 +34,7 @@
           <v-col cols="8" style="font-weight: 500" class="white--text"><span v-html="item.value"></span></v-col>
         </v-row>
       </template>
-      <div style="margin-top: 15px" class="white--text" v-html="wikipediaSummary"></div>
+
     </v-card-text>
     <v-card-actions style="margin-top: -25px">
       <v-spacer/>
@@ -86,7 +86,7 @@ export default {
   data: function () {
     return {
       showMinorNames: false,
-      wikipediaData: undefined,
+
       shareLink: undefined,
       showShareLinkDialog: false,
       copied: false,
@@ -112,18 +112,7 @@ export default {
     otherNames8andMore: function () {
       return this.showMinorNames ? this.otherNames.slice(8) : []
     },
-    wikipediaSummary: function () {
-      if (!this.wikipediaData) return ''
-      const page = this.wikipediaData.query.pages[Object.keys(this.wikipediaData.query.pages)[0]]
-      if (!page || !page.extract) return ''
-      const wl = '<b><a style="color: #62d1df;" target="_blank" rel="noopener" href="' + this.wikipediaLink + '">wikipedia</a></b></i>'
-      return page.extract.replace(/<p>/g, '').replace(/<\/p>/g, '') + '<span class="grey--text text-caption" style="margin-left:auto; margin-right:0;"><i>&nbsp; ' + this.$t('more on {0}', [wl]) + '</span>'
-    },
-    wikipediaLink: function () {
-      const page = this.wikipediaData.query.pages[Object.keys(this.wikipediaData.query.pages)[0]]
-      if (!page || !page.extract) return ''
-      return 'https://en.wikipedia.org/wiki/' + page.title
-    },
+
     type: function () {
       if (!this.selectedObject) return this.$t('Unknown')
       let morpho = ''
@@ -168,7 +157,7 @@ export default {
   watch: {
     selectedObject: function (s) {
       this.showMinorNames = false
-      this.wikipediaData = undefined
+
       if (!s) {
         if (this.timer) clearInterval(this.timer)
         this.timer = undefined
@@ -178,10 +167,6 @@ export default {
       that.items = that.computeItems()
       if (that.timer) clearInterval(that.timer)
       that.timer = setInterval(() => { that.items = that.computeItems() }, 1000)
-
-      swh.getSkySourceSummaryFromWikipedia(s).then(data => {
-        that.wikipediaData = data
-      }, reason => { })
     },
     stelSelectionId: function (s) {
       if (!this.$stel.core.selection) {
