@@ -40,37 +40,7 @@
       </v-list>
 
       <!-- Categories when not searching -->
-      <v-list v-else dense class="category-list">
-        <v-list-item @click="showFavorites">
-          <v-list-item-icon>
-            <v-icon color="grey">mdi-heart</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Favorites</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-
-        <v-list-item @click="showRecents">
-          <v-list-item-icon>
-            <v-icon color="grey">mdi-history</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Recents</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-
-        <v-list-item @click="showBrowse">
-          <v-list-item-icon>
-            <v-icon color="grey">mdi-format-list-bulleted</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Browse</v-list-item-title>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-icon>mdi-chevron-right</v-icon>
-          </v-list-item-action>
-        </v-list-item>
-      </v-list>
+      <div v-else></div>
     </v-card>
   </v-dialog>
 </template>
@@ -157,15 +127,7 @@ export default {
 
       this.closePanel()
     },
-    showFavorites: function () {
-      console.log('Show favorites')
-    },
-    showRecents: function () {
-      console.log('Show recents')
-    },
-    showBrowse: function () {
-      console.log('Show browse')
-    },
+
     refresh: _.debounce(function () {
       var that = this
       let str = that.searchText
@@ -238,16 +200,6 @@ export default {
 
 .search-input >>> input::placeholder {
   color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.category-list {
-  background: rgba(40, 40, 40, 0.95) !important;
-  margin: 8px 16px 16px 16px;
-  border-radius: 12px;
-}
-
-.category-list .v-list-item {
-  min-height: 56px;
 }
 
 .search-results {
