@@ -290,8 +290,27 @@ export default {
 
           // Start auto location detection (even if we don't use it)
           swh.getGeolocation().then(p => {
+            // If GPS failed (usedDefault) and we are supposed to be using Auto Location
             if (p.usedDefault && that.$store.state.useAutoLocation) {
-              that.gpsErrorSnackbar = true
+              const currentLoc = that.$store.state.currentLocation
+              // Check if we have a valid previously saved location
+              if (currentLoc && (currentLoc.lat !== 0 || currentLoc.lng !== 0)) {
+                console.log('GPS failed. Using saved location as fallback for Auto Location.')
+                that.gpsErrorSnackbar = true
+
+                // Construct a position object from the saved location
+                // This effectively "pretends" the GPS returned the saved location
+                p = {
+                  lat: currentLoc.lat,
+                  lng: currentLoc.lng,
+                  accuracy: currentLoc.accuracy || 20000,
+                  usedDefault: true
+                }
+              } else {
+                // No saved location, and GPS failed.
+                // We will fall through to using the Default (25N 81E)
+                that.gpsErrorSnackbar = true
+              }
             }
             return swh.geoCodePosition(p, that)
           }).then((loc) => {

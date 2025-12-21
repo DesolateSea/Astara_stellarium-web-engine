@@ -16,6 +16,10 @@
     "android:build": "npm run build && npx cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/device": "^8.0.0",
     "@mdi/font": "^3.6.95",
     "core-js": "^3.4.4",
     "leaflet": "^1.7.1",
