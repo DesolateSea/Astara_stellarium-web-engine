@@ -569,13 +569,13 @@ const swh = {
             accuracy: position.coords.accuracy,
             usedDefault: false
           }
-          console.log('System GPS localization successful')
+          console.log('GPS localization successful: ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6) + ' (accuracy: ' + pos.accuracy + 'm)')
           resolve(pos)
         }, function (error) {
-          console.log('Could not get location from browser:', error.message)
+          console.log('GPS error code: ' + error.code + ', message: ' + error.message)
           console.log('Using default location: 25N 81E')
           resolve(defaultPos)
-        }, { enableHighAccuracy: true, timeout: 5000 })
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 })
       })
     } else {
       console.log('Geolocation not supported. Using default location: 25N 81E')
@@ -590,34 +590,18 @@ const swh = {
   },
 
   geoCodePosition: function (pos, ctx) {
-    console.log('Geocoding position... ')
+    // Return location with GPS coordinates - no network request needed for offline use
     const ll = ctx.$t('Lat {0}° Lon {1}°', [pos.lat.toFixed(3), pos.lng.toFixed(3)])
     var loc = {
-      short_name: pos.accuracy > 500 ? ctx.$t('Near {0}', [ll]) : ll,
-      country: 'Unknown',
+      short_name: ll,
+      country: '',
       lng: pos.lng,
       lat: pos.lat,
       alt: pos.alt ? pos.alt : 0,
       accuracy: pos.accuracy,
       street_address: ''
     }
-    return fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + pos.lat + '&lon=' + pos.lng,
-      { headers: { 'Content-Type': 'application/json; charset=UTF-8' } }).then(response => {
-      if (response.ok) {
-        return response.json().then(res => {
-          const city = res.address.city ? res.address.city : (res.address.village ? res.address.village : res.name)
-          loc.short_name = pos.accuracy > 500 ? ctx.$t('Near {0}', [city]) : city
-          loc.country = res.address.country
-          if (pos.accuracy < 50) {
-            loc.street_address = res.address.road ? res.address.road : res.display_name
-          }
-          return loc
-        })
-      } else {
-        console.log('Geocoder failed due to: ' + response.statusText)
-        return loc
-      }
-    })
+    return Promise.resolve(loc)
   },
 
   getDistanceFromLatLonInM: function (lat1, lon1, lat2, lon2) {
