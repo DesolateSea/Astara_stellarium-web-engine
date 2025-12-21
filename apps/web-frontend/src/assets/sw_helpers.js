@@ -293,15 +293,99 @@ const swh = {
     if (!limit) {
       limit = 10
     }
-    return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/?q=' + str + '&limit=' + limit)
-      .then(function (response) {
-        if (!response.ok) {
-          throw response.body
+    const $stel = Vue.prototype.$stel
+    if (!$stel) {
+      return Promise.resolve([])
+    }
+
+    // Use local Stellarium engine search
+    return new Promise((resolve) => {
+      const results = []
+      const searchStr = str.toUpperCase()
+
+      // Try direct object lookup first
+      const directObj = $stel.getObj(str)
+      if (directObj) {
+        const ss = directObj.jsonData || {}
+        ss.names = ss.names || directObj.designations() || [str]
+        ss.types = ss.types || [directObj.type || 'unknown']
+        ss.match = str
+        results.push(ss)
+      }
+
+      // Search in stars catalog
+      try {
+        const obs = $stel.observer
+        const starFilter = function (obj) {
+          const names = obj.designations()
+          for (const name of names) {
+            if (name.toUpperCase().includes(searchStr)) {
+              return true
+            }
+          }
+          return false
         }
-        return response.json()
-      }, err => {
-        throw err.response.body
-      })
+        const stars = $stel.core.stars.listObjs(obs, 6, starFilter)
+        for (const star of stars) {
+          if (results.length >= limit) break
+          const names = star.designations()
+          const ss = star.jsonData || {
+            names: names,
+            types: ['*'],
+            model: 'star'
+          }
+          ss.names = names
+          ss.match = names[0]
+          // Check if already in results
+          const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+          if (!isDuplicate) {
+            results.push(ss)
+          }
+          star.destroy()
+        }
+      } catch (e) {
+        console.log('Star search error:', e)
+      }
+
+      // Search planets
+      const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
+      for (const planet of planets) {
+        if (results.length >= limit) break
+        if (planet.toUpperCase().includes(searchStr)) {
+          const obj = $stel.getObj('NAME ' + planet)
+          if (obj) {
+            results.push({
+              names: [planet],
+              types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
+              model: 'jpl_sso',
+              match: planet
+            })
+          }
+        }
+      }
+
+      // Search constellations
+      const constellations = [
+        'Orion', 'Ursa Major', 'Ursa Minor', 'Leo', 'Scorpius', 'Sagittarius',
+        'Cassiopeia', 'Cygnus', 'Lyra', 'Aquila', 'Perseus', 'Andromeda',
+        'Pegasus', 'Gemini', 'Taurus', 'Aries', 'Pisces', 'Aquarius',
+        'Capricornus', 'Virgo', 'Libra', 'Cancer', 'Draco', 'Hercules',
+        'Bootes', 'Canis Major', 'Canis Minor', 'Centaurus', 'Cetus', 'Corona Borealis'
+      ]
+      for (const con of constellations) {
+        if (results.length >= limit) break
+        if (con.toUpperCase().includes(searchStr)) {
+          results.push({
+            names: [con],
+            types: ['Con'],
+            model: 'constellation',
+            match: con
+          })
+        }
+      }
+
+      resolve(results.slice(0, limit))
+    })
   },
 
   sweObj2SkySource: function (obj) {
@@ -501,8 +585,8 @@ const swh = {
     var dLat = deg2rad(lat2 - lat1)
     var dLon = deg2rad(lon2 - lon1)
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     var d = R * c // Distance in m
     return d

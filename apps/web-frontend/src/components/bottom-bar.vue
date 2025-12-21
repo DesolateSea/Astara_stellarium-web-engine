@@ -7,127 +7,105 @@
 // repository.
 
 <template>
-  <div style="position: absolute; display:flex; align-items: flex-end;">
-    <div v-if="$store.state.showLocationButton" class="tbtcontainer" style="max-width: 300px; display:flex; align-items: flex-end;">
-      <v-btn class="tmenubt" color="secondary" @click.stop.native="locationClicked()"><v-icon class="hidden-sm-and-up">mdi-map-marker</v-icon><span class="hidden-xs-only">{{ $store.state.currentLocation.short_name }}</span></v-btn>
+  <div class="bottom-bar-container">
+    <!-- Left section: Menu trigger -->
+    <div class="bottom-bar-left">
+      <v-btn icon class="menu-trigger" @click="toggleMenuPanel">
+        <v-icon>mdi-layers-outline</v-icon>
+      </v-btn>
     </div>
-    <v-spacer></v-spacer>
 
-    <bottom-button :label="$t('Constellations')"
-                v-if="$store.state.showConstellationsLinesButton !== false"
-                :img="require('@/assets/images/btn-cst-lines.svg')"
-                img_alt="Constellations Button"
-                :toggled="$store.state.stel.constellations.lines_visible"
-                @clicked="(b) => { $stel.core.constellations.lines_visible = b; $stel.core.constellations.labels_visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Constellations Art')"
-                v-if="$store.state.showConstellationsArtButton !== false"
-                :img="require('@/assets/images/btn-cst-art.svg')"
-                img_alt="Constellations Art Button"
-                :toggled="$store.state.stel.constellations.images_visible"
-                @clicked="(b) => { $stel.core.constellations.images_visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Atmosphere')"
-                v-if="$store.state.showAtmosphereButton !== false"
-                :img="require('@/assets/images/btn-atmosphere.svg')"
-                img_alt="Atmosphere Button"
-                :toggled="$store.state.stel.atmosphere.visible"
-                @clicked="(b) => { $stel.core.atmosphere.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Landscape')"
-                v-if="$store.state.showLandscapeButton !== false"
-                :img="require('@/assets/images/btn-landscape.svg')"
-                img_alt="Landscape Button"
-                :toggled="$store.state.stel.landscapes.visible"
-                @clicked="(b) => { $stel.core.landscapes.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Azimuthal Grid')"
-                v-if="$store.state.showAzimuthalGridButton !== false"
-                :img="require('@/assets/images/btn-azimuthal-grid.svg')"
-                img_alt="Azimuthal Button"
-                :toggled="$store.state.stel.lines.azimuthal.visible"
-                @clicked="(b) => { $stel.core.lines.azimuthal.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Equatorial Grid')"
-                v-if="$store.state.showEquatorialGridButton !== false"
-                :img="require('@/assets/images/btn-equatorial-grid.svg')"
-                img_alt="Equatorial Grid Button"
-                :toggled="$store.state.stel.lines.equatorial_jnow.visible"
-                @clicked="(b) => { $stel.core.lines.equatorial_jnow.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Equatorial J2000 Grid')"
-                v-if="$store.state.showEquatorialJ2000GridButton !== false"
-                :img="require('@/assets/images/btn-equatorial-grid.svg')"
-                img_alt="Equatorial J2000 Grid Button"
-                :toggled="$store.state.stel.lines.equatorial.visible"
-                @clicked="(b) => { $stel.core.lines.equatorial.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Deep Sky Objects')"
-                :img="require('@/assets/images/btn-nebulae.svg')"
-                img_alt="Deep Sky Objects Button"
-                class="mr-auto"
-                :toggled="$store.state.stel.dsos.visible"
-                @clicked="(b) => { $stel.core.dsos.visible = b }">
-    </bottom-button>
-    <bottom-button :label="$t('Night Mode')"
-                v-if="$store.state.showNightmodeButton !== false"
-                :img="require('@/assets/images/btn-night-mode.svg')"
-                img_alt="Night Mode Button"
-                class="mr-auto"
-                :toggled="$store.state.nightmode"
-                @clicked="(b) => { setNightMode(b) }">
-    </bottom-button>
-    <bottom-button :label="$t('Fullscreen')"
-                :img="fullscreenBtnImage"
-                img_alt="Fullscreen Button"
-                class="mr-auto hidden-xs-only"
-                :toggled="$store.state.fullscreen"
-                @clicked="(b) => { setFullscreen(b) }">
-    </bottom-button>
+    <!-- Center section: Compass -->
+    <div class="bottom-bar-center">
+      <div class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
+        <!-- Compass diamond pointer -->
+        <div class="compass-pointer">
+          <div class="pointer-north"></div>
+          <div class="pointer-south"></div>
+        </div>
+        <!-- Cardinal directions -->
+        <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
+        <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
+        <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
+        <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
+      </div>
+    </div>
 
-    <v-spacer></v-spacer>
+    <!-- Right section: Time -->
+    <div class="bottom-bar-right" @click="showTimePicker = !showTimePicker">
+      <div class="time-display">
+        {{ time }}
+      </div>
+    </div>
 
-    <v-menu v-if="$store.state.showTimeButtons" :close-on-content-click="false" transition="v-slide-y-transition" offset-y top left>
-      <template v-slot:activator="{ on }">
-        <v-btn large class="tmenubt" color="secondary" v-on="on">
-          <v-icon class="hidden-sm-and-up">mdi-clock-outline</v-icon>
-          <span class="hidden-xs-only">
-            <div class="text-subtitle-2">{{ time }}</div>
-            <div class="text-caption">{{ date }}</div>
-          </span>
-        </v-btn>
-      </template>
+    <!-- Floating menu panel -->
+    <transition name="slide-up">
+      <div class="menu-overlay" v-if="showMenuPanel" @click.self="closeMenu">
+        <bottom-menu-panel
+          v-if="currentSubmenu === null"
+          @open-submenu="openSubmenu"
+        />
+        <grids-lines-submenu
+          v-else-if="currentSubmenu === 'grids-lines'"
+          @back="currentSubmenu = null"
+        />
+        <constellations-submenu
+          v-else-if="currentSubmenu === 'constellations'"
+          @back="currentSubmenu = null"
+        />
+        <atmosphere-submenu
+          v-else-if="currentSubmenu === 'atmosphere'"
+          @back="currentSubmenu = null"
+        />
+        <labels-submenu
+          v-else-if="currentSubmenu === 'labels'"
+          @back="currentSubmenu = null"
+        />
+      </div>
+    </transition>
+
+    <!-- Time picker dialog -->
+    <v-dialog v-model="showTimePicker" max-width="400">
       <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
-    </v-menu>
-
+    </v-dialog>
   </div>
 </template>
 
 <script>
-
-import BottomButton from '@/components/bottom-button.vue'
 import DateTimePicker from '@/components/date-time-picker.vue'
+import BottomMenuPanel from '@/components/bottom-menu/BottomMenuPanel.vue'
+import GridsLinesSubmenu from '@/components/bottom-menu/GridsLinesSubmenu.vue'
+import ConstellationsSubmenu from '@/components/bottom-menu/ConstellationsSubmenu.vue'
+import AtmosphereSubmenu from '@/components/bottom-menu/AtmosphereSubmenu.vue'
+import LabelsSubmenu from '@/components/bottom-menu/LabelsSubmenu.vue'
 import Moment from 'moment'
 
 export default {
-  components: { BottomButton, DateTimePicker },
+  components: {
+    DateTimePicker,
+    BottomMenuPanel,
+    GridsLinesSubmenu,
+    ConstellationsSubmenu,
+    AtmosphereSubmenu,
+    LabelsSubmenu
+  },
   data: function () {
     return {
+      showMenuPanel: false,
+      currentSubmenu: null,
+      showTimePicker: false
     }
   },
   computed: {
     time: {
       get: function () {
-        return this.getLocalTime().format('HH:mm:ss')
+        return this.getLocalTime().format('HH:mm')
       }
     },
     date: {
       get: function () {
         return this.getLocalTime().format('YYYY-MM-DD')
       }
-    },
-    fullscreenBtnImage: function () {
-      return this.$store.state.fullscreen ? require('@/assets/images/svg/ui/fullscreen_exit.svg') : require('@/assets/images/svg/ui/fullscreen.svg')
     },
     pickerDate: {
       get: function () {
@@ -141,10 +119,34 @@ export default {
         m.milliseconds(this.getLocalTime().milliseconds())
         this.$stel.core.observer.utc = m.toDate().getMJD()
       }
+    },
+    // Azimuth in degrees (0-360), 0 = North, 90 = East, 180 = South, 270 = West
+    azimuthDegrees: function () {
+      const yaw = this.$store.state.stel?.observer?.yaw || 0
+      // Convert radians to degrees and normalize to 0-360
+      let degrees = (yaw * 180 / Math.PI) % 360
+      if (degrees < 0) degrees += 360
+      return degrees
+    },
+    // Direction detection (within 45 degrees of each cardinal direction)
+    isNorth: function () {
+      const az = this.azimuthDegrees
+      return az >= 315 || az < 45
+    },
+    isEast: function () {
+      const az = this.azimuthDegrees
+      return az >= 45 && az < 135
+    },
+    isSouth: function () {
+      const az = this.azimuthDegrees
+      return az >= 135 && az < 225
+    },
+    isWest: function () {
+      const az = this.azimuthDegrees
+      return az >= 225 && az < 315
     }
   },
   methods: {
-    // The MomentJS time in local time
     getLocalTime: function () {
       var d = new Date()
       d.setMJD(this.$store.state.stel.observer.utc)
@@ -152,39 +154,177 @@ export default {
       m.local()
       return m
     },
-    locationClicked: function () {
-      this.$store.commit('toggleBool', 'showLocationDialog')
-    },
-    setFullscreen: function (b) {
-      this.$fullscreen.toggle(document.body, {
-        wrap: false,
-        callback: this.onFullscreenChange
-      })
-    },
-    setNightMode: function (b) {
-      this.$store.commit('toggleBool', 'nightmode')
-      if (window.navigator.userAgent.indexOf('Edge') > -1) {
-        document.getElementById('nightmode').style.opacity = b ? '0.5' : '0'
+    toggleMenuPanel () {
+      this.showMenuPanel = !this.showMenuPanel
+      if (!this.showMenuPanel) {
+        this.currentSubmenu = null
       }
-      document.getElementById('nightmode').style.visibility = b ? 'visible' : 'hidden'
     },
-    onFullscreenChange: function (b) {
-      if (this.$store.state.fullscreen === b) return
-      this.$store.commit('toggleBool', 'fullscreen')
+    closeMenu () {
+      this.showMenuPanel = false
+      this.currentSubmenu = null
+    },
+    openSubmenu (submenuName) {
+      this.currentSubmenu = submenuName
     }
   }
 }
 </script>
 
-<style>
-@media all and (max-width: 600px) {
-  .tmenubt {
-    min-width: 30px;
-  }
+<style scoped>
+.bottom-bar-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 20px 24px;
+  padding-bottom: 32px;
+  pointer-events: none;
 }
-@media all and (min-width: 600px) {
-  .tbtcontainer {
-    width: 300px;
-  }
+
+.bottom-bar-left,
+.bottom-bar-center,
+.bottom-bar-right {
+  pointer-events: auto;
+}
+
+.bottom-bar-left {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bottom-bar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.bottom-bar-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.menu-trigger {
+  background: transparent !important;
+  color: white !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.menu-trigger .v-icon {
+  font-size: 36px !important;
+}
+
+.compass-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  transition: transform 0.1s ease-out;
+}
+
+.compass-pointer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+}
+
+.pointer-north {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid rgba(255, 255, 255, 0.8);
+}
+
+.pointer-south {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 8px solid rgba(255, 255, 255, 0.4);
+}
+
+.compass-letter {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s ease;
+}
+
+.compass-letter.active {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.compass-n {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-e {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.compass-s {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-w {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.time-display {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+}
+
+.menu-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Slide up animation */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>
