@@ -720,6 +720,34 @@ const swh = {
       this.circumpolarMask = layer.add('circle', shapeParams)
     }
   }
+  // startDeviceOrientation: function (callback) {
+  //   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+  //     // iOS 13+ requires user interaction to request permission
+  //     return DeviceOrientationEvent.requestPermission()
+  //       .then(permissionState => {
+  //         if (permissionState === 'granted') {
+  //           window.addEventListener('deviceorientation', callback)
+  //           return true
+  //         }
+  //         return false
+  //       })
+  //       .catch(console.error)
+  //   } else {
+  //     // Android and standard browsers
+  //     window.addEventListener('deviceorientation', callback)
+  //     if ('ondeviceorientationabsolute' in window) {
+  //       window.addEventListener('deviceorientationabsolute', callback)
+  //     }
+  //     return Promise.resolve(true)
+  //   }
+  // },
+
+  // stopDeviceOrientation: function (callback) {
+  //   window.removeEventListener('deviceorientation', callback)
+  //   if ('ondeviceorientationabsolute' in window) {
+  //     window.removeEventListener('deviceorientationabsolute', callback)
+  //   }
+  // }
 }
 
 export default swh

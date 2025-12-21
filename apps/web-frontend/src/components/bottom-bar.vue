@@ -19,7 +19,7 @@
     <div class="bottom-bar-center">
       <div class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
         <!-- Compass diamond pointer -->
-        <div class="compass-pointer">
+        <div class="compass-pointer" ref="compassNeedle">
           <div class="pointer-north"></div>
           <div class="pointer-south"></div>
         </div>
@@ -93,7 +93,8 @@ export default {
     return {
       showMenuPanel: false,
       currentSubmenu: null,
-      showTimePicker: false
+      showTimePicker: false,
+      rafId: null
     }
   },
   computed: {
@@ -166,6 +167,57 @@ export default {
     },
     openSubmenu (submenuName) {
       this.currentSubmenu = submenuName
+    },
+    initCompass () {
+      let latestHeading = 0
+      let smoothHeading = 0
+
+      this.onOrientation = (e) => {
+        let heading = null
+
+        // iOS has direct compass heading
+        if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+          heading = e.webkitCompassHeading
+        } else if (e.absolute && e.alpha !== null) {
+          // On Android, alpha represents the compass heading directly
+          // 0 = North, 90 = East, 180 = South, 270 = West
+          heading = e.alpha
+        }
+
+        if (heading !== null) {
+          latestHeading = heading
+        }
+      }
+
+      window.addEventListener(
+        'deviceorientationabsolute',
+        this.onOrientation,
+        true
+      )
+
+      const update = () => {
+        // Low-pass filter for smooth rotation
+        smoothHeading += (latestHeading - smoothHeading)
+
+        const needle = this.$refs.compassNeedle
+        if (needle) {
+          needle.style.transform = 'translate(-50%, -50%) rotate(' + smoothHeading + 'deg)'
+        }
+        this.rafId = requestAnimationFrame(update)
+      }
+
+      update()
+    }
+  },
+  mounted () {
+    this.initCompass()
+  },
+  beforeDestroy () {
+    if (this.onOrientation) {
+      window.removeEventListener('deviceorientationabsolute', this.onOrientation)
+    }
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId)
     }
   }
 }
@@ -231,9 +283,9 @@ export default {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
+  will-change: transform;
 }
 
 .pointer-north {
