@@ -17,7 +17,7 @@
   <template v-for="(item, i) in dialogs">
     <component :is="item" :key="i + pluginsGuiComponents.length"></component>
   </template>
-  <selected-object-info style="position: absolute; top: 48px; left: 0px; width: 380px; max-width: calc(100vw - 12px); margin: 6px" class="get-click"></selected-object-info>
+  <selected-object-info class="get-click"></selected-object-info>
   <progress-bars style="position: absolute; bottom: 54px; right: 12px;"></progress-bars>
   <bottom-bar style="position:absolute; width: 100%; justify-content: center; bottom: 0; display:flex; margin-bottom: 0px" class="get-click"></bottom-bar>
   <search-panel class="get-click"></search-panel>
