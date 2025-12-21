@@ -345,9 +345,15 @@ export default {
 
             // Allow to specify a custom path for sky culture data
             if (that.$route.query.sc) {
-              const key = that.$route.query.sc.substring(that.$route.query.sc.lastIndexOf('/') + 1)
-              core.skycultures.addDataSource({ url: that.$route.query.sc, key: key })
-              core.skycultures.current_id = key
+              const culture = that.$route.query.sc
+              // Sanitize: Allow only alphanumeric keys, no paths/URLs
+              if (/^[a-zA-Z0-9_-]+$/.test(culture)) {
+                core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/' + culture, key: culture })
+                core.skycultures.current_id = culture
+              } else {
+                console.warn('Invalid sky culture key provided:', culture)
+                core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
+              }
             } else {
               core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
             }

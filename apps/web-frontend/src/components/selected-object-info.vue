@@ -263,16 +263,9 @@ export default {
       return r.sign + '<span>' + this.formatInt(r.degrees, 2) + '</span>° <span>' + this.formatInt(r.arcminutes, 2) + '</span>\' <span>' + this.formatInt(r.arcseconds, 2) + '.' + r.fraction + '</span>"'
     },
     fetchWikipediaInfo: function () {
-      if (!this.selectedObject) return
-      swh.getSkySourceSummaryFromWikipedia(this.selectedObject).then(res => {
-        const pages = res.query.pages
-        const id = Object.keys(pages)[0]
-        if (id !== '-1' && pages[id].extract) {
-          const text = pages[id].extract.replace(/<[^>]*>/g, '')
-          this.wikipediaDescription = text
-          this.wikipediaUrl = 'https://en.wikipedia.org/wiki/' + pages[id].title.replace(/ /g, '_')
-        }
-      }).catch(() => {})
+      // Disabled for offline/secure deployment - no external API calls
+      this.wikipediaDescription = null
+      this.wikipediaUrl = null
     },
     unselect: function () {
       this.$stel.core.selection = 0

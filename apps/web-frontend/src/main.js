@@ -16,7 +16,6 @@ import '@mdi/font/css/materialdesignicons.css'
 import store from './store'
 import Router from 'vue-router'
 import fullscreen from 'vue-fullscreen'
-import VueJsonp from 'vue-jsonp'
 import VueCookie from 'vue-cookie'
 import _ from 'lodash'
 
@@ -39,7 +38,7 @@ Icon.Default.mergeOptions({
 
 Vue.use(VueCookie)
 Vue.use(fullscreen)
-Vue.use(VueJsonp)
+
 Vue.use(VueI18n)
 
 // Load all plugins JS modules found in the plugins directory

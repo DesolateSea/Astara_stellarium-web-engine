@@ -85,7 +85,7 @@ export default {
       pickLocation: undefined,
       selectedKnownLocation: undefined,
       mapCenter: [43.6, 1.4333],
-      url: 'https://{s}.tile.osm.org/{z}/{x}/{y}.png'
+      url: '' // Disabled for offline/secure deployment - no external tile server
     }
   },
   props: ['showMyLocation', 'knownLocations', 'startLocation', 'realLocation'],
@@ -112,42 +112,11 @@ export default {
     }
   },
   mounted: function () {
-    const that = this
     this.setPickLocation(this.startLocation)
     this.$nextTick(() => {
       const map = this.$refs.myMap.mapObject
       map._onResize()
-
-      var geocoder = new L.Control.Geocoder({
-        defaultMarkGeocode: false,
-        position: 'topleft',
-        collapsed: false
-      }).on('markgeocode', function (e) {
-        var pos = { lat: e.geocode.center.lat, lng: e.geocode.center.lng }
-        that.mapCenter = [pos.lat, pos.lng]
-        pos.accuracy = 100
-        const ll = that.$t('Lat {0}° Lon {1}°', [pos.lat.toFixed(3), pos.lng.toFixed(3)])
-        var loc = {
-          short_name: pos.accuracy > 500 ? that.$t('Near {0}', [ll]) : ll,
-          country: that.$t('Unknown'),
-          lng: pos.lng,
-          lat: pos.lat,
-          alt: pos.alt ? pos.alt : 0,
-          accuracy: pos.accuracy,
-          street_address: ''
-        }
-        const res = e.geocode.properties
-        const city = res.address.city ? res.address.city : (res.address.village ? res.address.village : res.name)
-        loc.short_name = pos.accuracy > 500 ? that.$t('Near {0}', [city]) : city
-        loc.country = res.address.country
-        if (pos.accuracy < 50) {
-          loc.street_address = res.address.road ? res.address.road : res.display_name
-        }
-        that.pickLocation = loc
-        that.setPickLocationMode()
-        geocoder.setQuery('')
-      })
-      geocoder.addTo(map)
+      // Geocoder removed for offline/secure deployment - no external API calls
     })
   },
   methods: {
