@@ -553,41 +553,34 @@ const swh = {
 
   getGeolocation: function () {
     console.log('Getting geolocalization')
+    const defaultPos = {
+      lat: 25.0,
+      lng: 81.0,
+      accuracy: 20000,
+      usedDefault: true
+    }
 
-    // First get geoIP location, to use as fallback
-    return Vue.jsonp('https://freegeoip.stellarium.org/json/')
-      .then(location => {
-        var pos = {
-          lat: location.latitude,
-          lng: location.longitude,
-          accuracy: 20000
-        }
-        console.log('GeoIP localization: ' + JSON.stringify(pos))
-        return pos
-      }, err => {
-        console.log(err)
-      }).then(geoipPos => {
-        if (navigator.geolocation) {
-          return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(function (position) {
-              var pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy
-              }
-              resolve(pos)
-            }, function () {
-              console.log('Could not get location from browser, use fallback from GeoIP')
-              // No HTML5 Geolocalization support, return geoip fallback values
-              if (geoipPos) {
-                resolve(geoipPos)
-              } else {
-                reject(new Error('Cannot detect position'))
-              }
-            }, { enableHighAccuracy: true })
-          })
-        }
+    if (navigator.geolocation) {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            usedDefault: false
+          }
+          console.log('System GPS localization successful')
+          resolve(pos)
+        }, function (error) {
+          console.log('Could not get location from browser:', error.message)
+          console.log('Using default location: 25N 81E')
+          resolve(defaultPos)
+        }, { enableHighAccuracy: true, timeout: 5000 })
       })
+    } else {
+      console.log('Geolocation not supported. Using default location: 25N 81E')
+      return Promise.resolve(defaultPos)
+    }
   },
 
   delay: function (t, v) {

@@ -62,6 +62,14 @@
         </div>
       </div>
     </v-container>
+    <v-snackbar v-model="gpsErrorSnackbar" :timeout="-1" color="warning">
+      GPS access failed. Using default location.
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="gpsErrorSnackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-main>
 
 </v-app>
@@ -90,7 +98,8 @@ export default {
       guiComponent: 'GuiLoader',
       startTimeIsSet: false,
       initDone: false,
-      dataSourceInitDone: false
+      dataSourceInitDone: false,
+      gpsErrorSnackbar: false
     }
   },
   components: { Gui, GuiLoader },
@@ -173,9 +182,34 @@ export default {
           console.log("Couldn't find skysource for name: " + name)
         })
       }
+    },
+    saveSettings: function () {
+      const settings = {
+        currentLocation: this.$store.state.currentLocation,
+        useAutoLocation: this.$store.state.useAutoLocation
+      }
+      localStorage.setItem('stellarium-settings', JSON.stringify(settings))
+    },
+    loadSettings: function () {
+      try {
+        const settings = JSON.parse(localStorage.getItem('stellarium-settings'))
+        if (settings) {
+          if (settings.currentLocation) {
+            this.$store.commit('setCurrentLocation', settings.currentLocation)
+          }
+          if (typeof settings.useAutoLocation !== 'undefined') {
+            this.$store.commit('setUseAutoLocation', settings.useAutoLocation)
+          }
+        }
+      } catch (e) {
+        console.log('Error loading settings', e)
+      }
     }
   },
   computed: {
+    useAutoLocation: function () {
+      return this.$store.state.useAutoLocation
+    },
     nav: {
       get: function () {
         return this.$store.state.showNavigationDrawer
@@ -206,6 +240,10 @@ export default {
       }
       // Init of time and date is complete
       this.$store.commit('setValue', { varName: 'initComplete', newValue: true })
+      this.saveSettings()
+    },
+    useAutoLocation: function () {
+      this.saveSettings()
     },
     $route: function () {
       // react to route changes...
@@ -248,8 +286,15 @@ export default {
       // To modify the state of the StelWebEngine, it's enough to call/set values directly on the $stel object
       try {
         swh.initStelWebEngine(that.$store, f.default, that.$refs.stelCanvas, function () {
+          that.loadSettings()
+
           // Start auto location detection (even if we don't use it)
-          swh.getGeolocation().then(p => swh.geoCodePosition(p, that)).then((loc) => {
+          swh.getGeolocation().then(p => {
+            if (p.usedDefault && that.$store.state.useAutoLocation) {
+              that.gpsErrorSnackbar = true
+            }
+            return swh.geoCodePosition(p, that)
+          }).then((loc) => {
             that.$store.commit('setAutoDetectedLocation', loc)
           }, (error) => { console.log(error) })
 
