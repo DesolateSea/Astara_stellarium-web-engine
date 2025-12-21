@@ -58,15 +58,43 @@ const swh = {
   ],
 
   astroConstants: {
-    // Light time for 1 au in s
-    ERFA_AULT: 499.004782,
-    // Seconds per day
-    ERFA_DAYSEC: 86400.0,
-    // Days per Julian year
-    ERFA_DJY: 365.25,
-    // Astronomical unit in m
-    ERFA_DAU: 149597870000
+    AU: 149597870700.0,
+    R_Earth: 6378137.0
   },
+
+  _cachedSatellites: null,
+  _loadSatellites: function () {
+    if (this._loadingSatellites) return
+    this._loadingSatellites = true
+    fetch('skydata/tle_satellite.jsonl')
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.split('\n')
+        this._cachedSatellites = []
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const sat = JSON.parse(line)
+            if (sat.names) {
+              this._cachedSatellites.push(sat)
+            }
+          } catch (e) {
+            // ignore bad lines
+          }
+        }
+        console.log('Loaded ' + this._cachedSatellites.length + ' satellites for search cache')
+      })
+      .catch(e => console.error('Failed to load satellites for search', e))
+      .finally(() => { this._loadingSatellites = false })
+  },
+  // Light time for 1 au in s
+  ERFA_AULT: 499.004782,
+  // Seconds per day
+  ERFA_DAYSEC: 86400.0,
+  // Days per Julian year
+  ERFA_DJY: 365.25,
+  // Astronomical unit in m
+  ERFA_DAU: 149597870000,
 
   iconForSkySourceTypes: function (skySourceTypes) {
     // Array sorted by specificity, i.e. the most generic names at the end
@@ -348,37 +376,67 @@ const swh = {
       }
 
       // Search in stars catalog
-      try {
-        const obs = $stel.observer
-        const starFilter = function (obj) {
-          const names = obj.designations()
-          for (const name of names) {
-            if (name.toUpperCase().includes(searchStr)) {
-              return true
+      if (results.length < limit) {
+        try {
+          const obs = $stel.observer
+          const starFilter = function (obj) {
+            const names = obj.designations()
+            for (const name of names) {
+              if (name.toUpperCase().includes(searchStr)) {
+                return true
+              }
+            }
+            return false
+          }
+          const stars = $stel.core.stars.listObjs(obs, 6, starFilter)
+          for (const star of stars) {
+            if (results.length >= limit) break
+            const names = star.designations()
+            const ss = star.jsonData || {
+              names: names,
+              types: ['*'],
+              model: 'star'
+            }
+            ss.names = names
+            ss.match = names[0]
+            // Check if already in results
+            const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+            if (!isDuplicate) {
+              results.push(ss)
+            }
+            star.destroy()
+          }
+        } catch (e) {
+          console.log('Star search error:', e)
+        }
+      }
+
+      // Search satellites (JS-based)
+      if (results.length < limit) {
+        if (!swh._cachedSatellites) {
+          swh._loadSatellites()
+        }
+        if (swh._cachedSatellites) {
+          for (const sat of swh._cachedSatellites) {
+            if (results.length >= limit) break
+            // Simple case-insensitive inclusion check
+            const nameMatch = sat.names.some(n => n.toUpperCase().includes(searchStr))
+            if (nameMatch) {
+              // Clone to avoid modifying cache
+              const ss = {
+                names: [...sat.names],
+                types: ['Asa'],
+                model: 'tle_satellite',
+                match: sat.names[0] // Approximation
+              }
+
+              const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+              if (!isDuplicate) {
+                results.push(ss)
+              }
             }
           }
-          return false
         }
-        const stars = $stel.core.stars.listObjs(obs, 6, starFilter)
-        for (const star of stars) {
-          if (results.length >= limit) break
-          const names = star.designations()
-          const ss = star.jsonData || {
-            names: names,
-            types: ['*'],
-            model: 'star'
-          }
-          ss.names = names
-          ss.match = names[0]
-          // Check if already in results
-          const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
-          if (!isDuplicate) {
-            results.push(ss)
-          }
-          star.destroy()
-        }
-      } catch (e) {
-        console.log('Star search error:', e)
       }
 
       // Search planets

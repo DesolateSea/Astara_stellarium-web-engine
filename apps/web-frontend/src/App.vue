@@ -296,7 +296,7 @@ export default {
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/sun', key: 'sun' })
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'default' })
             core.comets.addDataSource({ url: dataBaseUrl + 'skydata/CometEls.txt', key: 'mpc_comets' })
-            core.satellites.addDataSource({ url: dataBaseUrl + 'skydata/tle_satellite.jsonl.gz', key: 'jsonl/sat' })
+            core.satellites.addDataSource({ url: dataBaseUrl + 'skydata/tle_satellite.dat', key: 'jsonl/sat' })
           }
         })
       } catch (e) {
