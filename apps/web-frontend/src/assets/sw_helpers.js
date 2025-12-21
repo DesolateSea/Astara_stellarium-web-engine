@@ -368,6 +368,7 @@ const swh = {
       // Try direct object lookup first
       const directObj = $stel.getObj(str)
       if (directObj) {
+        console.log('Direct object lookup:', directObj.jsonData)
         const ss = directObj.jsonData || {}
         ss.names = ss.names || directObj.designations() || [str]
         ss.types = ss.types || [directObj.type || 'unknown']
@@ -376,40 +377,40 @@ const swh = {
       }
 
       // Search in stars catalog
-      if (results.length < limit) {
-        try {
-          const obs = $stel.observer
-          const starFilter = function (obj) {
-            const names = obj.designations()
-            for (const name of names) {
-              if (name.toUpperCase().includes(searchStr)) {
-                return true
-              }
-            }
-            return false
-          }
-          const stars = $stel.core.stars.listObjs(obs, 6, starFilter)
-          for (const star of stars) {
-            if (results.length >= limit) break
-            const names = star.designations()
-            const ss = star.jsonData || {
-              names: names,
-              types: ['*'],
-              model: 'star'
-            }
-            ss.names = names
-            ss.match = names[0]
-            // Check if already in results
-            const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
-            if (!isDuplicate) {
-              results.push(ss)
-            }
-            star.destroy()
-          }
-        } catch (e) {
-          console.log('Star search error:', e)
-        }
-      }
+      // if (results.length < limit) {
+      //   try {
+      //     const obs = $stel.observer
+      //     const starFilter = function (obj) {
+      //       const names = obj.designations()
+      //       for (const name of names) {
+      //         if (name.toUpperCase().includes(searchStr)) {
+      //           return true
+      //         }
+      //       }
+      //       return false
+      //     }
+      //     const stars = $stel.core.stars.listObjs(obs, 1, starFilter)
+      //     for (const star of stars) {
+      //       if (results.length >= limit) break
+      //       const names = star.designations()
+      //       const ss = star.jsonData || {
+      //         names: names,
+      //         types: ['*'],
+      //         model: 'star'
+      //       }
+      //       ss.names = names
+      //       ss.match = names[0]
+      //       // Check if already in results
+      //       const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+      //       if (!isDuplicate) {
+      //         results.push(ss)
+      //       }
+      //       star.destroy()
+      //     }
+      //   } catch (e) {
+      //     console.log('Star search error:', e)
+      //   }
+      // }
 
       // Search satellites (JS-based)
       if (results.length < limit) {
@@ -417,15 +418,23 @@ const swh = {
           swh._loadSatellites()
         }
         if (swh._cachedSatellites) {
+          const searchSat = searchStr.toUpperCase().replace(/\s/g, '')
+          const cleanSearch = 'NAME' + searchSat
+
           for (const sat of swh._cachedSatellites) {
             if (results.length >= limit) break
-            // Simple case-insensitive inclusion check
-            const nameMatch = sat.names.some(n => n.toUpperCase().includes(searchStr))
+            // Improved search: check original and cleaned (no prefix, no space) names
+            const nameMatch = sat.names.some(n => {
+              const upperN = n.toUpperCase().replace(/\s/g, '')
+              return (cleanSearch.length > 0 && upperN.includes(cleanSearch)) || (searchSat.length > 0 && upperN.includes(searchSat))
+            })
+
             if (nameMatch) {
               // Clone to avoid modifying cache
               const ss = {
+                model_data: sat.model_data,
                 names: [...sat.names],
-                types: ['Asa'],
+                types: sat.types,
                 model: 'tle_satellite',
                 match: sat.names[0] // Approximation
               }
