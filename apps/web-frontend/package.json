@@ -6,7 +6,6 @@
   "author": "Stellarium Labs <contact@stellarium-labs.com>",
   "scripts": {
     "build": "vue-cli-service build",
-    "copy-skydata": "powershell -Command \"Copy-Item -Path '../test-skydata/*' -Destination 'dist/skydata' -Recurse -Force\"",
     "lint": "vue-cli-service lint",
     "dev": "vue-cli-service serve",
     "i18n": "vue-cli-service i18n:report",
@@ -14,7 +13,7 @@
     "cap:add:android": "npx cap add android",
     "cap:sync": "npx cap sync android",
     "cap:open:android": "npx cap open android",
-    "android:build": "npm run build && npm run copy-skydata && npx cap sync android"
+    "android:build": "npm run build && npx cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

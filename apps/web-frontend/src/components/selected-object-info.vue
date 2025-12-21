@@ -7,90 +7,127 @@
 // repository.
 
 <template>
-  <v-card v-if="selectedObject" transparent style="background: rgba(66, 66, 66, 0.3);">
-    <v-btn icon style="position: absolute; right: 0" v-on:click.native="unselect()"><v-icon>mdi-close</v-icon></v-btn>
-    <v-card-title primary-title>
-      <div style="width: 100%">
-        <img :src="icon" height="48" width="48" align="left" style="margin-top: 3px; margin-right: 10px"/>
-        <div style="overflow: hidden; text-overflow: ellipsis;">
-          <div class="text-h5">{{ title }}</div>
-          <div class="grey--text text-body-2">{{ type }}</div>
+  <div v-if="selectedObject"
+       class="stel-bottom-sheet"
+       :class="{ 'is-expanded': isExpanded }"
+       @touchstart="handleTouchStart"
+       @touchmove="handleTouchMove"
+       @touchend="handleTouchEnd">
+
+    <!-- Top Pull Bar / Drag Handle -->
+    <div class="drag-handle-container">
+      <div class="drag-handle"></div>
+    </div>
+
+    <div class="sheet-scroll-container">
+      <!-- Minimized Bar Content -->
+      <div class="minimized-header">
+        <div class="obj-identity">
+          <div class="obj-icon-container" @click="isExpanded = true">
+            <div class="obj-type-dot"></div>
+          </div>
+          <div class="obj-title-group" @click="isExpanded = true">
+            <h1 class="obj-name">{{ title }}</h1>
+            <p class="obj-meta">{{ type }}</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Center Button (Shows when not centered/locked) -->
+          <div v-if="showPointToButton" class="center-button-wrapper" @click.stop="lockToSelection">
+            <div class="center-btn-large">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="5"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="5" y2="12"/>
+                <line x1="19" y1="12" x2="22" y2="12"/>
+              </svg>
+            </div>
+            <span class="center-label">Center</span>
+          </div>
+
+          <!-- Zoom Controls (Shows only when centered) -->
+          <div v-else class="zoom-controls-wrapper">
+            <div class="zoom-controls">
+              <button class="icon-btn" @mousedown.stop="zoomOutButtonClicked" @touchstart.stop="zoomOutButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              </button>
+              <span class="zoom-label">Zoom</span>
+              <button class="icon-btn" @mousedown.stop="zoomInButtonClicked" @touchstart.stop="zoomInButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              </button>
+            </div>
+            <button class="close-btn-circle" @click.stop="unselect">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         </div>
       </div>
-    </v-card-title>
-    <v-card-text style="padding-bottom: 5px;">
-      <v-row v-if="otherNames.length > 1" style="width: 100%;">
-        <v-col cols="12">
-          <span style="position: absolute;">{{ $t('Also known as') }}</span><span style="padding-left: 33.3333%">&nbsp;</span><span class="text-caption white--text" v-for="mname in otherNames1to7" :key="mname" style="margin-right: 15px; font-weight: 500;">{{ mname }}</span>
-          <v-btn small icon class="grey--text" v-if="otherNames.length > 8" v-on:click.native="showMinorNames = !showMinorNames" style="margin-top: -5px; margin-bottom: -5px;"><v-icon>mdi-dots-horizontal</v-icon></v-btn>
-          <span class="text-caption white--text" v-for="mname in otherNames8andMore" :key="mname" style="margin-right: 15px; font-weight: 500">{{ mname }}</span>
-        </v-col>
-      </v-row>
-    </v-card-text>
-    <v-card-text>
-      <template v-for="item in items">
-        <v-row style="width: 100%" :key="item.key" no-gutters>
-          <v-col cols="4" style="color: #dddddd">{{ item.key }}</v-col>
-          <v-col cols="8" style="font-weight: 500" class="white--text"><span v-html="item.value"></span></v-col>
-        </v-row>
-      </template>
 
-    </v-card-text>
-    <v-card-actions style="margin-top: -25px">
-      <v-spacer/>
-      <template v-for="item in pluginsSelectedInfoExtraGuiComponents">
-        <component :is="item" :key="item"></component>
-      </template>
-    </v-card-actions>
-    <v-dialog v-model="showShareLinkDialog" width="500px" absolute>
-      <v-card style="height: 180px" class="secondary white--text">
-        <v-card-title primary-title>
-          <div>
-            <h3 class="text-h5 mb-0">Share link</h3>
+      <!-- Expanded Content Section -->
+      <transition name="fade">
+        <div v-if="isExpanded" class="expanded-body">
+          <!-- Data Table -->
+          <div class="data-table">
+            <div v-if="constellation" class="data-row">
+              <span class="data-label">Constellation</span>
+              <div class="data-value-group">
+                <span class="data-value">{{ constellation }}</span>
+                <div class="nav-arrows">
+                  <span class="chevron">&lt;</span>
+                  <span class="chevron">&gt;</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="magnitude" class="data-row">
+              <span class="data-label">Magnitude</span>
+              <span class="data-value">{{ magnitude }}</span>
+            </div>
+            <div v-if="distance" class="data-row">
+              <span class="data-label">Distance</span>
+              <span class="data-value" v-html="distance"></span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">RA/Dec</span>
+              <span class="data-value mono" v-html="radecFormatted"></span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Az/Alt</span>
+              <span class="data-value mono" v-html="azaltFormatted"></span>
+            </div>
           </div>
-        </v-card-title>
-        <v-card-text style="width:100%;">
-          <v-row style="width: 100%">
-            <v-text-field id="link_inputid" v-model="shareLink" label="Link" solo readonly></v-text-field>
-            <v-btn @click.native.stop="copyLink">Copy</v-btn>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-    <div v-if="$store.state.showSelectedInfoButtons" style="position: absolute; right: 0px; bottom: -50px;">
-      <v-btn v-if="!showPointToButton" fab small color="transparent" @click.native="showShareLinkDialog = !showShareLinkDialog">
-        <v-icon>mdi-link</v-icon>
-      </v-btn>
-      <v-btn v-if="showPointToButton" fab small color="transparent" v-on:click.native="lockToSelection()">
-        <img src="@/assets/images/svg/ui/point_to.svg" height="40px" style="min-height: 40px"></img>
-      </v-btn>
-      <v-btn v-if="!showPointToButton" fab small color="transparent" @mousedown="zoomOutButtonClicked()">
-        <img :class="{bt_disabled: !zoomOutButtonEnabled}" src="@/assets/images/svg/ui/remove_circle_outline.svg" height="40px" style="min-height: 40px"></img>
-      </v-btn>
-      <v-btn v-if="!showPointToButton" fab small color="transparent" @mousedown="zoomInButtonClicked()">
-        <img :class="{bt_disabled: !zoomInButtonEnabled}" src="@/assets/images/svg/ui/add_circle_outline.svg" height="40px" style="min-height: 40px"></img>
-      </v-btn>
+
+          <!-- Wiki Section -->
+          <div v-if="wikipediaDescription" class="wiki-section">
+            <p class="wiki-paragraph">
+              <span class="wiki-highlight">{{ title }}</span>
+              <span v-if="shortName" class="wiki-dim">({{ shortName }})</span>
+              {{ wikipediaDescription }}
+            </p>
+            <a v-if="wikipediaUrl" :href="wikipediaUrl" target="_blank" class="wiki-link-more">more on Wikipedia</a>
+          </div>
+        </div>
+      </transition>
     </div>
-    <v-snackbar bottom left :timeout="2000" v-model="copied" color="secondary" >
-      Link copied
-    </v-snackbar>
-  </v-card>
+  </div>
 </template>
 
 <script>
-
-import Moment from 'moment'
 import swh from '@/assets/sw_helpers.js'
 
 export default {
   data: function () {
     return {
-      showMinorNames: false,
-
-      shareLink: undefined,
-      showShareLinkDialog: false,
-      copied: false,
-      items: []
+      isExpanded: false,
+      wikipediaDescription: null,
+      wikipediaUrl: null,
+      zoomTimeout: null,
+      timer: null,
+      // Touch state
+      touchStartY: 0,
+      swipeThreshold: 50
     }
   },
   computed: {
@@ -101,26 +138,21 @@ export default {
       return this.$store.state.stel && this.$store.state.stel.selection ? this.$store.state.stel.selection : undefined
     },
     title: function () {
-      return this.selectedObject ? this.otherNames[0] : 'Selection'
+      return this.selectedObject ? swh.namesForSkySource(this.selectedObject, 26)[0] : 'Selection'
     },
-    otherNames: function () {
-      return this.selectedObject ? swh.namesForSkySource(this.selectedObject, 26) : undefined
+    shortName: function () {
+      if (!this.selectedObject || !this.selectedObject.names) return null
+      for (const name of this.selectedObject.names) {
+        if (name.length <= 8 && name !== this.title) return swh.cleanupOneSkySourceName(name)
+      }
+      return null
     },
-    otherNames1to7: function () {
-      return this.otherNames.slice(1, 8)
-    },
-    otherNames8andMore: function () {
-      return this.showMinorNames ? this.otherNames.slice(8) : []
-    },
-
     type: function () {
-      if (!this.selectedObject) return this.$t('Unknown')
+      if (!this.selectedObject) return 'Unknown'
       let morpho = ''
       if (this.selectedObject.model_data && this.selectedObject.model_data.morpho) {
         morpho = swh.nameForGalaxyMorpho(this.selectedObject.model_data.morpho)
-        if (morpho) {
-          morpho = morpho + ' '
-        }
+        if (morpho) morpho = morpho + ' '
       }
       return morpho + swh.nameForSkySourceType(this.selectedObject.types[0])
     },
@@ -132,41 +164,51 @@ export default {
       if (this.$store.state.stel.lock !== this.$store.state.stel.selection) return true
       return false
     },
-    zoomInButtonEnabled: function () {
-      if (!this.$store.state.stel.lock || !this.selectedObject) return false
-      return true
+    constellation: function () {
+      if (!this.selectedObject || !this.selectedObject.model_data) return null
+      return this.selectedObject.model_data.constellation || (this.selectedObject.types.includes('Con') ? this.title : null)
     },
-    zoomOutButtonEnabled: function () {
-      if (!this.$store.state.stel.lock || !this.selectedObject) return false
-      return true
+    magnitude: function () {
+      if (!this.$stel || !this.$stel.core.selection) return null
+      const v = this.$stel.core.selection.getInfo('vmag')
+      return (v !== undefined && !isNaN(v)) ? v.toFixed(2) : null
     },
-    extraButtons: function () {
-      return swh.selectedObjectExtraButtons
+    distance: function () {
+      if (!this.$stel || !this.$stel.core.selection) return null
+      const d = this.$stel.core.selection.getInfo('distance')
+      if (!d || isNaN(d)) return null
+      const ly = d * swh.astroConstants.ERFA_AULT / swh.astroConstants.ERFA_DAYSEC / swh.astroConstants.ERFA_DJY
+      if (ly >= 0.1) return ly.toFixed(2) + ' <span class="unit-dim">ly</span>'
+      if (d >= 0.1) return d.toFixed(2) + ' <span class="unit-dim">AU</span>'
+      const meter = d * swh.astroConstants.ERFA_DAU
+      return meter >= 1000 ? (meter / 1000).toFixed(2) + ' <span class="unit-dim">km</span>' : meter.toFixed(2) + ' <span class="unit-dim">m</span>'
     },
-    pluginsSelectedInfoExtraGuiComponents: function () {
-      let res = []
-      for (const i in this.$stellariumWebPlugins()) {
-        const plugin = this.$stellariumWebPlugins()[i]
-        if (plugin.selectedInfoExtraGuiComponents) {
-          res = res.concat(plugin.selectedInfoExtraGuiComponents)
-        }
-      }
-      return res
+    radecFormatted: function () {
+      if (!this.$stel || !this.$stel.core.selection) return ''
+      const obj = this.$stel.core.selection
+      const posCIRS = this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'JNOW', obj.getInfo('radec'))
+      const radecCIRS = this.$stel.c2s(posCIRS)
+      const ra = this.$stel.anp(radecCIRS[0])
+      const dec = this.$stel.anpm(radecCIRS[1])
+      return this.formatRA(ra) + '&nbsp;&nbsp;' + this.formatDec(dec)
+    },
+    azaltFormatted: function () {
+      if (!this.$stel || !this.$stel.core.selection) return ''
+      const obj = this.$stel.core.selection
+      const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
+      return this.formatAz(this.$stel.anp(azalt[0])) + '&nbsp;&nbsp;' + this.formatDec(this.$stel.anpm(azalt[1]))
     }
   },
   watch: {
     selectedObject: function (s) {
-      this.showMinorNames = false
-
+      this.wikipediaDescription = null
+      this.wikipediaUrl = null
       if (!s) {
-        if (this.timer) clearInterval(this.timer)
-        this.timer = undefined
         return
       }
-      var that = this
-      that.items = that.computeItems()
-      if (that.timer) clearInterval(that.timer)
-      that.timer = setInterval(() => { that.items = that.computeItems() }, 1000)
+      this.fetchWikipediaInfo()
+      if (this.timer) clearInterval(this.timer)
+      this.timer = setInterval(() => { this.$forceUpdate() }, 1000)
     },
     stelSelectionId: function (s) {
       if (!this.$stel.core.selection) {
@@ -179,195 +221,423 @@ export default {
         console.log("Couldn't find info for object " + s + ':' + err)
         this.$store.commit('setSelectedObject', 0)
       })
-    },
-    showShareLinkDialog: function (b) {
-      this.shareLink = swh.getShareLink(this)
     }
   },
   methods: {
-    computeItems: function () {
-      const obj = this.$stel.core.selection
-      if (!obj) return []
-      const that = this
+    toggleExpand: function () {
+      this.isExpanded = !this.isExpanded
+    },
+    // Touch Gestures
+    handleTouchStart: function (e) {
+      this.touchStartY = e.touches[0].clientY
+    },
+    handleTouchMove: function (e) {
+      // Avoid browser scrolling while swiping panel
+      if (this.isExpanded && this.$el.querySelector('.sheet-scroll-container').scrollTop > 0) {}
+      // Optional: Visual dragging feedback could be added here
+    },
+    handleTouchEnd: function (e) {
+      const touchEndY = e.changedTouches[0].clientY
+      const deltaY = this.touchStartY - touchEndY
 
-      const ret = []
-
-      const addAttr = (key, attr, format) => {
-        const v = obj.getInfo(attr)
-        if (v && !isNaN(v)) {
-          ret.push({
-            key: key,
-            value: format ? format(v) : v.toString()
-          })
-        }
+      if (deltaY > this.swipeThreshold && !this.isExpanded) {
+        this.isExpanded = true
+      } else if (deltaY < -this.swipeThreshold && this.isExpanded) {
+        this.isExpanded = false
       }
-
-      addAttr(that.$t('Magnitude'), 'vmag', this.formatMagnitude)
-      addAttr(that.$t('Distance'), 'distance', this.formatDistance)
-      if (this.selectedObject.model_data) {
-        if (this.selectedObject.model_data.radius) {
-          ret.push({
-            key: that.$t('Radius'),
-            value: this.selectedObject.model_data.radius.toString() + ' Km'
-          })
-        }
-        if (this.selectedObject.model_data.spect_t) {
-          ret.push({
-            key: that.$t('Spectral Type'),
-            value: this.selectedObject.model_data.spect_t
-          })
-        }
-        if (this.selectedObject.model_data.dimx) {
-          const dimy = this.selectedObject.model_data.dimy ? this.selectedObject.model_data.dimy : this.selectedObject.model_data.dimx
-          ret.push({
-            key: that.$t('Size'),
-            value: this.selectedObject.model_data.dimx.toString() + "' x " + dimy.toString() + "'"
-          })
-        }
-      }
-      const formatInt = function (num, padLen) {
-        const pad = new Array(1 + padLen).join('0')
-        return (pad + num).slice(-pad.length)
-      }
-      const formatRA = function (a) {
-        const raf = that.$stel.a2tf(a, 1)
-        return '<div class="radecVal">' + formatInt(raf.hours, 2) + '<span class="radecUnit">h</span>&nbsp;</div><div class="radecVal">' + formatInt(raf.minutes, 2) + '<span class="radecUnit">m</span></div><div class="radecVal">' + formatInt(raf.seconds, 2) + '.' + raf.fraction + '<span class="radecUnit">s</span></div>'
-      }
-      const formatAz = function (a) {
-        const raf = that.$stel.a2af(a, 1)
-        return '<div class="radecVal">' + formatInt(raf.degrees < 0 ? raf.degrees + 180 : raf.degrees, 3) + '<span class="radecUnit">°</span></div><div class="radecVal">' + formatInt(raf.arcminutes, 2) + '<span class="radecUnit">\'</span></div><div class="radecVal">' + formatInt(raf.arcseconds, 2) + '.' + raf.fraction + '<span class="radecUnit">"</span></div>'
-      }
-      const formatDec = function (a) {
-        const raf = that.$stel.a2af(a, 1)
-        return '<div class="radecVal">' + raf.sign + formatInt(raf.degrees, 2) + '<span class="radecUnit">°</span></div><div class="radecVal">' + formatInt(raf.arcminutes, 2) + '<span class="radecUnit">\'</span></div><div class="radecVal">' + formatInt(raf.arcseconds, 2) + '.' + raf.fraction + '<span class="radecUnit">"</span></div>'
-      }
-      const posCIRS = this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'JNOW', obj.getInfo('radec'))
-      const radecCIRS = this.$stel.c2s(posCIRS)
-      const raCIRS = this.$stel.anp(radecCIRS[0])
-      const decCIRS = this.$stel.anpm(radecCIRS[1])
-      ret.push({
-        key: that.$t('Ra/Dec'),
-        value: formatRA(raCIRS) + '&nbsp;&nbsp;&nbsp;' + formatDec(decCIRS)
-      })
-      const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
-      const az = this.$stel.anp(azalt[0])
-      const alt = this.$stel.anpm(azalt[1])
-      ret.push({
-        key: that.$t('Az/Alt'),
-        value: formatAz(az) + '&nbsp;&nbsp;&nbsp;' + formatDec(alt)
-      })
-      addAttr(that.$t('Phase'), 'phase', this.formatPhase)
-      const vis = obj.computeVisibility()
-      let str = ''
-      if (vis.length === 0) {
-        str = that.$t('Not visible tonight')
-      } else if (vis[0].rise === null) {
-        str = that.$t('Always visible tonight')
-      } else {
-        str = that.$t('Rise: {0}&nbsp;&nbsp;&nbsp; Set: {1}', [this.formatTime(vis[0].rise), this.formatTime(vis[0].set)])
-      }
-      ret.push({
-        key: that.$t('Visibility'),
-        value: str
-      })
-      return ret
     },
-    formatPhase: function (v) {
-      return (v * 100).toFixed(0) + '%'
+    formatInt: function (num, padLen) {
+      return ('000' + num).slice(-padLen)
     },
-    formatMagnitude: function (v) {
-      if (!v) {
-        return 'Unknown'
-      }
-      return v.toFixed(2)
+    formatRA: function (a) {
+      const r = this.$stel.a2tf(a, 1)
+      return '<span>' + this.formatInt(r.hours, 2) + '</span><sub>h</sub> <span>' + this.formatInt(r.minutes, 2) + '</span><sub>m</sub> <span>' + this.formatInt(r.seconds, 2) + '.' + r.fraction + '</span><sub>s</sub>'
     },
-    formatDistance: function (d) {
-      // d is in AU
-      if (!d) {
-        return 'NAN'
-      }
-      const ly = d * swh.astroConstants.ERFA_AULT / swh.astroConstants.ERFA_DAYSEC / swh.astroConstants.ERFA_DJY
-      if (ly >= 0.1) {
-        return ly.toFixed(2) + '<span class="radecUnit"> light years</span>'
-      }
-      if (d >= 0.1) {
-        return d.toFixed(2) + '<span class="radecUnit"> AU</span>'
-      }
-      const meter = d * swh.astroConstants.ERFA_DAU
-      if (meter >= 1000) {
-        return (meter / 1000).toFixed(2) + '<span class="radecUnit"> km</span>'
-      }
-      return meter.toFixed(2) + '<span class="radecUnit"> m</span>'
+    formatAz: function (a) {
+      const r = this.$stel.a2af(a, 1)
+      const deg = r.degrees < 0 ? r.degrees + 180 : r.degrees
+      return '<span>' + this.formatInt(deg, 3) + '</span>° <span>' + this.formatInt(r.arcminutes, 2) + '</span>\' <span>' + this.formatInt(r.arcseconds, 2) + '.' + r.fraction + '</span>"'
     },
-    formatTime: function (jdm) {
-      var d = new Date()
-      d.setMJD(jdm)
-      const utc = new Moment(d)
-      utc.utcOffset(this.$store.state.stel.utcoffset)
-      return utc.format('HH:mm')
+    formatDec: function (a) {
+      const r = this.$stel.a2af(a, 1)
+      return r.sign + '<span>' + this.formatInt(r.degrees, 2) + '</span>° <span>' + this.formatInt(r.arcminutes, 2) + '</span>\' <span>' + this.formatInt(r.arcseconds, 2) + '.' + r.fraction + '</span>"'
+    },
+    fetchWikipediaInfo: function () {
+      if (!this.selectedObject) return
+      swh.getSkySourceSummaryFromWikipedia(this.selectedObject).then(res => {
+        const pages = res.query.pages
+        const id = Object.keys(pages)[0]
+        if (id !== '-1' && pages[id].extract) {
+          const text = pages[id].extract.replace(/<[^>]*>/g, '')
+          this.wikipediaDescription = text
+          this.wikipediaUrl = 'https://en.wikipedia.org/wiki/' + pages[id].title.replace(/ /g, '_')
+        }
+      }).catch(() => {})
     },
     unselect: function () {
       this.$stel.core.selection = 0
     },
     lockToSelection: function () {
-      if (this.$stel.core.selection) {
-        this.$stel.pointAndLock(this.$stel.core.selection, 0.5)
-      }
+      if (this.$stel.core.selection) this.$stel.pointAndLock(this.$stel.core.selection, 0.5)
     },
     zoomInButtonClicked: function () {
-      const currentFov = this.$store.state.stel.fov * 180 / Math.PI
-      this.$stel.zoomTo(currentFov * 0.3 * Math.PI / 180, 0.4)
-      const that = this
-      this.zoomTimeout = setTimeout(_ => { that.zoomInButtonClicked() }, 300)
+      const fov = this.$store.state.stel.fov * 180 / Math.PI
+      this.$stel.zoomTo(fov * 0.3 * Math.PI / 180, 0.4)
+      this.zoomTimeout = setTimeout(() => this.zoomInButtonClicked(), 300)
     },
     zoomOutButtonClicked: function () {
-      const currentFov = this.$store.state.stel.fov * 180 / Math.PI
-      this.$stel.zoomTo(currentFov * 3 * Math.PI / 180, 0.6)
-      const that = this
-      this.zoomTimeout = setTimeout(_ => { that.zoomOutButtonClicked() }, 200)
+      const fov = this.$store.state.stel.fov * 180 / Math.PI
+      this.$stel.zoomTo(fov * 3 * Math.PI / 180, 0.6)
+      this.zoomTimeout = setTimeout(() => this.zoomOutButtonClicked(), 200)
     },
     stopZoom: function () {
-      if (this.zoomTimeout) {
-        clearTimeout(this.zoomTimeout)
-        this.zoomTimeout = undefined
-      }
-    },
-    extraButtonClicked: function (btn) {
-      btn.callback()
-    },
-    copyLink: function () {
-      const input = document.querySelector('#link_inputid')
-      input.focus()
-      input.select()
-      this.copied = document.execCommand('copy')
-      window.getSelection().removeAllRanges()
-      this.showShareLinkDialog = false
+      if (this.zoomTimeout) { clearTimeout(this.zoomTimeout); this.zoomTimeout = null }
     }
   },
   mounted: function () {
-    const that = this
-    window.addEventListener('mouseup', function (event) {
-      that.stopZoom()
-    })
+    window.addEventListener('mouseup', () => this.stopZoom())
+    window.addEventListener('touchend', () => this.stopZoom())
   }
 }
 </script>
 
-<style>
-.bt_disabled {
-  filter: opacity(0.2);
+<style scoped>
+.stel-bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 20px 20px 0 0;
+  color: #fff;
+  z-index: 1000;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  transition: height 0.3s cubic-bezier(0.2, 0, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  height: 112px; /* Balanced height to prevent clipping with safe area */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.radecVal {
-  display: inline-block;
-  font-family: monospace;
-  padding-right: 2px;
+.stel-bottom-sheet.is-expanded {
+  height: auto;
+  max-height: 70vh;
+  border-radius: 24px 24px 0 0;
+}
+
+.sheet-scroll-container {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drag-handle-container {
+  width: 100%;
+  padding: 4px 0 2px 0;
+  cursor: pointer;
+}
+
+.drag-handle {
+  width: 32px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+/* Minimized Header */
+.minimized-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px 12px 16px;
+}
+
+.obj-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.obj-icon-container {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.obj-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.obj-type-dot {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.obj-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.obj-meta {
   font-size: 13px;
-  font-weight: bold;
+  color: #5AC8FA;
+  margin: 0;
+  font-weight: 500;
 }
 
-.radecUnit {
-  color: #dddddd;
-  font-weight: normal
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.center-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding-top: 4px;
+}
+
+.center-btn-large {
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.center-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.zoom-controls-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  padding: 2px 6px;
+}
+
+.zoom-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 8px;
+  font-weight: 500;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 6px;
+  display: flex;
+  cursor: pointer;
+}
+
+.close-btn-circle {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Expanded Content */
+.expanded-body {
+  padding: 2px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.pill-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pill-action.active {
+  background: rgba(10, 132, 255, 0.2);
+  border-color: #0A84FF;
+  color: #0A84FF;
+}
+
+.pill-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heart-action {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heart-action.favored {
+  color: #FF2D55;
+  border-color: #FF2D55;
+  background: rgba(255, 45, 85, 0.1);
+}
+
+/* Transitions */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+/* Data Table (shared styles) */
+.data-table {
+  margin-bottom: 6px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.data-value {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.data-value.mono {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 14px;
+}
+
+.data-value-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-arrows {
+  display: flex;
+  gap: 4px;
+}
+
+.chevron {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Wiki Section */
+.wiki-section {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wiki-paragraph {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 10px;
+}
+
+.wiki-highlight {
+  color: #5AC8FA;
+  font-weight: 600;
+}
+
+.wiki-dim {
+  color: #5AC8FA;
+  opacity: 0.8;
+}
+
+.wiki-link-more {
+  display: block;
+  text-align: right;
+  color: #5AC8FA;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Units */
+sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  vertical-align: baseline;
+  position: relative;
+  top: 0.2em;
+  margin-left: 1px;
+}
+
+.unit-dim {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
 }
 </style>

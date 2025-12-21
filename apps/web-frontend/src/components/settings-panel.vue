@@ -86,74 +86,67 @@
             </v-list-item-action>
           </v-list-item>
 
-          <!-- Custom Lat/Long inputs when autolocation is off -->
           <template v-if="!useAutoLocation">
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>Latitude</v-list-item-title>
-              </v-list-item-content>
-              <v-list-item-action class="input-action">
-                <v-text-field
-                  v-model.number="customLat"
-                  type="number"
-                  dense
-                  hide-details
-                  suffix="°"
-                  class="coord-input"
-                  @change="updateLocation"
-                ></v-text-field>
-              </v-list-item-action>
-            </v-list-item>
-
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>Longitude</v-list-item-title>
-              </v-list-item-content>
-              <v-list-item-action class="input-action">
-                <v-text-field
-                  v-model.number="customLng"
-                  type="number"
-                  dense
-                  hide-details
-                  suffix="°"
-                  class="coord-input"
-                  @change="updateLocation"
-                ></v-text-field>
-              </v-list-item-action>
-            </v-list-item>
-          </template>
-
-          <!-- Display only when autolocation is on -->
-          <template v-else>
-            <v-list-item>
+            <v-list-item @click="openCoordEditor('latitude')">
               <v-list-item-content>
                 <v-list-item-title>Latitude</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
-                <span class="location-value">{{ formatLatitude }}</span>
+                <span class="location-value">{{ formatLatitudeValue(customLat) }}</span>
               </v-list-item-action>
             </v-list-item>
 
-            <v-list-item>
+            <v-list-item @click="openCoordEditor('longitude')">
               <v-list-item-content>
                 <v-list-item-title>Longitude</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
-                <span class="location-value">{{ formatLongitude }}</span>
+                <span class="location-value">{{ formatLongitudeValue(customLng) }}</span>
               </v-list-item-action>
             </v-list-item>
           </template>
+
+        <!-- Display only when autolocation is on -->
+        <template v-else>
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>Latitude</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <span class="location-value">{{ formatLatitude }}</span>
+            </v-list-item-action>
+          </v-list-item>
 
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Name/City</v-list-item-title>
+              <v-list-item-title>Longitude</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
-              <span class="location-value">{{ cityName }}</span>
+              <span class="location-value">{{ formatLongitude }}</span>
             </v-list-item-action>
           </v-list-item>
-        </v-list>
-      </div>
+        </template>
+
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>Name/City</v-list-item-title>
+          </v-list-item-content>
+          <v-list-item-action>
+            <span class="location-value">{{ cityName }}</span>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </div>
+
+    <!-- Coordinate Editor View -->
+    <div v-else-if="currentView === 'edit-coordinate'">
+      <coordinate-editor
+        :type="editCoordType"
+        :value="editCoordValue"
+        @input="updateCoord"
+        @back="currentView = 'location'"
+      />
+    </div>
 
       <!-- Advanced View -->
       <div v-else-if="currentView === 'advanced'">
@@ -202,7 +195,12 @@
 </template>
 
 <script>
+import CoordinateEditor from './coordinate-editor.vue'
+
 export default {
+  components: {
+    CoordinateEditor
+  },
   data: function () {
     return {
       currentView: 'main',
@@ -211,10 +209,14 @@ export default {
       startupTimeOptions: ['At night', 'Current time', 'Last used'],
       customLat: 0,
       customLng: 0,
-      limitMagnitude: 9.0
+      limitMagnitude: 9.0,
+      editCoordType: 'latitude'
     }
   },
   computed: {
+    editCoordValue () {
+      return this.editCoordType === 'latitude' ? this.customLat : this.customLng
+    },
     dialogVisible: {
       get: function () {
         return this.$store.state.showSettingsPanel
@@ -284,6 +286,30 @@ export default {
         short_name: 'Custom'
       }
       this.$store.commit('setCurrentLocation', newLoc)
+    },
+    openCoordEditor (type) {
+      this.editCoordType = type
+      this.currentView = 'edit-coordinate'
+    },
+    updateCoord (val) {
+      if (this.editCoordType === 'latitude') {
+        this.customLat = val
+      } else {
+        this.customLng = val
+      }
+      this.updateLocation()
+    },
+    formatLatitudeValue (lat) {
+      const absLat = Math.abs(lat)
+      const deg = Math.floor(absLat)
+      const min = Math.floor((absLat - deg) * 60)
+      return deg + '° ' + min + "' " + (lat >= 0 ? 'N' : 'S')
+    },
+    formatLongitudeValue (lng) {
+      const absLng = Math.abs(lng)
+      const deg = Math.floor(absLng)
+      const min = Math.floor((absLng - deg) * 60)
+      return deg + '° ' + min + "' " + (lng >= 0 ? 'E' : 'W')
     },
     resetSettings: function () {
       this.sensorsEnabled = false
