@@ -58,15 +58,43 @@ const swh = {
   ],
 
   astroConstants: {
-    // Light time for 1 au in s
-    ERFA_AULT: 499.004782,
-    // Seconds per day
-    ERFA_DAYSEC: 86400.0,
-    // Days per Julian year
-    ERFA_DJY: 365.25,
-    // Astronomical unit in m
-    ERFA_DAU: 149597870000
+    AU: 149597870700.0,
+    R_Earth: 6378137.0
   },
+
+  _cachedSatellites: null,
+  _loadSatellites: function () {
+    if (this._loadingSatellites) return
+    this._loadingSatellites = true
+    fetch('skydata/tle_satellite.jsonl')
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.split('\n')
+        this._cachedSatellites = []
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const sat = JSON.parse(line)
+            if (sat.names) {
+              this._cachedSatellites.push(sat)
+            }
+          } catch (e) {
+            // ignore bad lines
+          }
+        }
+        console.log('Loaded ' + this._cachedSatellites.length + ' satellites for search cache')
+      })
+      .catch(e => console.error('Failed to load satellites for search', e))
+      .finally(() => { this._loadingSatellites = false })
+  },
+  // Light time for 1 au in s
+  ERFA_AULT: 499.004782,
+  // Seconds per day
+  ERFA_DAYSEC: 86400.0,
+  // Days per Julian year
+  ERFA_DJY: 365.25,
+  // Astronomical unit in m
+  ERFA_DAU: 149597870000,
 
   iconForSkySourceTypes: function (skySourceTypes) {
     // Array sorted by specificity, i.e. the most generic names at the end
@@ -278,30 +306,187 @@ const swh = {
   },
 
   lookupSkySourceByName: function (name) {
-    return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/name/' + name)
-      .then(function (response) {
-        if (!response.ok) {
-          throw response.body
+    const ENABLE_API_LOOKUP = false
+
+    if (ENABLE_API_LOOKUP) {
+      return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/name/' + name)
+        .then(function (response) {
+          if (!response.ok) {
+            throw response.body
+          }
+          return response.json()
+        }, err => {
+          console.warn('API lookup failed for ' + name + ', trying local implementation.', err)
+          return this._lookupSkySourceLocal(name)
+        })
+    } else {
+      return this._lookupSkySourceLocal(name)
+    }
+  },
+
+  _lookupSkySourceLocal: function (name) {
+    const $stel = Vue.prototype.$stel
+    if ($stel) {
+      const obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
+      if (obj) {
+        const ss = obj.jsonData || {}
+        ss.names = ss.names || obj.designations() || [name]
+        ss.culturalNames = obj.culturalDesignations()
+
+        // Ensure model/types for proper icon display if missing
+        if (!ss.types || !ss.types.length) {
+          const t = obj.getInfo('type')
+          ss.types = t ? [t] : ['Star']
         }
-        return response.json()
-      }, err => {
-        throw err.response.body
-      })
+        if (!ss.model) {
+          const type = ss.types[0]
+          if (['Sun', 'Moo', 'Pla'].includes(type)) ss.model = 'jpl_sso'
+          else if (type === 'Star') ss.model = 'star'
+          else ss.model = 'dso' // fallback
+        }
+
+        return Promise.resolve(ss)
+      }
+    }
+    return Promise.reject(new Error('Object not found locally: ' + name))
   },
 
   querySkySources: function (str, limit) {
     if (!limit) {
       limit = 10
     }
-    return fetch(process.env.VUE_APP_NOCTUASKY_API_SERVER + '/api/v1/skysources/?q=' + str + '&limit=' + limit)
-      .then(function (response) {
-        if (!response.ok) {
-          throw response.body
+    const $stel = Vue.prototype.$stel
+    if (!$stel) {
+      return Promise.resolve([])
+    }
+
+    // Use local Stellarium engine search
+    return new Promise((resolve) => {
+      const results = []
+      const searchStr = str.toUpperCase()
+
+      // Try direct object lookup first
+      const directObj = $stel.getObj(str)
+      if (directObj) {
+        console.log('Direct object lookup:', directObj.jsonData)
+        const ss = directObj.jsonData || {}
+        ss.names = ss.names || directObj.designations() || [str]
+        ss.types = ss.types || [directObj.type || 'unknown']
+        ss.match = str
+        results.push(ss)
+      }
+
+      // Search in stars catalog
+      // if (results.length < limit) {
+      //   try {
+      //     const obs = $stel.observer
+      //     const starFilter = function (obj) {
+      //       const names = obj.designations()
+      //       for (const name of names) {
+      //         if (name.toUpperCase().includes(searchStr)) {
+      //           return true
+      //         }
+      //       }
+      //       return false
+      //     }
+      //     const stars = $stel.core.stars.listObjs(obs, 1, starFilter)
+      //     for (const star of stars) {
+      //       if (results.length >= limit) break
+      //       const names = star.designations()
+      //       const ss = star.jsonData || {
+      //         names: names,
+      //         types: ['*'],
+      //         model: 'star'
+      //       }
+      //       ss.names = names
+      //       ss.match = names[0]
+      //       // Check if already in results
+      //       const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+      //       if (!isDuplicate) {
+      //         results.push(ss)
+      //       }
+      //       star.destroy()
+      //     }
+      //   } catch (e) {
+      //     console.log('Star search error:', e)
+      //   }
+      // }
+
+      // Search satellites (JS-based)
+      if (results.length < limit) {
+        if (!swh._cachedSatellites) {
+          swh._loadSatellites()
         }
-        return response.json()
-      }, err => {
-        throw err.response.body
-      })
+        if (swh._cachedSatellites) {
+          const searchSat = searchStr.toUpperCase().replace(/\s/g, '')
+          const cleanSearch = 'NAME' + searchSat
+
+          for (const sat of swh._cachedSatellites) {
+            if (results.length >= limit) break
+            // Improved search: check original and cleaned (no prefix, no space) names
+            const nameMatch = sat.names.some(n => {
+              const upperN = n.toUpperCase().replace(/\s/g, '')
+              return (cleanSearch.length > 0 && upperN.includes(cleanSearch)) || (searchSat.length > 0 && upperN.includes(searchSat))
+            })
+
+            if (nameMatch) {
+              // Clone to avoid modifying cache
+              const ss = {
+                model_data: sat.model_data,
+                names: [...sat.names],
+                types: sat.types,
+                model: 'tle_satellite',
+                match: sat.names[0] // Approximation
+              }
+
+              const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
+              if (!isDuplicate) {
+                results.push(ss)
+              }
+            }
+          }
+        }
+      }
+
+      // Search planets
+      const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
+      for (const planet of planets) {
+        if (results.length >= limit) break
+        if (planet.toUpperCase().includes(searchStr)) {
+          const obj = $stel.getObj('NAME ' + planet)
+          if (obj) {
+            results.push({
+              names: [planet],
+              types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
+              model: 'jpl_sso',
+              match: planet
+            })
+          }
+        }
+      }
+
+      // Search constellations
+      const constellations = [
+        'Orion', 'Ursa Major', 'Ursa Minor', 'Leo', 'Scorpius', 'Sagittarius',
+        'Cassiopeia', 'Cygnus', 'Lyra', 'Aquila', 'Perseus', 'Andromeda',
+        'Pegasus', 'Gemini', 'Taurus', 'Aries', 'Pisces', 'Aquarius',
+        'Capricornus', 'Virgo', 'Libra', 'Cancer', 'Draco', 'Hercules',
+        'Bootes', 'Canis Major', 'Canis Minor', 'Centaurus', 'Cetus', 'Corona Borealis'
+      ]
+      for (const con of constellations) {
+        if (results.length >= limit) break
+        if (con.toUpperCase().includes(searchStr)) {
+          results.push({
+            names: [con],
+            types: ['Con'],
+            model: 'constellation',
+            match: con
+          })
+        }
+      }
+
+      resolve(results.slice(0, limit))
+    })
   },
 
   sweObj2SkySource: function (obj) {
@@ -366,94 +551,36 @@ const swh = {
     $stel.pointAndLock(obj)
   },
 
-  // Get data for a SkySource from wikipedia
-  getSkySourceSummaryFromWikipedia: function (ss) {
-    let title
-    if (ss.model === 'jpl_sso') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase()
-      if (['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'neptune', 'pluto'].indexOf(title) > -1) {
-        title = title + '_(planet)'
-      }
-      if (ss.types[0] === 'Moo') {
-        title = title + '_(moon)'
-      }
-    }
-    if (ss.model === 'mpc_asteroid') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase()
-    }
-    if (ss.model === 'constellation') {
-      title = this.cleanupOneSkySourceName(ss.names[0]).toLowerCase() + '_(constellation)'
-    }
-    if (ss.model === 'dso') {
-      for (const i in ss.names) {
-        if (ss.names[i].startsWith('M ')) {
-          title = 'Messier_' + ss.names[i].substr(2)
-          break
-        }
-        if (ss.names[i].startsWith('NGC ')) {
-          title = ss.names[i]
-          break
-        }
-        if (ss.names[i].startsWith('IC ')) {
-          title = ss.names[i]
-          break
-        }
-      }
-    }
-    if (ss.model === 'star') {
-      for (const i in ss.names) {
-        if (ss.names[i].startsWith('* ')) {
-          title = this.cleanupOneSkySourceName(ss.names[i])
-          break
-        }
-      }
-    }
-    if (!title) return Promise.reject(new Error("Can't find wikipedia compatible name"))
-
-    return fetch('https://en.wikipedia.org/w/api.php?action=query&redirects&prop=extracts&exintro&exlimit=1&exchars=300&format=json&origin=*&titles=' + title,
-      { headers: { 'Content-Type': 'application/json; charset=UTF-8' } })
-      .then(response => {
-        return response.json()
-      })
-  },
-
   getGeolocation: function () {
     console.log('Getting geolocalization')
+    const defaultPos = {
+      lat: 25.0,
+      lng: 81.0,
+      accuracy: 20000,
+      usedDefault: true
+    }
 
-    // First get geoIP location, to use as fallback
-    return Vue.jsonp('https://freegeoip.stellarium.org/json/')
-      .then(location => {
-        var pos = {
-          lat: location.latitude,
-          lng: location.longitude,
-          accuracy: 20000
-        }
-        console.log('GeoIP localization: ' + JSON.stringify(pos))
-        return pos
-      }, err => {
-        console.log(err)
-      }).then(geoipPos => {
-        if (navigator.geolocation) {
-          return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(function (position) {
-              var pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy
-              }
-              resolve(pos)
-            }, function () {
-              console.log('Could not get location from browser, use fallback from GeoIP')
-              // No HTML5 Geolocalization support, return geoip fallback values
-              if (geoipPos) {
-                resolve(geoipPos)
-              } else {
-                reject(new Error('Cannot detect position'))
-              }
-            }, { enableHighAccuracy: true })
-          })
-        }
+    if (navigator.geolocation) {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            usedDefault: false
+          }
+          console.log('GPS localization successful: ' + pos.lat.toFixed(6) + ', ' + pos.lng.toFixed(6) + ' (accuracy: ' + pos.accuracy + 'm)')
+          resolve(pos)
+        }, function (error) {
+          console.log('GPS error code: ' + error.code + ', message: ' + error.message)
+          console.log('Using default location: 25N 81E')
+          resolve(defaultPos)
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 })
       })
+    } else {
+      console.log('Geolocation not supported. Using default location: 25N 81E')
+      return Promise.resolve(defaultPos)
+    }
   },
 
   delay: function (t, v) {
@@ -463,34 +590,18 @@ const swh = {
   },
 
   geoCodePosition: function (pos, ctx) {
-    console.log('Geocoding position... ')
+    // Return location with GPS coordinates - no network request needed for offline use
     const ll = ctx.$t('Lat {0}° Lon {1}°', [pos.lat.toFixed(3), pos.lng.toFixed(3)])
     var loc = {
-      short_name: pos.accuracy > 500 ? ctx.$t('Near {0}', [ll]) : ll,
-      country: 'Unknown',
+      short_name: ll,
+      country: '',
       lng: pos.lng,
       lat: pos.lat,
       alt: pos.alt ? pos.alt : 0,
       accuracy: pos.accuracy,
       street_address: ''
     }
-    return fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + pos.lat + '&lon=' + pos.lng,
-      { headers: { 'Content-Type': 'application/json; charset=UTF-8' } }).then(response => {
-      if (response.ok) {
-        return response.json().then(res => {
-          const city = res.address.city ? res.address.city : (res.address.village ? res.address.village : res.name)
-          loc.short_name = pos.accuracy > 500 ? ctx.$t('Near {0}', [city]) : city
-          loc.country = res.address.country
-          if (pos.accuracy < 50) {
-            loc.street_address = res.address.road ? res.address.road : res.display_name
-          }
-          return loc
-        })
-      } else {
-        console.log('Geocoder failed due to: ' + response.statusText)
-        return loc
-      }
-    })
+    return Promise.resolve(loc)
   },
 
   getDistanceFromLatLonInM: function (lat1, lon1, lat2, lon2) {
@@ -501,8 +612,8 @@ const swh = {
     var dLat = deg2rad(lat2 - lat1)
     var dLon = deg2rad(lon2 - lon1)
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     var d = R * c // Distance in m
     return d
@@ -593,6 +704,34 @@ const swh = {
       this.circumpolarMask = layer.add('circle', shapeParams)
     }
   }
+  // startDeviceOrientation: function (callback) {
+  //   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+  //     // iOS 13+ requires user interaction to request permission
+  //     return DeviceOrientationEvent.requestPermission()
+  //       .then(permissionState => {
+  //         if (permissionState === 'granted') {
+  //           window.addEventListener('deviceorientation', callback)
+  //           return true
+  //         }
+  //         return false
+  //       })
+  //       .catch(console.error)
+  //   } else {
+  //     // Android and standard browsers
+  //     window.addEventListener('deviceorientation', callback)
+  //     if ('ondeviceorientationabsolute' in window) {
+  //       window.addEventListener('deviceorientationabsolute', callback)
+  //     }
+  //     return Promise.resolve(true)
+  //   }
+  // },
+
+  // stopDeviceOrientation: function (callback) {
+  //   window.removeEventListener('deviceorientation', callback)
+  //   if ('ondeviceorientationabsolute' in window) {
+  //     window.removeEventListener('deviceorientationabsolute', callback)
+  //   }
+  // }
 }
 
 export default swh

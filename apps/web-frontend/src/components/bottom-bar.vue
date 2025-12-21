@@ -17,11 +17,17 @@
 
     <!-- Center section: Compass -->
     <div class="bottom-bar-center">
-      <div class="compass-indicator">
-        <span class="compass-letter">W</span>
-        <span class="compass-letter">N</span>
-        <span class="compass-letter">S</span>
-        <span class="compass-letter">E</span>
+      <div class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
+        <!-- Compass diamond pointer -->
+        <div class="compass-pointer" ref="compassNeedle">
+          <div class="pointer-north"></div>
+          <div class="pointer-south"></div>
+        </div>
+        <!-- Cardinal directions -->
+        <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
+        <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
+        <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
+        <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
       </div>
     </div>
 
@@ -87,7 +93,8 @@ export default {
     return {
       showMenuPanel: false,
       currentSubmenu: null,
-      showTimePicker: false
+      showTimePicker: false,
+      rafId: null
     }
   },
   computed: {
@@ -113,6 +120,31 @@ export default {
         m.milliseconds(this.getLocalTime().milliseconds())
         this.$stel.core.observer.utc = m.toDate().getMJD()
       }
+    },
+    // Azimuth in degrees (0-360), 0 = North, 90 = East, 180 = South, 270 = West
+    azimuthDegrees: function () {
+      const yaw = this.$store.state.stel?.observer?.yaw || 0
+      // Convert radians to degrees and normalize to 0-360
+      let degrees = (yaw * 180 / Math.PI) % 360
+      if (degrees < 0) degrees += 360
+      return degrees
+    },
+    // Direction detection (within 45 degrees of each cardinal direction)
+    isNorth: function () {
+      const az = this.azimuthDegrees
+      return az >= 315 || az < 45
+    },
+    isEast: function () {
+      const az = this.azimuthDegrees
+      return az >= 45 && az < 135
+    },
+    isSouth: function () {
+      const az = this.azimuthDegrees
+      return az >= 135 && az < 225
+    },
+    isWest: function () {
+      const az = this.azimuthDegrees
+      return az >= 225 && az < 315
     }
   },
   methods: {
@@ -135,6 +167,61 @@ export default {
     },
     openSubmenu (submenuName) {
       this.currentSubmenu = submenuName
+    },
+    initCompass () {
+      let latestHeading = 0
+      let smoothHeading = 0
+
+      this.onOrientation = (e) => {
+        let heading = null
+
+        // iOS has direct compass heading
+        if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+          heading = e.webkitCompassHeading
+        } else if (e.absolute && e.alpha !== null) {
+          // On Android, alpha represents the compass heading directly
+          // 0 = North, 90 = East, 180 = South, 270 = West
+          heading = e.alpha
+        }
+
+        if (heading !== null) {
+          latestHeading = heading
+        }
+      }
+
+      window.addEventListener(
+        'deviceorientationabsolute',
+        this.onOrientation,
+        true
+      )
+
+      const update = () => {
+        // Low-pass filter for smooth rotation
+        smoothHeading += (latestHeading - smoothHeading)
+
+        const needle = this.$refs.compassNeedle
+        if (needle) {
+          // Counter-rotate by azimuthDegrees to compensate for container rotation
+          const azimuth = this.$store.state.stel?.observer?.yaw || 0
+          const azimuthDeg = (azimuth * 180 / Math.PI) % 360
+          const finalRotation = smoothHeading + azimuthDeg
+          needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'
+        }
+        this.rafId = requestAnimationFrame(update)
+      }
+
+      update()
+    }
+  },
+  mounted () {
+    this.initCompass()
+  },
+  beforeDestroy () {
+    if (this.onOrientation) {
+      window.removeEventListener('deviceorientationabsolute', this.onOrientation)
+    }
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId)
     }
   }
 }
@@ -181,23 +268,93 @@ export default {
 .menu-trigger {
   background: transparent !important;
   color: white !important;
+  width: 56px !important;
+  height: 56px !important;
 }
 
-.compass-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.2;
+.menu-trigger .v-icon {
+  font-size: 36px !important;
+}
+
+.compass-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  transition: transform 0.1s ease-out;
+}
+
+.compass-pointer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  will-change: transform;
+}
+
+.pointer-north {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid rgba(255, 255, 255, 0.8);
+}
+
+.pointer-south {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 8px solid rgba(255, 255, 255, 0.4);
 }
 
 .compass-letter {
+  position: absolute;
+  font-size: 12px;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s ease;
+}
+
+.compass-letter.active {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.compass-n {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-e {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.compass-s {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-w {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
 }
 
 .time-display {
-  font-size: 18px;
+  font-size: 28px;
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
