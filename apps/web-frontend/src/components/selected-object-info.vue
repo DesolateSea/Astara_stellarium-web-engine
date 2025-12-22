@@ -82,21 +82,21 @@
                 </div>
               </div>
             </div>
-            <div v-if="magnitude" class="data-row">
+            <div v-if="magnitude()" class="data-row">
               <span class="data-label">Magnitude</span>
-              <span class="data-value">{{ magnitude }}</span>
+              <span class="data-value">{{ magnitude() }}</span>
             </div>
-            <div v-if="distance" class="data-row">
+            <div v-if="distance()" class="data-row">
               <span class="data-label">Distance</span>
-              <span class="data-value" v-html="distance"></span>
+              <span class="data-value" v-html="distance()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">RA/Dec</span>
-              <span class="data-value mono" v-html="radecFormatted"></span>
+              <span class="data-value mono" v-html="radecFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">Az/Alt</span>
-              <span class="data-value mono" v-html="azaltFormatted"></span>
+              <span class="data-value mono" v-html="azaltFormatted()"></span>
             </div>
           </div>
 
@@ -168,6 +168,38 @@ export default {
     constellation: function () {
       if (!this.selectedObject || !this.selectedObject.model_data) return null
       return this.selectedObject.model_data.constellation || (this.selectedObject.types.includes('Con') ? this.title : null)
+    }
+  },
+  watch: {
+    selectedObject: function (s) {
+      this.wikipediaDescription = null
+      this.wikipediaUrl = null
+      if (this.timer) {
+        clearInterval(this.timer)
+        this.timer = null
+      }
+      if (!s) {
+        return
+      }
+      this.fetchWikipediaInfo()
+      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+    },
+    stelSelectionId: function (s) {
+      if (!this.$stel.core.selection) {
+        this.$store.commit('setSelectedObject', 0)
+        return
+      }
+      swh.sweObj2SkySource(this.$stel.core.selection).then(res => {
+        this.$store.commit('setSelectedObject', res)
+      }, err => {
+        console.log("Couldn't find info for object " + s + ':' + err)
+        this.$store.commit('setSelectedObject', 0)
+      })
+    }
+  },
+  methods: {
+    toggleExpand: function () {
+      this.isExpanded = !this.isExpanded
     },
     magnitude: function () {
       if (!this.$stel || !this.$stel.core.selection) return null
@@ -198,35 +230,6 @@ export default {
       const obj = this.$stel.core.selection
       const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
       return this.formatAz(this.$stel.anp(azalt[0])) + '&nbsp;&nbsp;' + this.formatDec(this.$stel.anpm(azalt[1]))
-    }
-  },
-  watch: {
-    selectedObject: function (s) {
-      this.wikipediaDescription = null
-      this.wikipediaUrl = null
-      if (!s) {
-        return
-      }
-      this.fetchWikipediaInfo()
-      if (this.timer) clearInterval(this.timer)
-      this.timer = setInterval(() => { this.$forceUpdate() }, 1000)
-    },
-    stelSelectionId: function (s) {
-      if (!this.$stel.core.selection) {
-        this.$store.commit('setSelectedObject', 0)
-        return
-      }
-      swh.sweObj2SkySource(this.$stel.core.selection).then(res => {
-        this.$store.commit('setSelectedObject', res)
-      }, err => {
-        console.log("Couldn't find info for object " + s + ':' + err)
-        this.$store.commit('setSelectedObject', 0)
-      })
-    }
-  },
-  methods: {
-    toggleExpand: function () {
-      this.isExpanded = !this.isExpanded
     },
     // Pointer Gestures
     handlePointerStart: function (e) {
@@ -290,6 +293,16 @@ export default {
   },
   mounted: function () {
     window.addEventListener('pointerup', () => this.stopZoom())
+    // Start update timer if object is already selected on mount
+    if (this.selectedObject) {
+      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+    }
+  },
+  beforeDestroy: function () {
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
   }
 }
 </script>
