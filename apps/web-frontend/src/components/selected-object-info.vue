@@ -10,9 +10,10 @@
   <div v-if="selectedObject"
        class="stel-bottom-sheet"
        :class="{ 'is-expanded': isExpanded }"
-       @touchstart="handleTouchStart"
-       @touchmove="handleTouchMove"
-       @touchend="handleTouchEnd">
+       @pointerdown="handlePointerStart"
+       @pointermove="handlePointerMove"
+       @pointerup="handlePointerEnd"
+       @pointercancel="handlePointerEnd">
 
     <!-- Top Pull Bar / Drag Handle -->
     <div class="drag-handle-container">
@@ -51,11 +52,11 @@
           <!-- Zoom Controls (Shows only when centered) -->
           <div v-else class="zoom-controls-wrapper">
             <div class="zoom-controls">
-              <button class="icon-btn" @mousedown.stop="zoomOutButtonClicked" @touchstart.stop="zoomOutButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+              <button class="icon-btn" @pointerdown.stop="zoomOutButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
               <span class="zoom-label">Zoom</span>
-              <button class="icon-btn" @mousedown.stop="zoomInButtonClicked" @touchstart.stop="zoomInButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+              <button class="icon-btn" @pointerdown.stop="zoomInButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
             </div>
@@ -227,17 +228,17 @@ export default {
     toggleExpand: function () {
       this.isExpanded = !this.isExpanded
     },
-    // Touch Gestures
-    handleTouchStart: function (e) {
-      this.touchStartY = e.touches[0].clientY
+    // Pointer Gestures
+    handlePointerStart: function (e) {
+      this.touchStartY = e.clientY
     },
-    handleTouchMove: function (e) {
+    handlePointerMove: function (e) {
       // Avoid browser scrolling while swiping panel
       if (this.isExpanded && this.$el.querySelector('.sheet-scroll-container').scrollTop > 0) {}
       // Optional: Visual dragging feedback could be added here
     },
-    handleTouchEnd: function (e) {
-      const touchEndY = e.changedTouches[0].clientY
+    handlePointerEnd: function (e) {
+      const touchEndY = e.clientY
       const deltaY = this.touchStartY - touchEndY
 
       if (deltaY > this.swipeThreshold && !this.isExpanded) {
@@ -288,8 +289,7 @@ export default {
     }
   },
   mounted: function () {
-    window.addEventListener('mouseup', () => this.stopZoom())
-    window.addEventListener('touchend', () => this.stopZoom())
+    window.addEventListener('pointerup', () => this.stopZoom())
   }
 }
 </script>

@@ -33,28 +33,79 @@ static void screen_to_mount(
     convert_frame(obs, FRAME_VIEW, FRAME_MOUNT, true, pos, p);
 }
 
+// static int on_pan(const gesture_t *gest, void *user)
+// {
+//     double sal, saz, dal, daz;
+//     double pos[3];
+//     static double start_pos[3];
+//     projection_t proj;
+
+//     core_get_proj(&proj);
+//     screen_to_mount(core->observer, &proj, gest->pos, pos);
+//     if (gest->state == GESTURE_BEGIN)
+//         vec3_copy(pos, start_pos);
+
+//     vec3_to_sphe(start_pos, &saz, &sal);
+//     vec3_to_sphe(pos, &daz, &dal);
+//     core->observer->yaw += (saz - daz);
+//     core->observer->pitch += (sal - dal);
+//     core->observer->pitch = clamp(core->observer->pitch, -M_PI / 2, +M_PI / 2);
+
+//     obj_set_attr(&core->obj, "lock", NULL);
+//     observer_update(core->observer, true);
+//     // Notify the changes.
+//     module_changed(&core->observer->obj, "pitch");
+//     module_changed(&core->observer->obj, "yaw");
+//     return 0;
+// }
 
 static int on_pan(const gesture_t *gest, void *user)
 {
-    double sal, saz, dal, daz;
-    double pos[3];
-    static double start_pos[3];
-    projection_t proj;
+    static double start_pitch = 0.0;
+    static double start_yaw   = 0.0;
+    static double start_x     = 0.0;
+    static double start_y     = 0.0;
 
-    core_get_proj(&proj);
-    screen_to_mount(core->observer, &proj, gest->pos, pos);
-    if (gest->state == GESTURE_BEGIN)
-        vec3_copy(pos, start_pos);
+    double sens_mul = 1.0;
+    bool invert_y = false;
 
-    vec3_to_sphe(start_pos, &saz, &sal);
-    vec3_to_sphe(pos, &daz, &dal);
-    core->observer->yaw += (saz - daz);
-    core->observer->pitch += (sal - dal);
-    core->observer->pitch = clamp(core->observer->pitch, -M_PI / 2, +M_PI / 2);
+    // Base sensitivity (radians per pixel)
+    const double BASE_SENS = 0.002;
+
+    // Read frontend-configurable parameters (if present)
+
+    // Note to self:
+    // var app = document.getElementById('app').__vue__
+    // app.$stel.setValue('touch_pan_invert_y', true)
+    obj_get_attr(&core->obj, "touch_pan_sensitivity", &sens_mul);
+    obj_get_attr(&core->obj, "touch_pan_invert_y", &invert_y);
+
+    double sens = BASE_SENS * sens_mul;
+
+    if (gest->state == GESTURE_BEGIN) {
+        start_pitch = core->observer->pitch;
+        start_yaw   = core->observer->yaw;
+        start_x     = gest->pos[0];
+        start_y     = gest->pos[1];
+        return 0;
+    }
+
+    double dx = gest->pos[0] - start_x;
+    double dy = gest->pos[1] - start_y;
+
+    core->observer->yaw = start_yaw - dx * sens;
+
+    if (invert_y)
+        core->observer->pitch = start_pitch + dy * sens;
+    else
+        core->observer->pitch = start_pitch - dy * sens;
+
+    core->observer->pitch =
+        clamp(core->observer->pitch, -M_PI / 2, +M_PI / 2);
 
     obj_set_attr(&core->obj, "lock", NULL);
     observer_update(core->observer, true);
-    // Notify the changes.
+
     module_changed(&core->observer->obj, "pitch");
     module_changed(&core->observer->obj, "yaw");
     return 0;
