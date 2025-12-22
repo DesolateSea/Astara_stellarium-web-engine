@@ -10,9 +10,10 @@
   <div v-if="selectedObject"
        class="stel-bottom-sheet"
        :class="{ 'is-expanded': isExpanded }"
-       @touchstart="handleTouchStart"
-       @touchmove="handleTouchMove"
-       @touchend="handleTouchEnd">
+       @pointerdown="handlePointerStart"
+       @pointermove="handlePointerMove"
+       @pointerup="handlePointerEnd"
+       @pointercancel="handlePointerEnd">
 
     <!-- Top Pull Bar / Drag Handle -->
     <div class="drag-handle-container">
@@ -51,11 +52,11 @@
           <!-- Zoom Controls (Shows only when centered) -->
           <div v-else class="zoom-controls-wrapper">
             <div class="zoom-controls">
-              <button class="icon-btn" @mousedown.stop="zoomOutButtonClicked" @touchstart.stop="zoomOutButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+              <button class="icon-btn" @pointerdown.stop="zoomOutButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
               <span class="zoom-label">Zoom</span>
-              <button class="icon-btn" @mousedown.stop="zoomInButtonClicked" @touchstart.stop="zoomInButtonClicked" @mouseup.stop="stopZoom" @touchend.stop="stopZoom">
+              <button class="icon-btn" @pointerdown.stop="zoomInButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
             </div>
@@ -81,21 +82,21 @@
                 </div>
               </div>
             </div>
-            <div v-if="magnitude" class="data-row">
+            <div v-if="magnitude()" class="data-row">
               <span class="data-label">Magnitude</span>
-              <span class="data-value">{{ magnitude }}</span>
+              <span class="data-value">{{ magnitude() }}</span>
             </div>
-            <div v-if="distance" class="data-row">
+            <div v-if="distance()" class="data-row">
               <span class="data-label">Distance</span>
-              <span class="data-value" v-html="distance"></span>
+              <span class="data-value" v-html="distance()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">RA/Dec</span>
-              <span class="data-value mono" v-html="radecFormatted"></span>
+              <span class="data-value mono" v-html="radecFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">Az/Alt</span>
-              <span class="data-value mono" v-html="azaltFormatted"></span>
+              <span class="data-value mono" v-html="azaltFormatted()"></span>
             </div>
           </div>
 
@@ -167,6 +168,38 @@ export default {
     constellation: function () {
       if (!this.selectedObject || !this.selectedObject.model_data) return null
       return this.selectedObject.model_data.constellation || (this.selectedObject.types.includes('Con') ? this.title : null)
+    }
+  },
+  watch: {
+    selectedObject: function (s) {
+      this.wikipediaDescription = null
+      this.wikipediaUrl = null
+      if (this.timer) {
+        clearInterval(this.timer)
+        this.timer = null
+      }
+      if (!s) {
+        return
+      }
+      this.fetchWikipediaInfo()
+      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+    },
+    stelSelectionId: function (s) {
+      if (!this.$stel.core.selection) {
+        this.$store.commit('setSelectedObject', 0)
+        return
+      }
+      swh.sweObj2SkySource(this.$stel.core.selection).then(res => {
+        this.$store.commit('setSelectedObject', res)
+      }, err => {
+        console.log("Couldn't find info for object " + s + ':' + err)
+        this.$store.commit('setSelectedObject', 0)
+      })
+    }
+  },
+  methods: {
+    toggleExpand: function () {
+      this.isExpanded = !this.isExpanded
     },
     magnitude: function () {
       if (!this.$stel || !this.$stel.core.selection) return null
@@ -197,47 +230,18 @@ export default {
       const obj = this.$stel.core.selection
       const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
       return this.formatAz(this.$stel.anp(azalt[0])) + '&nbsp;&nbsp;' + this.formatDec(this.$stel.anpm(azalt[1]))
-    }
-  },
-  watch: {
-    selectedObject: function (s) {
-      this.wikipediaDescription = null
-      this.wikipediaUrl = null
-      if (!s) {
-        return
-      }
-      this.fetchWikipediaInfo()
-      if (this.timer) clearInterval(this.timer)
-      this.timer = setInterval(() => { this.$forceUpdate() }, 1000)
     },
-    stelSelectionId: function (s) {
-      if (!this.$stel.core.selection) {
-        this.$store.commit('setSelectedObject', 0)
-        return
-      }
-      swh.sweObj2SkySource(this.$stel.core.selection).then(res => {
-        this.$store.commit('setSelectedObject', res)
-      }, err => {
-        console.log("Couldn't find info for object " + s + ':' + err)
-        this.$store.commit('setSelectedObject', 0)
-      })
-    }
-  },
-  methods: {
-    toggleExpand: function () {
-      this.isExpanded = !this.isExpanded
+    // Pointer Gestures
+    handlePointerStart: function (e) {
+      this.touchStartY = e.clientY
     },
-    // Touch Gestures
-    handleTouchStart: function (e) {
-      this.touchStartY = e.touches[0].clientY
-    },
-    handleTouchMove: function (e) {
+    handlePointerMove: function (e) {
       // Avoid browser scrolling while swiping panel
       if (this.isExpanded && this.$el.querySelector('.sheet-scroll-container').scrollTop > 0) {}
       // Optional: Visual dragging feedback could be added here
     },
-    handleTouchEnd: function (e) {
-      const touchEndY = e.changedTouches[0].clientY
+    handlePointerEnd: function (e) {
+      const touchEndY = e.clientY
       const deltaY = this.touchStartY - touchEndY
 
       if (deltaY > this.swipeThreshold && !this.isExpanded) {
@@ -263,16 +267,9 @@ export default {
       return r.sign + '<span>' + this.formatInt(r.degrees, 2) + '</span>° <span>' + this.formatInt(r.arcminutes, 2) + '</span>\' <span>' + this.formatInt(r.arcseconds, 2) + '.' + r.fraction + '</span>"'
     },
     fetchWikipediaInfo: function () {
-      if (!this.selectedObject) return
-      swh.getSkySourceSummaryFromWikipedia(this.selectedObject).then(res => {
-        const pages = res.query.pages
-        const id = Object.keys(pages)[0]
-        if (id !== '-1' && pages[id].extract) {
-          const text = pages[id].extract.replace(/<[^>]*>/g, '')
-          this.wikipediaDescription = text
-          this.wikipediaUrl = 'https://en.wikipedia.org/wiki/' + pages[id].title.replace(/ /g, '_')
-        }
-      }).catch(() => {})
+      // Disabled for offline/secure deployment - no external API calls
+      this.wikipediaDescription = null
+      this.wikipediaUrl = null
     },
     unselect: function () {
       this.$stel.core.selection = 0
@@ -295,8 +292,17 @@ export default {
     }
   },
   mounted: function () {
-    window.addEventListener('mouseup', () => this.stopZoom())
-    window.addEventListener('touchend', () => this.stopZoom())
+    window.addEventListener('pointerup', () => this.stopZoom())
+    // Start update timer if object is already selected on mount
+    if (this.selectedObject) {
+      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+    }
+  },
+  beforeDestroy: function () {
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
   }
 }
 </script>

@@ -345,9 +345,15 @@ export default {
 
             // Allow to specify a custom path for sky culture data
             if (that.$route.query.sc) {
-              const key = that.$route.query.sc.substring(that.$route.query.sc.lastIndexOf('/') + 1)
-              core.skycultures.addDataSource({ url: that.$route.query.sc, key: key })
-              core.skycultures.current_id = key
+              const culture = that.$route.query.sc
+              // Sanitize: Allow only alphanumeric keys, no paths/URLs
+              if (/^[a-zA-Z0-9_-]+$/.test(culture)) {
+                core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/' + culture, key: culture })
+                core.skycultures.current_id = culture
+              } else {
+                console.warn('Invalid sky culture key provided:', culture)
+                core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
+              }
             } else {
               core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
             }
@@ -358,7 +364,13 @@ export default {
             core.minor_planets.addDataSource({ url: dataBaseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'moon' })
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/sun', key: 'sun' })
-            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'default' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/mercury', key: 'mercury' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/venus', key: 'venus' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/mars', key: 'mars' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/jupiter', key: 'jupiter' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/saturn', key: 'saturn' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/uranus', key: 'uranus' })
+            core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/neptune', key: 'neptune' })
             core.comets.addDataSource({ url: dataBaseUrl + 'skydata/CometEls.txt', key: 'mpc_comets' })
             core.satellites.addDataSource({ url: dataBaseUrl + 'skydata/tle_satellite.dat', key: 'jsonl/sat' })
           }

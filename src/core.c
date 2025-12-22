@@ -191,6 +191,15 @@ static void core_set_default(void)
 
     core->time_animation.dst_utc = NAN;
 
+    // Custom panning controls
+    core->touch_pan_sensitivity = 1.0;
+    core->touch_pan_invert_y = false;
+
+    // Custom fov limit
+    core->fov_use_limit = false;
+    core->fov_lower_limit = 0;
+    core->fov_upper_limit = 0;
+
     observer_update(core->observer, false);
 }
 
@@ -1046,6 +1055,10 @@ static obj_klass_t core_klass = {
                  MEMBER(core_t, time_animation.dst_utc)),
         PROPERTY(time_speed, TYPE_FLOAT, MEMBER(core_t, time_speed)),
         PROPERTY(y_offset, TYPE_FLOAT, MEMBER(core_t, y_offset)),
+        PROPERTY(touch_pan_sensitivity, TYPE_FLOAT,
+                 MEMBER(core_t, touch_pan_sensitivity)),
+        PROPERTY(touch_pan_invert_y, TYPE_BOOL,
+                 MEMBER(core_t, touch_pan_invert_y)),
         {}
     }
 };

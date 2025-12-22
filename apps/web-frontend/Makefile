@@ -9,13 +9,13 @@
 .PHONY: setup build dev start
 
 gen-es6:
-	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app" swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6"
+	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app:Z" swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6"
 
 gen-es6-debug:
-	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app" swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6-debug"
+	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app:Z" swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6-debug"
 
 gen-es6-prof:
-	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app"  swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6-prof"
+	cd ../.. && docker run -it -p 8000:8000 -v "$(PWD)/../..:/app:Z"  swe-dev /bin/bash -c "source /emsdk/emsdk_env.sh && make js-es6-prof"
 
 update-engine:
 	make gen-es6
@@ -30,7 +30,7 @@ update-engine-debug:
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
 
-DOCKER_MOUNTS := -v "$(PWD):/app" -v "$(PWD)/public/skydata:/skydata" $(EXTRA_DOCKER_MOUNTS)
+DOCKER_MOUNTS := -v "$(PWD):/app:Z" -v "$(PWD)/public/skydata:/skydata:Z" $(EXTRA_DOCKER_MOUNTS)
 
 setup: Dockerfile Dockerfile.jsbuild
 	# Build docker image for compilation with emscripten
@@ -54,3 +54,19 @@ start:
 
 i18n:
 	python3 ./tools/update-i18n-en.py
+
+android:
+	npx cap add android
+
+sync-android:
+	npx cap sync android
+
+build-apk:
+	cd android && ./gradlew assembleDebug
+
+open-android:
+	npx cap open android
+
+install-apk:
+	adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+

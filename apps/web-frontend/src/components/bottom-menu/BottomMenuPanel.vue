@@ -12,12 +12,10 @@
       <!-- Grids & Lines: Click toggles, Long press opens submenu -->
       <div class="menu-item"
            @click="toggleGridsLines"
-           @touchstart="startLongPress('grids-lines')"
-           @touchend="cancelLongPress"
-           @touchcancel="cancelLongPress"
-           @mousedown="startLongPress('grids-lines')"
-           @mouseup="cancelLongPress"
-           @mouseleave="cancelLongPress">
+           @pointerdown="startLongPress('grids-lines')"
+           @pointerup="cancelLongPress"
+           @pointercancel="cancelLongPress"
+           @pointerleave="cancelLongPress">
         <div class="menu-icon" :class="{ active: gridsLinesActive }">
           <v-icon large>mdi-grid</v-icon>
         </div>
@@ -27,12 +25,10 @@
       <!-- Constellations: Click toggles, Long press opens submenu -->
       <div class="menu-item"
            @click="toggleConstellations"
-           @touchstart="startLongPress('constellations')"
-           @touchend="cancelLongPress"
-           @touchcancel="cancelLongPress"
-           @mousedown="startLongPress('constellations')"
-           @mouseup="cancelLongPress"
-           @mouseleave="cancelLongPress">
+           @pointerdown="startLongPress('constellations')"
+           @pointerup="cancelLongPress"
+           @pointercancel="cancelLongPress"
+           @pointerleave="cancelLongPress">
         <div class="menu-icon" :class="{ active: constellationsActive }">
           <v-icon large>mdi-creation</v-icon>
         </div>
@@ -50,12 +46,10 @@
       <!-- Atmosphere: Click toggles, Long press opens submenu -->
       <div class="menu-item"
            @click="toggleAtmosphere"
-           @touchstart="startLongPress('atmosphere')"
-           @touchend="cancelLongPress"
-           @touchcancel="cancelLongPress"
-           @mousedown="startLongPress('atmosphere')"
-           @mouseup="cancelLongPress"
-           @mouseleave="cancelLongPress">
+           @pointerdown="startLongPress('atmosphere')"
+           @pointerup="cancelLongPress"
+           @pointercancel="cancelLongPress"
+           @pointerleave="cancelLongPress">
         <div class="menu-icon" :class="{ active: atmosphereVisible }">
           <v-icon large>mdi-weather-partly-cloudy</v-icon>
         </div>
@@ -65,12 +59,10 @@
       <!-- Labels: Click toggles, Long press opens submenu -->
       <div class="menu-item"
            @click="toggleLabels"
-           @touchstart="startLongPress('labels')"
-           @touchend="cancelLongPress"
-           @touchcancel="cancelLongPress"
-           @mousedown="startLongPress('labels')"
-           @mouseup="cancelLongPress"
-           @mouseleave="cancelLongPress">
+           @pointerdown="startLongPress('labels')"
+           @pointerup="cancelLongPress"
+           @pointercancel="cancelLongPress"
+           @pointerleave="cancelLongPress">
         <div class="menu-icon" :class="{ active: labelsActive }">
           <v-icon large>mdi-label</v-icon>
         </div>
