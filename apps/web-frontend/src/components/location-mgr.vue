@@ -76,8 +76,6 @@
 <script>
 import swh from '@/assets/sw_helpers.js'
 import { LMap, LTileLayer, LMarker, LCircle, LTooltip, LControlZoom } from 'vue2-leaflet'
-import { L } from 'leaflet-control-geocoder/dist/Control.Geocoder.js'
-
 export default {
   data: function () {
     return {
