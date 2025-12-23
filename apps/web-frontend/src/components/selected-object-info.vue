@@ -25,7 +25,7 @@
       <div class="minimized-header">
         <div class="obj-identity">
           <div class="obj-icon-container" @click="isExpanded = true">
-            <div class="obj-type-dot"></div>
+            <img :src="icon" class="obj-type-icon" :alt="type"/>
           </div>
           <div class="obj-title-group" @click="isExpanded = true">
             <h1 class="obj-name">{{ title }}</h1>
@@ -73,47 +73,69 @@
           <!-- Data Table -->
           <div class="data-table">
             <div v-if="constellation" class="data-row">
-              <span class="data-label">Constellation</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-star-cluster</v-icon>Constellation
+              </span>
               <span class="data-value">{{ constellation }}</span>
             </div>
             <div v-if="magnitude()" class="data-row">
-              <span class="data-label">Magnitude</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-brightness-5</v-icon>Magnitude
+              </span>
               <span class="data-value">{{ magnitude() }}</span>
             </div>
             <div v-if="distance()" class="data-row">
-              <span class="data-label">Distance</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-ruler</v-icon>Distance
+              </span>
               <span class="data-value" v-html="distance()"></span>
             </div>
             <div v-if="phase()" class="data-row">
-              <span class="data-label">Phase</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-moon-waning-crescent</v-icon>Phase
+              </span>
               <span class="data-value">{{ phase() }}</span>
             </div>
             <div v-if="angularSize()" class="data-row">
-              <span class="data-label">Angular Size</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-unfold-more-horizontal</v-icon>Angular Size
+              </span>
               <span class="data-value">{{ angularSize() }}</span>
             </div>
             <div v-if="spectralType()" class="data-row">
-              <span class="data-label">Spectral Type</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-palette-swatch-outline</v-icon>Spectral Type
+              </span>
               <span class="data-value">{{ spectralType() }}</span>
             </div>
             <div class="data-row">
-              <span class="data-label">RA/Dec (J2000)</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-grid</v-icon>RA/Dec (J2000)
+              </span>
               <span class="data-value mono" v-html="radecFormatted()"></span>
             </div>
             <div class="data-row">
-              <span class="data-label">Az/Alt</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-compass-outline</v-icon>Az/Alt
+              </span>
               <span class="data-value mono" v-html="azaltFormatted()"></span>
             </div>
             <div class="data-row">
-              <span class="data-label">Visibility</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-eye-outline</v-icon>Visibility
+              </span>
               <span class="data-value" :class="visibilityClass()">{{ visibility() }}</span>
             </div>
             <div v-if="riseSetTimes()" class="data-row">
-              <span class="data-label">Rise / Set</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-weather-sunset</v-icon>Rise / Set
+              </span>
               <span class="data-value">{{ riseSetTimes() }}</span>
             </div>
             <div v-if="allNames().length > 1" class="data-row names-row">
-              <span class="data-label">Other Names</span>
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-tag-text-outline</v-icon>Other Names
+              </span>
               <span class="data-value names-list">{{ allNames().slice(1).join(', ') }}</span>
             </div>
           </div>
@@ -500,12 +522,10 @@ export default {
   cursor: pointer;
 }
 
-.obj-type-dot {
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+.obj-type-icon {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 
 .obj-name {
