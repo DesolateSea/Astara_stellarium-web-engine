@@ -158,37 +158,37 @@
         </div>
 
         <v-list dense class="settings-list">
-          <v-list-item>
-            <v-list-item-content>
-              <v-list-item-title>Time at startup</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-select
-                v-model="startupTime"
-                :items="startupTimeOptions"
-                dense
-                hide-details
-                class="startup-select"
-              ></v-select>
-            </v-list-item-action>
+          <v-list-item @click="currentView = 'grids-lines'">
+            <v-list-item-content><v-list-item-title>Grids & Lines</v-list-item-title></v-list-item-content>
+            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
           </v-list-item>
-
-          <v-list-item>
-            <v-list-item-content>
-              <v-list-item-title>Limit Magnitude</v-list-item-title>
-              <v-list-item-subtitle>{{ limitMagnitude.toFixed(1) }}</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action class="slider-action">
-              <v-slider
-                v-model="limitMagnitude"
-                :min="1"
-                :max="12"
-                :step="0.1"
-                hide-details
-              ></v-slider>
-            </v-list-item-action>
+          <v-list-item @click="currentView = 'constellations-settings'">
+            <v-list-item-content><v-list-item-title>Constellations</v-list-item-title></v-list-item-content>
+            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
+          </v-list-item>
+          <v-list-item @click="currentView = 'atmosphere-settings'">
+            <v-list-item-content><v-list-item-title>Atmosphere</v-list-item-title></v-list-item-content>
+            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
+          </v-list-item>
+          <v-list-item @click="currentView = 'labels-settings'">
+            <v-list-item-content><v-list-item-title>Labels</v-list-item-title></v-list-item-content>
+            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
           </v-list-item>
         </v-list>
+      </div>
+
+      <!-- Specific Settings Views -->
+      <div v-else-if="currentView === 'grids-lines'" class="submenu-wrapper">
+        <grids-lines-submenu in-settings @back="currentView = 'advanced'" />
+      </div>
+      <div v-else-if="currentView === 'constellations-settings'" class="submenu-wrapper">
+        <constellations-submenu in-settings @back="currentView = 'advanced'" />
+      </div>
+      <div v-else-if="currentView === 'atmosphere-settings'" class="submenu-wrapper">
+        <atmosphere-submenu in-settings @back="currentView = 'advanced'" />
+      </div>
+      <div v-else-if="currentView === 'labels-settings'" class="submenu-wrapper">
+        <labels-submenu in-settings @back="currentView = 'advanced'" />
       </div>
     </v-card>
   </v-dialog>
@@ -196,20 +196,25 @@
 
 <script>
 import CoordinateEditor from './coordinate-editor.vue'
+import GridsLinesSubmenu from './bottom-menu/GridsLinesSubmenu.vue'
+import ConstellationsSubmenu from './bottom-menu/ConstellationsSubmenu.vue'
+import AtmosphereSubmenu from './bottom-menu/AtmosphereSubmenu.vue'
+import LabelsSubmenu from './bottom-menu/LabelsSubmenu.vue'
 
 export default {
   components: {
-    CoordinateEditor
+    CoordinateEditor,
+    GridsLinesSubmenu,
+    ConstellationsSubmenu,
+    AtmosphereSubmenu,
+    LabelsSubmenu
   },
   data: function () {
     return {
       currentView: 'main',
       sensorsEnabled: false,
-      startupTime: 'At night',
-      startupTimeOptions: ['At night', 'Current time', 'Last used'],
       customLat: 0,
       customLng: 0,
-      limitMagnitude: 9.0,
       editCoordType: 'latitude'
     }
   },
@@ -262,11 +267,6 @@ export default {
       if (!val) {
         this.currentView = 'main'
       }
-    },
-    limitMagnitude: function (val) {
-      if (this.$stel && this.$stel.core) {
-        this.$stel.core.star_linear_scale = val
-      }
     }
   },
   methods: {
@@ -313,11 +313,34 @@ export default {
     },
     resetSettings: function () {
       this.sensorsEnabled = false
-      this.startupTime = 'At night'
-      if (this.$stel && this.$stel.core && this.$stel.core.stars) {
-        this.$stel.core.stars.hints_mag_offset = 2.0
+      if (this.$stel && this.$stel.core) {
+        // Reset labels
+        if (this.$stel.core.stars) this.$stel.core.stars.hints_mag_offset = 2.0
+        if (this.$stel.core.planets) this.$stel.core.planets.hints_mag_offset = 2.0
+        if (this.$stel.core.dsos) this.$stel.core.dsos.hints_mag_offset = 2.0
+        if (this.$stel.core.satellites) this.$stel.core.satellites.hints_mag_offset = 2.0
+
+        // Reset display flags
+        if (this.$stel.core.atmosphere) this.$stel.core.atmosphere.visible = true
+        if (this.$stel.core.landscapes) this.$stel.core.landscapes.visible = true
+        if (this.$stel.core.constellations) {
+          this.$stel.core.constellations.lines_visible = true
+          this.$stel.core.constellations.labels_visible = true
+          this.$stel.core.constellations.images_visible = false
+          this.$stel.core.constellations.bounds_visible = false
+        }
+        if (this.$stel.core.lines) {
+          this.$stel.core.lines.ecliptic.visible = false
+          this.$stel.core.lines.azimuthal.visible = false
+        }
+        this.$stel.core.bortle_index = 3
       }
       this.$store.commit('setUseAutoLocation', true)
+      this.$store.commit('setValue', { varName: 'nightmode', newValue: false })
+      if (window.navigator.userAgent.indexOf('Edge') > -1) {
+        document.getElementById('nightmode').style.opacity = '0'
+      }
+      document.getElementById('nightmode').style.visibility = 'hidden'
     }
   }
 }
@@ -378,6 +401,10 @@ export default {
 .coord-input >>> input {
   text-align: right;
   color: white !important;
+}
+
+.submenu-wrapper {
+  padding: 16px;
 }
 </style>
 

@@ -9,26 +9,16 @@
 <template>
   <div class="bottom-menu-panel">
     <div class="menu-grid">
-      <!-- Grids & Lines: Click toggles, Long press opens submenu -->
       <div class="menu-item"
-           @click="toggleGridsLines"
-           @pointerdown="startLongPress('grids-lines')"
-           @pointerup="cancelLongPress"
-           @pointercancel="cancelLongPress"
-           @pointerleave="cancelLongPress">
+           @click="toggleGridsLines">
         <div class="menu-icon" :class="{ active: gridsLinesActive }">
           <v-icon large>mdi-grid</v-icon>
         </div>
         <div class="menu-label">Grids & Lines</div>
       </div>
 
-      <!-- Constellations: Click toggles, Long press opens submenu -->
       <div class="menu-item"
-           @click="toggleConstellations"
-           @pointerdown="startLongPress('constellations')"
-           @pointerup="cancelLongPress"
-           @pointercancel="cancelLongPress"
-           @pointerleave="cancelLongPress">
+           @click="toggleConstellations">
         <div class="menu-icon" :class="{ active: constellationsActive }">
           <v-icon large>mdi-creation</v-icon>
         </div>
@@ -43,28 +33,18 @@
         <div class="menu-label">Landscape</div>
       </div>
 
-      <!-- Atmosphere: Click toggles, Long press opens submenu -->
       <div class="menu-item"
-           @click="toggleAtmosphere"
-           @pointerdown="startLongPress('atmosphere')"
-           @pointerup="cancelLongPress"
-           @pointercancel="cancelLongPress"
-           @pointerleave="cancelLongPress">
+           @click="toggleAtmosphere">
         <div class="menu-icon" :class="{ active: atmosphereVisible }">
           <v-icon large>mdi-weather-partly-cloudy</v-icon>
         </div>
         <div class="menu-label">Atmosphere</div>
       </div>
 
-      <!-- Labels: Click toggles, Long press opens submenu -->
       <div class="menu-item"
-           @click="toggleLabels"
-           @pointerdown="startLongPress('labels')"
-           @pointerup="cancelLongPress"
-           @pointercancel="cancelLongPress"
-           @pointerleave="cancelLongPress">
+           @click="toggleLabels">
         <div class="menu-icon" :class="{ active: labelsActive }">
-          <v-icon large>mdi-label</v-icon>
+          <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-outline' }}</v-icon>
         </div>
         <div class="menu-label">Labels</div>
       </div>
@@ -84,11 +64,7 @@
 export default {
   name: 'BottomMenuPanel',
   data () {
-    return {
-      longPressTimer: null,
-      longPressTriggered: false,
-      longPressDuration: 500 // milliseconds
-    }
+    return {}
   },
   computed: {
     gridsLinesActive () {
@@ -109,29 +85,16 @@ export default {
     labelsActive () {
       const stel = this.$store.state.stel
       // Use hints_visible to check if labels are shown (not object visibility)
-      return (stel?.stars?.hints_visible || stel?.planets?.hints_visible || stel?.dsos?.hints_visible) || false
+      return (stel?.stars?.hints_visible || stel?.planets?.hints_visible ||
+              stel?.dsos?.hints_visible || stel?.satellites?.hints_visible) || false
     },
     nightModeActive () {
       return this.$store.state.nightmode || false
     }
   },
   methods: {
-    startLongPress (submenu) {
-      this.longPressTriggered = false
-      this.longPressTimer = setTimeout(() => {
-        this.longPressTriggered = true
-        this.$emit('open-submenu', submenu)
-      }, this.longPressDuration)
-    },
-    cancelLongPress () {
-      if (this.longPressTimer) {
-        clearTimeout(this.longPressTimer)
-        this.longPressTimer = null
-      }
-    },
     // Toggle Grids & Lines (ecliptic + azimuthal)
     toggleGridsLines () {
-      if (this.longPressTriggered) return
       const newVal = !this.gridsLinesActive
       if (this.$stel && this.$stel.core) {
         this.$stel.core.lines.ecliptic.visible = newVal
@@ -140,7 +103,6 @@ export default {
     },
     // Toggle Constellations (lines, labels, drawings, centered only)
     toggleConstellations () {
-      if (this.longPressTriggered) return
       const newVal = !this.constellationsActive
       if (this.$stel && this.$stel.core) {
         this.$stel.core.constellations.lines_visible = newVal
@@ -157,7 +119,6 @@ export default {
     },
     // Toggle Atmosphere
     toggleAtmosphere () {
-      if (this.longPressTriggered) return
       const newVal = !this.atmosphereVisible
       if (this.$stel && this.$stel.core) {
         this.$stel.core.atmosphere.visible = newVal
@@ -165,12 +126,12 @@ export default {
     },
     // Toggle Labels (hints_visible for stars, planets, dsos - NOT visibility to keep Sun visible)
     toggleLabels () {
-      if (this.longPressTriggered) return
       const newVal = !this.labelsActive
       if (this.$stel && this.$stel.core) {
-        this.$stel.core.stars.hints_visible = newVal
-        this.$stel.core.planets.hints_visible = newVal
-        this.$stel.core.dsos.hints_visible = newVal
+        if (this.$stel.core.stars) this.$stel.core.stars.hints_visible = newVal
+        if (this.$stel.core.planets) this.$stel.core.planets.hints_visible = newVal
+        if (this.$stel.core.dsos) this.$stel.core.dsos.hints_visible = newVal
+        if (this.$stel.core.satellites) this.$stel.core.satellites.hints_visible = newVal
       }
     },
     // Toggle Night Mode
@@ -182,9 +143,6 @@ export default {
       }
       document.getElementById('nightmode').style.visibility = b ? 'visible' : 'hidden'
     }
-  },
-  beforeDestroy () {
-    this.cancelLongPress()
   }
 }
 </script>

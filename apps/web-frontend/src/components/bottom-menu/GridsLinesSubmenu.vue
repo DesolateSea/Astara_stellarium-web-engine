@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <bottom-menu-submenu title="Grids & Lines" subtitle="Grids & Lines" @back="$emit('back')">
+  <bottom-menu-submenu title="Grids & Lines" subtitle="Grids & Lines" :in-settings="inSettings" @back="$emit('back')">
     <div class="grids-lines-content">
       <div class="column">
         <div class="column-title">Lines</div>
@@ -50,6 +50,12 @@ import BottomMenuSubmenu from './BottomMenuSubmenu.vue'
 export default {
   name: 'GridsLinesSubmenu',
   components: { BottomMenuSubmenu },
+  props: {
+    inSettings: {
+      type: Boolean,
+      default: false
+    }
+  },
   computed: {
     eclipticVisible: {
       get () { return this.$store.state.stel?.lines?.ecliptic?.visible || false },

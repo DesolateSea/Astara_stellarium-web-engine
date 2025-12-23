@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <div class="bottom-menu-submenu">
+  <div class="bottom-menu-submenu" :class="{ 'in-settings': inSettings }">
     <div class="submenu-header">
       <v-btn icon @click="$emit('back')" class="back-btn">
         <v-icon>mdi-arrow-left</v-icon>
@@ -34,6 +34,10 @@ export default {
     subtitle: {
       type: String,
       default: ''
+    },
+    inSettings: {
+      type: Boolean,
+      default: false
     }
   }
 }
@@ -46,6 +50,12 @@ export default {
   padding: 16px;
   width: 100%;
   max-width: 400px;
+}
+
+.bottom-menu-submenu.in-settings {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 .submenu-header {

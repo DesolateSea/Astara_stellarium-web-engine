@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <bottom-menu-submenu title="Constellations" subtitle="Constellations" @back="$emit('back')">
+  <bottom-menu-submenu title="Constellations" subtitle="Constellations" :in-settings="inSettings" @back="$emit('back')">
     <div class="constellations-content">
       <div class="toggle-grid">
         <div class="toggle-row">
@@ -41,6 +41,12 @@ import BottomMenuSubmenu from './BottomMenuSubmenu.vue'
 export default {
   name: 'ConstellationsSubmenu',
   components: { BottomMenuSubmenu },
+  props: {
+    inSettings: {
+      type: Boolean,
+      default: false
+    }
+  },
   computed: {
     linesVisible: {
       get () { return this.$store.state.stel?.constellations?.lines_visible || false },

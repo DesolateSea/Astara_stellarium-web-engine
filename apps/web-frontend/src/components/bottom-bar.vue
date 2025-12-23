@@ -38,29 +38,9 @@
       </div>
     </div>
 
-    <!-- Floating menu panel -->
     <transition name="slide-up">
       <div class="menu-overlay" v-if="showMenuPanel" @click.self="closeMenu">
-        <bottom-menu-panel
-          v-if="currentSubmenu === null"
-          @open-submenu="openSubmenu"
-        />
-        <grids-lines-submenu
-          v-else-if="currentSubmenu === 'grids-lines'"
-          @back="currentSubmenu = null"
-        />
-        <constellations-submenu
-          v-else-if="currentSubmenu === 'constellations'"
-          @back="currentSubmenu = null"
-        />
-        <atmosphere-submenu
-          v-else-if="currentSubmenu === 'atmosphere'"
-          @back="currentSubmenu = null"
-        />
-        <labels-submenu
-          v-else-if="currentSubmenu === 'labels'"
-          @back="currentSubmenu = null"
-        />
+        <bottom-menu-panel />
       </div>
     </transition>
 
@@ -74,25 +54,16 @@
 <script>
 import DateTimePicker from '@/components/date-time-picker.vue'
 import BottomMenuPanel from '@/components/bottom-menu/BottomMenuPanel.vue'
-import GridsLinesSubmenu from '@/components/bottom-menu/GridsLinesSubmenu.vue'
-import ConstellationsSubmenu from '@/components/bottom-menu/ConstellationsSubmenu.vue'
-import AtmosphereSubmenu from '@/components/bottom-menu/AtmosphereSubmenu.vue'
-import LabelsSubmenu from '@/components/bottom-menu/LabelsSubmenu.vue'
 import Moment from 'moment'
 
 export default {
   components: {
     DateTimePicker,
-    BottomMenuPanel,
-    GridsLinesSubmenu,
-    ConstellationsSubmenu,
-    AtmosphereSubmenu,
-    LabelsSubmenu
+    BottomMenuPanel
   },
   data: function () {
     return {
       showMenuPanel: false,
-      currentSubmenu: null,
       showTimePicker: false,
       rafId: null
     }
@@ -157,16 +128,9 @@ export default {
     },
     toggleMenuPanel () {
       this.showMenuPanel = !this.showMenuPanel
-      if (!this.showMenuPanel) {
-        this.currentSubmenu = null
-      }
     },
     closeMenu () {
       this.showMenuPanel = false
-      this.currentSubmenu = null
-    },
-    openSubmenu (submenuName) {
-      this.currentSubmenu = submenuName
     },
     initCompass () {
       let latestHeading = 0

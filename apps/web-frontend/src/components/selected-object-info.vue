@@ -70,6 +70,15 @@
       <!-- Expanded Content Section -->
       <transition name="fade">
         <div v-if="isExpanded" class="expanded-body">
+          <!-- Other Names / Aliases at the top -->
+          <div v-if="allNames().length > 1" class="aliases-container">
+            <div class="aliases-scroll">
+              <span v-for="name in allNames().slice(1)" :key="name" class="alias-chip">
+                {{ name }}
+              </span>
+            </div>
+          </div>
+
           <!-- Data Table -->
           <div class="data-table">
             <div v-if="constellation" class="data-row">
@@ -84,7 +93,7 @@
               </span>
               <span class="data-value">{{ magnitude() }}</span>
             </div>
-            <div v-if="distance()" class="data-row">
+            <div v-if="distance() && !isSatellite" class="data-row">
               <span class="data-label">
                 <v-icon small class="mr-2">mdi-ruler</v-icon>Distance
               </span>
@@ -110,9 +119,15 @@
             </div>
             <div class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-grid</v-icon>RA/Dec (J2000)
+                <v-icon small class="mr-2">mdi-rhombus-split</v-icon>RA (J2000)
               </span>
-              <span class="data-value mono" v-html="radecFormatted()"></span>
+              <span class="data-value mono" v-html="raFormatted()"></span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">
+                <v-icon small class="mr-2">mdi-rhombus-split-outline</v-icon>Dec (J2000)
+              </span>
+              <span class="data-value mono" v-html="decFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">
@@ -132,12 +147,52 @@
               </span>
               <span class="data-value">{{ riseSetTimes() }}</span>
             </div>
-            <div v-if="allNames().length > 1" class="data-row names-row">
-              <span class="data-label">
-                <v-icon small class="mr-2">mdi-tag-text-outline</v-icon>Other Names
-              </span>
-              <span class="data-value names-list">{{ allNames().slice(1).join(', ') }}</span>
-            </div>
+
+            <!-- Satellite Specific Info -->
+            <template v-if="isSatellite">
+              <div v-if="nextPassCountdown" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-clock-outline</v-icon>Next Pass
+                </span>
+                <span class="data-value" :class="{ 'visible-yes': isVisibleNow }">{{ nextPassCountdown }}</span>
+              </div>
+              <div v-if="satelliteRange" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-map-marker-distance</v-icon>Range
+                </span>
+                <span class="data-value">{{ satelliteRange }} <span class="unit-dim">km</span></span>
+              </div>
+              <div v-if="satelliteError" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-alert-circle-outline</v-icon>Est. Error (~age)
+                </span>
+                <span class="data-value">{{ satelliteError }} <span class="unit-dim">km</span></span>
+              </div>
+              <div v-if="satelliteInfo.norad_number" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-numeric</v-icon>NORAD ID
+                </span>
+                <span class="data-value">{{ satelliteInfo.norad_number }}</span>
+              </div>
+              <div v-if="satelliteInfo.designation" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-identifier</v-icon>Designation
+                </span>
+                <span class="data-value">{{ satelliteInfo.designation }}</span>
+              </div>
+              <div v-if="satelliteInfo.group && satelliteInfo.group.length" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-folder-outline</v-icon>Group
+                </span>
+                <span class="data-value">{{ satelliteInfo.group.join(', ') }}</span>
+              </div>
+              <div v-if="satelliteInfo.launch_date && satelliteInfo.launch_date !== 'Unknown'" class="data-row">
+                <span class="data-label">
+                  <v-icon small class="mr-2">mdi-rocket-launch-outline</v-icon>Launch Date
+                </span>
+                <span class="data-value">{{ satelliteInfo.launch_date }}</span>
+              </div>
+            </template>
           </div>
         </div>
       </transition>
@@ -147,6 +202,7 @@
 
 <script>
 import swh from '@/assets/sw_helpers.js'
+import * as satellite from 'satellite.js'
 
 export default {
   data: function () {
@@ -156,7 +212,8 @@ export default {
       timer: null,
       // Touch state
       touchStartY: 0,
-      swipeThreshold: 50
+      swipeThreshold: 50,
+      nextPassTime: null
     }
   },
   computed: {
@@ -196,10 +253,111 @@ export default {
     constellation: function () {
       if (!this.selectedObject || !this.selectedObject.model_data) return null
       return this.selectedObject.model_data.constellation || (this.selectedObject.types.includes('Con') ? this.title : null)
+    },
+    isSatellite: function () {
+      return this.selectedObject && (this.selectedObject.model === 'tle_satellite' || this.selectedObject.types.includes('Asa'))
+    },
+    satelliteInfo: function () {
+      return this.isSatellite ? this.selectedObject.model_data : {}
+    },
+    satelliteRange: function () {
+      if (!this.isSatellite || !this.satelliteInfo.tle || this.satelliteInfo.tle.length < 2) return null
+      try {
+        const tle = this.satelliteInfo.tle
+        const satrec = satellite.twoline2satrec(tle[0], tle[1])
+        const now = new Date()
+        const positionAndVelocity = satellite.propagate(satrec, now)
+        const positionEci = positionAndVelocity.position
+
+        if (!positionEci) return null
+
+        const gmst = satellite.gstime(now)
+        const positionEcf = satellite.eciToEcf(positionEci, gmst)
+        const location = this.$store.state.currentLocation
+        const observerGd = {
+          longitude: satellite.degreesToRadians(location.lng),
+          latitude: satellite.degreesToRadians(location.lat),
+          height: (location.alt || 0) / 1000
+        }
+
+        const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf)
+        return lookAngles.rangeSat.toFixed(2)
+      } catch (e) {
+        console.error('Failed to calculate satellite range', e)
+        return null
+      }
+    },
+    satelliteError: function () {
+      if (!this.isSatellite || !this.satelliteInfo.tle || this.satelliteInfo.tle.length < 1) return null
+      try {
+        const line1 = this.satelliteInfo.tle[0]
+        // TLE Epoch is at chars 18-32 of Line 1: YYDOY.FRAC
+        const epochStr = line1.substring(18, 32).trim()
+        const yearShort = parseInt(epochStr.substring(0, 2))
+        const dayOfYear = parseFloat(epochStr.substring(2))
+
+        const year = yearShort < 57 ? 2000 + yearShort : 1900 + yearShort
+        const epochDate = new Date(year, 0)
+        epochDate.setMilliseconds((dayOfYear - 1) * 24 * 60 * 60 * 1000)
+
+        const now = new Date()
+        const ageDays = (now - epochDate) / (1000 * 60 * 60 * 24)
+
+        // Rough estimate: SGP4 TLEs drift 1-3km per day depending on altitude/drag
+        // We'll use 2km/day as a conservative average for the UI
+        const estError = Math.max(0, ageDays * 2.0)
+
+        if (estError > 100) return '>100'
+        return estError.toFixed(1)
+      } catch (e) {
+        return null
+      }
+    },
+    isVisibleNow: function () {
+      if (!this.isSatellite || !this.satelliteInfo.tle) return false
+      try {
+        const tle = this.satelliteInfo.tle
+        const satrec = satellite.twoline2satrec(tle[0], tle[1])
+        const now = new Date()
+        const positionAndVelocity = satellite.propagate(satrec, now)
+        const positionEci = positionAndVelocity.position
+        if (!positionEci) return false
+        const gmst = satellite.gstime(now)
+        const positionEcf = satellite.eciToEcf(positionEci, gmst)
+        const location = this.$store.state.currentLocation
+        const observerGd = {
+          longitude: satellite.degreesToRadians(location.lng),
+          latitude: satellite.degreesToRadians(location.lat),
+          height: (location.alt || 0) / 1000
+        }
+        const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf)
+        return lookAngles.elevation > 0
+      } catch (e) {
+        return false
+      }
+    },
+    nextPassCountdown: function () {
+      if (this.isVisibleNow) return 'VISIBLE NOW'
+      if (!this.nextPassTime) return null
+
+      const diff = this.nextPassTime.getTime() - (new Date()).getTime()
+      if (diff <= 0) {
+        // Trigger a re-calculation soon
+        return 'Starting...'
+      }
+
+      const hours = Math.floor(diff / 3600000)
+      const mins = Math.floor((diff % 3600000) / 60000)
+      const secs = Math.floor((diff % 60000) / 1000)
+
+      if (hours > 0) return hours + 'h ' + mins + 'm'
+      if (mins > 0) return mins + 'm ' + secs + 's'
+      return secs + 's'
     }
   },
   watch: {
     selectedObject: function (s) {
+      this.nextPassTime = null
       if (this.timer) {
         clearInterval(this.timer)
         this.timer = null
@@ -207,7 +365,10 @@ export default {
       if (!s) {
         return
       }
-      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+      if (this.isSatellite) {
+        this.calculateNextPass()
+      }
+      this.timer = setInterval(() => { this.$forceUpdate() }, 1000)
     },
     stelSelectionId: function (s) {
       if (!this.$stel.core.selection) {
@@ -234,21 +395,28 @@ export default {
     distance: function () {
       if (!this.$stel || !this.$stel.core.selection) return null
       const d = this.$stel.core.selection.getInfo('distance')
-      if (!d || isNaN(d)) return null
-      const ly = d * swh.astroConstants.ERFA_AULT / swh.astroConstants.ERFA_DAYSEC / swh.astroConstants.ERFA_DJY
+      if (d === undefined || isNaN(d) || d <= 0) return null
+      const ly = d * swh.ERFA_AULT / swh.ERFA_DAYSEC / swh.ERFA_DJY
       if (ly >= 0.1) return ly.toFixed(2) + ' <span class="unit-dim">ly</span>'
       if (d >= 0.1) return d.toFixed(2) + ' <span class="unit-dim">AU</span>'
-      const meter = d * swh.astroConstants.ERFA_DAU
+      const meter = d * swh.ERFA_DAU
       return meter >= 1000 ? (meter / 1000).toFixed(2) + ' <span class="unit-dim">km</span>' : meter.toFixed(2) + ' <span class="unit-dim">m</span>'
     },
-    radecFormatted: function () {
+    raFormatted: function () {
       if (!this.$stel || !this.$stel.core.selection) return ''
       const obj = this.$stel.core.selection
       const posCIRS = this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'JNOW', obj.getInfo('radec'))
       const radecCIRS = this.$stel.c2s(posCIRS)
       const ra = this.$stel.anp(radecCIRS[0])
+      return this.formatRA(ra)
+    },
+    decFormatted: function () {
+      if (!this.$stel || !this.$stel.core.selection) return ''
+      const obj = this.$stel.core.selection
+      const posCIRS = this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'JNOW', obj.getInfo('radec'))
+      const radecCIRS = this.$stel.c2s(posCIRS)
       const dec = this.$stel.anpm(radecCIRS[1])
-      return this.formatRA(ra) + '&nbsp;&nbsp;' + this.formatDec(dec)
+      return this.formatDec(dec)
     },
     azaltFormatted: function () {
       if (!this.$stel || !this.$stel.core.selection) return ''
@@ -426,13 +594,50 @@ export default {
     },
     stopZoom: function () {
       if (this.zoomTimeout) { clearTimeout(this.zoomTimeout); this.zoomTimeout = null }
+    },
+    calculateNextPass: function () {
+      if (!this.isSatellite || !this.satelliteInfo.tle || this.satelliteInfo.tle.length < 2) return
+
+      try {
+        const tle = this.satelliteInfo.tle
+        const satrec = satellite.twoline2satrec(tle[0], tle[1])
+        const location = this.$store.state.currentLocation
+        const observerGd = {
+          longitude: satellite.degreesToRadians(location.lng),
+          latitude: satellite.degreesToRadians(location.lat),
+          height: (location.alt || 0) / 1000
+        }
+
+        const now = new Date()
+        const stepMins = 2
+        const maxIter = (24 * 60) / stepMins
+
+        for (let i = 0; i < maxIter; i++) {
+          const checkTime = new Date(now.getTime() + i * stepMins * 60000)
+          const positionAndVelocity = satellite.propagate(satrec, checkTime)
+          const positionEci = positionAndVelocity.position
+          if (!positionEci) continue
+
+          const gmst = satellite.gstime(checkTime)
+          const positionEcf = satellite.eciToEcf(positionEci, gmst)
+          const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf)
+
+          if (lookAngles.elevation > satellite.degreesToRadians(5)) {
+            this.nextPassTime = checkTime
+            return
+          }
+        }
+      } catch (e) {
+        console.error('Next pass calculation failed', e)
+      }
     }
   },
   mounted: function () {
     window.addEventListener('pointerup', () => this.stopZoom())
     // Start update timer if object is already selected on mount
     if (this.selectedObject) {
-      this.timer = setInterval(() => { this.$forceUpdate() }, 100)
+      if (this.isSatellite) this.calculateNextPass()
+      this.timer = setInterval(() => { this.$forceUpdate() }, 1000)
     }
   },
   beforeDestroy: function () {
@@ -735,16 +940,34 @@ export default {
   color: rgba(255, 255, 255, 0.3);
 }
 
-/* Names List */
-.names-row {
-  flex-wrap: wrap;
+/* Names List - New Chip UI */
+.aliases-container {
+  margin: 10px 0 16px 0;
+  width: 100%;
 }
 
-.names-list {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  max-width: 60%;
-  text-align: right;
+.aliases-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.aliases-scroll::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.alias-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  backdrop-filter: blur(5px);
 }
 
 /* Units */

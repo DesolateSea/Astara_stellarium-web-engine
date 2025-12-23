@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <bottom-menu-submenu title="Atmosphere" subtitle="Atmosphere" @back="$emit('back')">
+  <bottom-menu-submenu title="Atmosphere" subtitle="Atmosphere" :in-settings="inSettings" @back="$emit('back')">
     <div class="atmosphere-content">
       <div class="slider-section">
         <div class="slider-label">Light Pollution</div>
@@ -38,6 +38,12 @@ import BottomMenuSubmenu from './BottomMenuSubmenu.vue'
 export default {
   name: 'AtmosphereSubmenu',
   components: { BottomMenuSubmenu },
+  props: {
+    inSettings: {
+      type: Boolean,
+      default: false
+    }
+  },
   computed: {
     lightPollution: {
       get () {
