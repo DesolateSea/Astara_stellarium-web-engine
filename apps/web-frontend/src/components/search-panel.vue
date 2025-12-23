@@ -109,10 +109,15 @@ export default {
         // Planet/Moon/Sun
         obj = $stel.getObj('NAME ' + name)
       } else if (source.model === 'constellation' || source.types.includes('Con')) {
-        // Constellation
-        obj = $stel.getObj('CON western ' + name)
+        // Constellation - use model_data if available
+        if (source.model_data && source.model_data.con_id) {
+          obj = $stel.getObj(source.model_data.con_id)
+        }
+        if (!obj && source.model_data && source.model_data.iau_abbreviation) {
+          obj = $stel.getObj('CON western ' + source.model_data.iau_abbreviation)
+        }
         if (!obj) {
-          obj = $stel.getObj(name)
+          obj = $stel.getObj('CON western ' + name) || $stel.getObj(name)
         }
       } else {
         // Stars and other objects

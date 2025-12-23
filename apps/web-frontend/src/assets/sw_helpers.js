@@ -290,14 +290,43 @@ const swh = {
     if (ss.model === 'tle_satellite') {
       const id = 'NORAD ' + ss.model_data.norad_number
       obj = $stel.getObj(id)
-    } else if (ss.model === 'constellation' && ss.model_data.iau_abbreviation) {
-      const id = 'CON western ' + ss.model_data.iau_abbreviation
-      obj = $stel.getObj(id)
+    } else if (ss.model === 'constellation' && ss.model_data) {
+      // Try direct con_id first, then construct from iau_abbreviation
+      if (ss.model_data.con_id) {
+        obj = $stel.getObj(ss.model_data.con_id)
+      }
+      if (!obj && ss.model_data.iau_abbreviation) {
+        const id = 'CON western ' + ss.model_data.iau_abbreviation
+        obj = $stel.getObj(id)
+      }
     }
-    if (!obj) {
-      obj = $stel.getObj(ss.names[0])
+    if (!obj && ss.names && ss.names.length) {
+      const name = ss.names[0]
+      // Try direct lookup first
+      obj = $stel.getObj(name)
+
+      // Try with '* ' prefix for Bayer/Flamsteed designations
+      if (!obj) {
+        obj = $stel.getObj('* ' + name)
+      }
+
+      // Try with 'NAME ' prefix
+      if (!obj) {
+        obj = $stel.getObj('NAME ' + name)
+      }
+
+      // Try without period (mu. CMa -> mu CMa)
+      if (!obj && name.includes('.')) {
+        const noPeriod = name.replace(/\./g, '')
+        obj = $stel.getObj('* ' + noPeriod) || $stel.getObj(noPeriod)
+      }
+
+      // If match is a different name, also try that
+      if (!obj && ss.match && ss.match !== name) {
+        obj = $stel.getObj(ss.match) || $stel.getObj('* ' + ss.match) || $stel.getObj('NAME ' + ss.match)
+      }
     }
-    if (!obj && ss.names[0].startsWith('Gaia DR2 ')) {
+    if (!obj && ss.names && ss.names[0] && ss.names[0].startsWith('Gaia DR2 ')) {
       const gname = ss.names[0].replace(/^Gaia DR2 /, 'GAIA ')
       obj = $stel.getObj(gname)
     }
@@ -327,7 +356,9 @@ const swh = {
   _lookupSkySourceLocal: function (name) {
     const $stel = Vue.prototype.$stel
     if ($stel) {
+      console.log('lookupSkySourceByName: ' + name)
       const obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
+      console.log('lookupSkySourceByName: ' + obj)
       if (obj) {
         const ss = obj.jsonData || {}
         ss.names = ss.names || obj.designations() || [name]
@@ -351,7 +382,7 @@ const swh = {
     return Promise.reject(new Error('Object not found locally: ' + name))
   },
 
-  querySkySources: function (str, limit) {
+  querySkySources: async function (str, limit) {
     if (!limit) {
       limit = 10
     }
@@ -360,133 +391,199 @@ const swh = {
       return Promise.resolve([])
     }
 
-    // Use local Stellarium engine search
-    return new Promise((resolve) => {
-      const results = []
-      const searchStr = str.toUpperCase()
+    const results = []
+    const seenNames = new Set() // Track seen names to avoid duplicates
 
-      // Try direct object lookup first
-      const directObj = $stel.getObj(str)
+    // Normalize helper: remove spaces, punctuation, uppercase, strip NAME prefix
+    const normalize = (s) => {
+      if (!s) return ''
+      // Remove spaces, periods, and common punctuation
+      let n = s.toUpperCase().replace(/[\s.,\-'"]+/g, '')
+      if (n.startsWith('NAME')) n = n.substring(4)
+      return n
+    }
+
+    const searchNorm = normalize(str)
+    if (!searchNorm) return results
+
+    // Helper to add result if not duplicate
+    const addResult = (ss) => {
+      const primaryName = ss.names && ss.names[0] ? ss.names[0] : ss.match
+      const normName = normalize(primaryName)
+      if (!seenNames.has(normName)) {
+        seenNames.add(normName)
+        results.push(ss)
+        return true
+      }
+      return false
+    }
+
+    // PRIORITY 1: Search planets first
+    const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
+    for (const planet of planets) {
+      if (results.length >= limit) break
+      if (normalize(planet).includes(searchNorm)) {
+        const obj = $stel.getObj('NAME ' + planet)
+        if (obj) {
+          addResult({
+            names: [planet],
+            types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
+            model: 'jpl_sso',
+            match: planet
+          })
+        }
+      }
+    }
+
+    // PRIORITY 2: Search stars using name index
+    if (results.length < limit) {
+      try {
+        const nameIndexLoader = (await import('@/assets/name_index_loader.js')).default
+        const starNames = await nameIndexLoader.searchStars(str, (limit - results.length) * 3) // Get more candidates since some may not be found
+
+        for (const starName of starNames) {
+          if (results.length >= limit) break
+
+          // Try multiple formats to find the star in Stellarium
+          let obj = null
+          const lookupAttempts = [
+            starName,
+            '* ' + starName,
+            'NAME ' + starName,
+            starName.replace(/\./g, ''), // Remove periods
+            '* ' + starName.replace(/\./g, '')
+          ]
+
+          // Also try HIP number if present in name
+          if (starName.startsWith('HIP ')) {
+            lookupAttempts.push(starName)
+          }
+
+          for (const attempt of lookupAttempts) {
+            obj = $stel.getObj(attempt)
+            if (obj) break
+          }
+
+          // Only add to results if we found a valid Stellarium object
+          if (obj) {
+            const ss = obj.jsonData || {}
+            ss.names = ss.names || obj.designations() || [starName]
+            ss.types = ss.types || ['*']
+            ss.model = ss.model || 'star'
+            ss.match = starName
+            addResult(ss)
+          }
+          // Skip stars that can't be found in Stellarium engine
+        }
+      } catch (e) {
+        console.log('Star search via name index failed:', e)
+      }
+    }
+
+    // PRIORITY 3: Search constellations using constellation index
+    if (results.length < limit) {
+      try {
+        const { constellationLoader } = await import('@/assets/name_index_loader.js')
+        const conMatches = await constellationLoader.searchConstellations(str, (limit - results.length) * 2)
+
+        for (const con of conMatches) {
+          if (results.length >= limit) break
+
+          const displayName = con.native || con.english || con.iau
+          addResult({
+            names: [displayName, con.english, con.iau].filter(n => n),
+            types: ['Con'],
+            model: 'constellation',
+            model_data: {
+              iau_abbreviation: con.iau,
+              con_id: con.id // Store the full ID for direct lookup
+            },
+            match: displayName
+          })
+        }
+      } catch (e) {
+        console.log('Constellation search failed:', e)
+      }
+    }
+
+    // PRIORITY 4: Search DSOs using name index
+    if (results.length < limit) {
+      try {
+        const nameIndexLoader = (await import('@/assets/name_index_loader.js')).default
+        const dsoNames = await nameIndexLoader.searchDSOs(str, (limit - results.length) * 3)
+
+        for (const dsoName of dsoNames) {
+          if (results.length >= limit) break
+
+          // Try multiple formats to find the DSO in Stellarium
+          let obj = null
+          const lookupAttempts = [
+            dsoName,
+            'NAME ' + dsoName,
+            dsoName.replace(/\./g, '')
+          ]
+
+          for (const attempt of lookupAttempts) {
+            obj = $stel.getObj(attempt)
+            if (obj) break
+          }
+
+          // Only add to results if we found a valid Stellarium object
+          if (obj) {
+            const ss = obj.jsonData || {}
+            ss.names = ss.names || obj.designations() || [dsoName]
+            ss.types = ss.types || ['dso']
+            ss.model = ss.model || 'dso'
+            ss.match = dsoName
+            addResult(ss)
+          }
+          // Skip DSOs that can't be found in Stellarium engine
+        }
+      } catch (e) {
+        console.log('DSO search via name index failed:', e)
+      }
+    }
+
+    // PRIORITY 5: Search satellites (JS-based cache)
+    if (results.length < limit) {
+      if (!swh._cachedSatellites) {
+        swh._loadSatellites()
+      }
+      if (swh._cachedSatellites) {
+        for (const sat of swh._cachedSatellites) {
+          if (results.length >= limit) break
+          // Check if any satellite name matches (normalized)
+          const nameMatch = sat.names.some(n => {
+            const satNorm = normalize(n)
+            return satNorm.includes(searchNorm) || searchNorm.includes(satNorm)
+          })
+
+          if (nameMatch) {
+            addResult({
+              model_data: sat.model_data,
+              names: [...sat.names],
+              types: sat.types,
+              model: 'tle_satellite',
+              match: sat.names[0]
+            })
+          }
+        }
+      }
+    }
+
+    // Fallback: Try direct object lookup if no results yet
+    if (results.length === 0) {
+      const directObj = $stel.getObj(str) || $stel.getObj('NAME ' + str)
       if (directObj) {
-        console.log('Direct object lookup:', directObj.jsonData)
         const ss = directObj.jsonData || {}
         ss.names = ss.names || directObj.designations() || [str]
         ss.types = ss.types || [directObj.type || 'unknown']
         ss.match = str
-        results.push(ss)
+        addResult(ss)
       }
+    }
 
-      // Search in stars catalog
-      // if (results.length < limit) {
-      //   try {
-      //     const obs = $stel.observer
-      //     const starFilter = function (obj) {
-      //       const names = obj.designations()
-      //       for (const name of names) {
-      //         if (name.toUpperCase().includes(searchStr)) {
-      //           return true
-      //         }
-      //       }
-      //       return false
-      //     }
-      //     const stars = $stel.core.stars.listObjs(obs, 1, starFilter)
-      //     for (const star of stars) {
-      //       if (results.length >= limit) break
-      //       const names = star.designations()
-      //       const ss = star.jsonData || {
-      //         names: names,
-      //         types: ['*'],
-      //         model: 'star'
-      //       }
-      //       ss.names = names
-      //       ss.match = names[0]
-      //       // Check if already in results
-      //       const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
-      //       if (!isDuplicate) {
-      //         results.push(ss)
-      //       }
-      //       star.destroy()
-      //     }
-      //   } catch (e) {
-      //     console.log('Star search error:', e)
-      //   }
-      // }
-
-      // Search satellites (JS-based)
-      if (results.length < limit) {
-        if (!swh._cachedSatellites) {
-          swh._loadSatellites()
-        }
-        if (swh._cachedSatellites) {
-          const searchSat = searchStr.toUpperCase().replace(/\s/g, '')
-          const cleanSearch = 'NAME' + searchSat
-
-          for (const sat of swh._cachedSatellites) {
-            if (results.length >= limit) break
-            // Improved search: check original and cleaned (no prefix, no space) names
-            const nameMatch = sat.names.some(n => {
-              const upperN = n.toUpperCase().replace(/\s/g, '')
-              return (cleanSearch.length > 0 && upperN.includes(cleanSearch)) || (searchSat.length > 0 && upperN.includes(searchSat))
-            })
-
-            if (nameMatch) {
-              // Clone to avoid modifying cache
-              const ss = {
-                model_data: sat.model_data,
-                names: [...sat.names],
-                types: sat.types,
-                model: 'tle_satellite',
-                match: sat.names[0] // Approximation
-              }
-
-              const isDuplicate = results.some(r => r.names && r.names[0] === ss.names[0])
-              if (!isDuplicate) {
-                results.push(ss)
-              }
-            }
-          }
-        }
-      }
-
-      // Search planets
-      const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
-      for (const planet of planets) {
-        if (results.length >= limit) break
-        if (planet.toUpperCase().includes(searchStr)) {
-          const obj = $stel.getObj('NAME ' + planet)
-          if (obj) {
-            results.push({
-              names: [planet],
-              types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
-              model: 'jpl_sso',
-              match: planet
-            })
-          }
-        }
-      }
-
-      // Search constellations
-      const constellations = [
-        'Orion', 'Ursa Major', 'Ursa Minor', 'Leo', 'Scorpius', 'Sagittarius',
-        'Cassiopeia', 'Cygnus', 'Lyra', 'Aquila', 'Perseus', 'Andromeda',
-        'Pegasus', 'Gemini', 'Taurus', 'Aries', 'Pisces', 'Aquarius',
-        'Capricornus', 'Virgo', 'Libra', 'Cancer', 'Draco', 'Hercules',
-        'Bootes', 'Canis Major', 'Canis Minor', 'Centaurus', 'Cetus', 'Corona Borealis'
-      ]
-      for (const con of constellations) {
-        if (results.length >= limit) break
-        if (con.toUpperCase().includes(searchStr)) {
-          results.push({
-            names: [con],
-            types: ['Con'],
-            model: 'constellation',
-            match: con
-          })
-        }
-      }
-
-      resolve(results.slice(0, limit))
-    })
+    return results.slice(0, limit)
   },
 
   sweObj2SkySource: function (obj) {

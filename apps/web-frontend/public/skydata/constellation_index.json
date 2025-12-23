@@ -1,0 +1,970 @@
+[
+  {
+    "id": "CON western Aql",
+    "iau": "Aql",
+    "english": "Eagle",
+    "native": "Aquila",
+    "names": [
+      "Aquila",
+      "Eagle",
+      "Aql"
+    ]
+  },
+  {
+    "id": "CON western And",
+    "iau": "And",
+    "english": "Chained Maiden",
+    "native": "Andromeda",
+    "names": [
+      "Andromeda",
+      "Chained Maiden",
+      "And"
+    ]
+  },
+  {
+    "id": "CON western Scl",
+    "iau": "Scl",
+    "english": "Sculptor",
+    "native": "Sculptor",
+    "names": [
+      "Sculptor",
+      "Sculptor",
+      "Scl"
+    ]
+  },
+  {
+    "id": "CON western Ara",
+    "iau": "Ara",
+    "english": "Altar",
+    "native": "Ara",
+    "names": [
+      "Ara",
+      "Altar",
+      "Ara"
+    ]
+  },
+  {
+    "id": "CON western Lib",
+    "iau": "Lib",
+    "english": "Scales",
+    "native": "Libra",
+    "names": [
+      "Libra",
+      "Scales",
+      "Lib"
+    ]
+  },
+  {
+    "id": "CON western Cet",
+    "iau": "Cet",
+    "english": "Sea Monster",
+    "native": "Cetus",
+    "names": [
+      "Cetus",
+      "Sea Monster",
+      "Cet"
+    ]
+  },
+  {
+    "id": "CON western Ari",
+    "iau": "Ari",
+    "english": "Ram",
+    "native": "Aries",
+    "names": [
+      "Aries",
+      "Ram",
+      "Ari"
+    ]
+  },
+  {
+    "id": "CON western Sct",
+    "iau": "Sct",
+    "english": "Shield",
+    "native": "Scutum",
+    "names": [
+      "Scutum",
+      "Shield",
+      "Sct"
+    ]
+  },
+  {
+    "id": "CON western Pyx",
+    "iau": "Pyx",
+    "english": "Compass",
+    "native": "Pyxis",
+    "names": [
+      "Pyxis",
+      "Compass",
+      "Pyx"
+    ]
+  },
+  {
+    "id": "CON western Boo",
+    "iau": "Boo",
+    "english": "Herdsman",
+    "native": "Bootes",
+    "names": [
+      "Bootes",
+      "Herdsman",
+      "Boo"
+    ]
+  },
+  {
+    "id": "CON western Cae",
+    "iau": "Cae",
+    "english": "Engraving Tool",
+    "native": "Caelum",
+    "names": [
+      "Caelum",
+      "Engraving Tool",
+      "Cae"
+    ]
+  },
+  {
+    "id": "CON western Cha",
+    "iau": "Cha",
+    "english": "Chameleon",
+    "native": "Chamaeleon",
+    "names": [
+      "Chamaeleon",
+      "Chameleon",
+      "Cha"
+    ]
+  },
+  {
+    "id": "CON western Cnc",
+    "iau": "Cnc",
+    "english": "Crab",
+    "native": "Cancer",
+    "names": [
+      "Cancer",
+      "Crab",
+      "Cnc"
+    ]
+  },
+  {
+    "id": "CON western Cap",
+    "iau": "Cap",
+    "english": "Sea Goat",
+    "native": "Capricornus",
+    "names": [
+      "Capricornus",
+      "Sea Goat",
+      "Cap"
+    ]
+  },
+  {
+    "id": "CON western Car",
+    "iau": "Car",
+    "english": "Keel",
+    "native": "Carina",
+    "names": [
+      "Carina",
+      "Keel",
+      "Car"
+    ]
+  },
+  {
+    "id": "CON western Cas",
+    "iau": "Cas",
+    "english": "Seated Queen",
+    "native": "Cassiopeia",
+    "names": [
+      "Cassiopeia",
+      "Seated Queen",
+      "Cas"
+    ]
+  },
+  {
+    "id": "CON western Cen",
+    "iau": "Cen",
+    "english": "Centaur",
+    "native": "Centaurus",
+    "names": [
+      "Centaurus",
+      "Centaur",
+      "Cen"
+    ]
+  },
+  {
+    "id": "CON western Cep",
+    "iau": "Cep",
+    "english": "King",
+    "native": "Cepheus",
+    "names": [
+      "Cepheus",
+      "King",
+      "Cep"
+    ]
+  },
+  {
+    "id": "CON western Com",
+    "iau": "Com",
+    "english": "Bernice's Hair",
+    "native": "Coma Berenices",
+    "names": [
+      "Coma Berenices",
+      "Bernice's Hair",
+      "Com"
+    ]
+  },
+  {
+    "id": "CON western Cvn",
+    "iau": "Cvn",
+    "english": "Hunting Dogs",
+    "native": "Canes Venatici",
+    "names": [
+      "Canes Venatici",
+      "Hunting Dogs",
+      "Cvn"
+    ]
+  },
+  {
+    "id": "CON western Aur",
+    "iau": "Aur",
+    "english": "Charioteer",
+    "native": "Auriga",
+    "names": [
+      "Auriga",
+      "Charioteer",
+      "Aur"
+    ]
+  },
+  {
+    "id": "CON western Col",
+    "iau": "Col",
+    "english": "Dove",
+    "native": "Columba",
+    "names": [
+      "Columba",
+      "Dove",
+      "Col"
+    ]
+  },
+  {
+    "id": "CON western Cir",
+    "iau": "Cir",
+    "english": "Compass",
+    "native": "Circinus",
+    "names": [
+      "Circinus",
+      "Compass",
+      "Cir"
+    ]
+  },
+  {
+    "id": "CON western Crt",
+    "iau": "Crt",
+    "english": "Cup",
+    "native": "Crater",
+    "names": [
+      "Crater",
+      "Cup",
+      "Crt"
+    ]
+  },
+  {
+    "id": "CON western CrA",
+    "iau": "CrA",
+    "english": "Southern Crown",
+    "native": "Corona Australis",
+    "names": [
+      "Corona Australis",
+      "Southern Crown",
+      "CrA"
+    ]
+  },
+  {
+    "id": "CON western CrB",
+    "iau": "CrB",
+    "english": "Northern Crown",
+    "native": "Corona Borealis",
+    "names": [
+      "Corona Borealis",
+      "Northern Crown",
+      "CrB"
+    ]
+  },
+  {
+    "id": "CON western Crv",
+    "iau": "Crv",
+    "english": "Crow",
+    "native": "Corvus",
+    "names": [
+      "Corvus",
+      "Crow",
+      "Crv"
+    ]
+  },
+  {
+    "id": "CON western Cru",
+    "iau": "Cru",
+    "english": "Southern Cross",
+    "native": "Crux",
+    "names": [
+      "Crux",
+      "Southern Cross",
+      "Cru"
+    ]
+  },
+  {
+    "id": "CON western Cyg",
+    "iau": "Cyg",
+    "english": "Swan",
+    "native": "Cygnus",
+    "names": [
+      "Cygnus",
+      "Swan",
+      "Cyg"
+    ]
+  },
+  {
+    "id": "CON western Del",
+    "iau": "Del",
+    "english": "Dolphin",
+    "native": "Delphinus",
+    "names": [
+      "Delphinus",
+      "Dolphin",
+      "Del"
+    ]
+  },
+  {
+    "id": "CON western Dor",
+    "iau": "Dor",
+    "english": "Swordfish",
+    "native": "Dorado",
+    "names": [
+      "Dorado",
+      "Swordfish",
+      "Dor"
+    ]
+  },
+  {
+    "id": "CON western Dra",
+    "iau": "Dra",
+    "english": "Dragon",
+    "native": "Draco",
+    "names": [
+      "Draco",
+      "Dragon",
+      "Dra"
+    ]
+  },
+  {
+    "id": "CON western Nor",
+    "iau": "Nor",
+    "english": "Carpenter's Square",
+    "native": "Norma",
+    "names": [
+      "Norma",
+      "Carpenter's Square",
+      "Nor"
+    ]
+  },
+  {
+    "id": "CON western Eri",
+    "iau": "Eri",
+    "english": "River",
+    "native": "Eridanus",
+    "names": [
+      "Eridanus",
+      "River",
+      "Eri"
+    ]
+  },
+  {
+    "id": "CON western Sge",
+    "iau": "Sge",
+    "english": "Arrow",
+    "native": "Sagitta",
+    "names": [
+      "Sagitta",
+      "Arrow",
+      "Sge"
+    ]
+  },
+  {
+    "id": "CON western For",
+    "iau": "For",
+    "english": "Furnace",
+    "native": "Fornax",
+    "names": [
+      "Fornax",
+      "Furnace",
+      "For"
+    ]
+  },
+  {
+    "id": "CON western Gem",
+    "iau": "Gem",
+    "english": "Twins",
+    "native": "Gemini",
+    "names": [
+      "Gemini",
+      "Twins",
+      "Gem"
+    ]
+  },
+  {
+    "id": "CON western Cam",
+    "iau": "Cam",
+    "english": "Giraffe",
+    "native": "Camelopardalis",
+    "names": [
+      "Camelopardalis",
+      "Giraffe",
+      "Cam"
+    ]
+  },
+  {
+    "id": "CON western CMa",
+    "iau": "CMa",
+    "english": "Great Dog",
+    "native": "Canis Major",
+    "names": [
+      "Canis Major",
+      "Great Dog",
+      "CMa"
+    ]
+  },
+  {
+    "id": "CON western UMa",
+    "iau": "UMa",
+    "english": "Great Bear",
+    "native": "Ursa Major",
+    "names": [
+      "Ursa Major",
+      "Great Bear",
+      "UMa"
+    ]
+  },
+  {
+    "id": "CON western Gru",
+    "iau": "Gru",
+    "english": "Crane",
+    "native": "Grus",
+    "names": [
+      "Grus",
+      "Crane",
+      "Gru"
+    ]
+  },
+  {
+    "id": "CON western Her",
+    "iau": "Her",
+    "english": "Hercules",
+    "native": "Hercules",
+    "names": [
+      "Hercules",
+      "Hercules",
+      "Her"
+    ]
+  },
+  {
+    "id": "CON western Hor",
+    "iau": "Hor",
+    "english": "Clock",
+    "native": "Horologium",
+    "names": [
+      "Horologium",
+      "Clock",
+      "Hor"
+    ]
+  },
+  {
+    "id": "CON western Hya",
+    "iau": "Hya",
+    "english": "Female Water Snake",
+    "native": "Hydra",
+    "names": [
+      "Hydra",
+      "Female Water Snake",
+      "Hya"
+    ]
+  },
+  {
+    "id": "CON western Hyi",
+    "iau": "Hyi",
+    "english": "Male Water Snake",
+    "native": "Hydrus",
+    "names": [
+      "Hydrus",
+      "Male Water Snake",
+      "Hyi"
+    ]
+  },
+  {
+    "id": "CON western Ind",
+    "iau": "Ind",
+    "english": "Indian",
+    "native": "Indus",
+    "names": [
+      "Indus",
+      "Indian",
+      "Ind"
+    ]
+  },
+  {
+    "id": "CON western Lac",
+    "iau": "Lac",
+    "english": "Lizard",
+    "native": "Lacerta",
+    "names": [
+      "Lacerta",
+      "Lizard",
+      "Lac"
+    ]
+  },
+  {
+    "id": "CON western Mon",
+    "iau": "Mon",
+    "english": "Unicorn",
+    "native": "Monoceros",
+    "names": [
+      "Monoceros",
+      "Unicorn",
+      "Mon"
+    ]
+  },
+  {
+    "id": "CON western Lep",
+    "iau": "Lep",
+    "english": "Hare",
+    "native": "Lepus",
+    "names": [
+      "Lepus",
+      "Hare",
+      "Lep"
+    ]
+  },
+  {
+    "id": "CON western Leo",
+    "iau": "Leo",
+    "english": "Lion",
+    "native": "Leo",
+    "names": [
+      "Leo",
+      "Lion",
+      "Leo"
+    ]
+  },
+  {
+    "id": "CON western Lup",
+    "iau": "Lup",
+    "english": "Wolf",
+    "native": "Lupus",
+    "names": [
+      "Lupus",
+      "Wolf",
+      "Lup"
+    ]
+  },
+  {
+    "id": "CON western Lyn",
+    "iau": "Lyn",
+    "english": "Lynx",
+    "native": "Lynx",
+    "names": [
+      "Lynx",
+      "Lynx",
+      "Lyn"
+    ]
+  },
+  {
+    "id": "CON western Lyr",
+    "iau": "Lyr",
+    "english": "Lyre",
+    "native": "Lyra",
+    "names": [
+      "Lyra",
+      "Lyre",
+      "Lyr"
+    ]
+  },
+  {
+    "id": "CON western Ant",
+    "iau": "Ant",
+    "english": "Air Pump",
+    "native": "Antlia",
+    "names": [
+      "Antlia",
+      "Air Pump",
+      "Ant"
+    ]
+  },
+  {
+    "id": "CON western Mic",
+    "iau": "Mic",
+    "english": "Microscope",
+    "native": "Microscopium",
+    "names": [
+      "Microscopium",
+      "Microscope",
+      "Mic"
+    ]
+  },
+  {
+    "id": "CON western Mus",
+    "iau": "Mus",
+    "english": "Fly",
+    "native": "Musca",
+    "names": [
+      "Musca",
+      "Fly",
+      "Mus"
+    ]
+  },
+  {
+    "id": "CON western Oct",
+    "iau": "Oct",
+    "english": "Octant",
+    "native": "Octans",
+    "names": [
+      "Octans",
+      "Octant",
+      "Oct"
+    ]
+  },
+  {
+    "id": "CON western Aps",
+    "iau": "Aps",
+    "english": "Bird of Paradise",
+    "native": "Apus",
+    "names": [
+      "Apus",
+      "Bird of Paradise",
+      "Aps"
+    ]
+  },
+  {
+    "id": "CON western Oph",
+    "iau": "Oph",
+    "english": "Serpent Bearer",
+    "native": "Ophiuchus",
+    "names": [
+      "Ophiuchus",
+      "Serpent Bearer",
+      "Oph"
+    ]
+  },
+  {
+    "id": "CON western Ori",
+    "iau": "Ori",
+    "english": "Hunter",
+    "native": "Orion",
+    "names": [
+      "Orion",
+      "Hunter",
+      "Ori"
+    ]
+  },
+  {
+    "id": "CON western Pav",
+    "iau": "Pav",
+    "english": "Peacock",
+    "native": "Pavo",
+    "names": [
+      "Pavo",
+      "Peacock",
+      "Pav"
+    ]
+  },
+  {
+    "id": "CON western Peg",
+    "iau": "Peg",
+    "english": "Winged Horse",
+    "native": "Pegasus",
+    "names": [
+      "Pegasus",
+      "Winged Horse",
+      "Peg"
+    ]
+  },
+  {
+    "id": "CON western Pic",
+    "iau": "Pic",
+    "english": "Painter's Easel",
+    "native": "Pictor",
+    "names": [
+      "Pictor",
+      "Painter's Easel",
+      "Pic"
+    ]
+  },
+  {
+    "id": "CON western Per",
+    "iau": "Per",
+    "english": "Hero",
+    "native": "Perseus",
+    "names": [
+      "Perseus",
+      "Hero",
+      "Per"
+    ]
+  },
+  {
+    "id": "CON western Equ",
+    "iau": "Equ",
+    "english": "Little Horse",
+    "native": "Equuleus",
+    "names": [
+      "Equuleus",
+      "Little Horse",
+      "Equ"
+    ]
+  },
+  {
+    "id": "CON western CMi",
+    "iau": "CMi",
+    "english": "Lesser Dog",
+    "native": "Canis Minor",
+    "names": [
+      "Canis Minor",
+      "Lesser Dog",
+      "CMi"
+    ]
+  },
+  {
+    "id": "CON western LMi",
+    "iau": "LMi",
+    "english": "Lesser Lion",
+    "native": "Leo Minor",
+    "names": [
+      "Leo Minor",
+      "Lesser Lion",
+      "LMi"
+    ]
+  },
+  {
+    "id": "CON western Vul",
+    "iau": "Vul",
+    "english": "Fox",
+    "native": "Vulpecula",
+    "names": [
+      "Vulpecula",
+      "Fox",
+      "Vul"
+    ]
+  },
+  {
+    "id": "CON western UMi",
+    "iau": "UMi",
+    "english": "Little Bear",
+    "native": "Ursa Minor",
+    "names": [
+      "Ursa Minor",
+      "Little Bear",
+      "UMi"
+    ]
+  },
+  {
+    "id": "CON western Phe",
+    "iau": "Phe",
+    "english": "Phoenix",
+    "native": "Phoenix",
+    "names": [
+      "Phoenix",
+      "Phoenix",
+      "Phe"
+    ]
+  },
+  {
+    "id": "CON western Psc",
+    "iau": "Psc",
+    "english": "Fishes",
+    "native": "Pisces",
+    "names": [
+      "Pisces",
+      "Fishes",
+      "Psc"
+    ]
+  },
+  {
+    "id": "CON western PsA",
+    "iau": "PsA",
+    "english": "Southern Fish",
+    "native": "Piscis Austrinus",
+    "names": [
+      "Piscis Austrinus",
+      "Southern Fish",
+      "PsA"
+    ]
+  },
+  {
+    "id": "CON western Vol",
+    "iau": "Vol",
+    "english": "Flying Fish",
+    "native": "Volans",
+    "names": [
+      "Volans",
+      "Flying Fish",
+      "Vol"
+    ]
+  },
+  {
+    "id": "CON western Pup",
+    "iau": "Pup",
+    "english": "Stern",
+    "native": "Puppis",
+    "names": [
+      "Puppis",
+      "Stern",
+      "Pup"
+    ]
+  },
+  {
+    "id": "CON western Ret",
+    "iau": "Ret",
+    "english": "Reticle",
+    "native": "Reticulum",
+    "names": [
+      "Reticulum",
+      "Reticle",
+      "Ret"
+    ]
+  },
+  {
+    "id": "CON western Sgr",
+    "iau": "Sgr",
+    "english": "Archer",
+    "native": "Sagittarius",
+    "names": [
+      "Sagittarius",
+      "Archer",
+      "Sgr"
+    ]
+  },
+  {
+    "id": "CON western Sco",
+    "iau": "Sco",
+    "english": "Scorpion",
+    "native": "Scorpius",
+    "names": [
+      "Scorpius",
+      "Scorpion",
+      "Sco"
+    ]
+  },
+  {
+    "id": "CON western Ser",
+    "iau": "Ser",
+    "english": "Serpent",
+    "native": "Serpens",
+    "names": [
+      "Serpens",
+      "Serpent",
+      "Ser"
+    ]
+  },
+  {
+    "id": "CON western Sex",
+    "iau": "Sex",
+    "english": "Sextant",
+    "native": "Sextans",
+    "names": [
+      "Sextans",
+      "Sextant",
+      "Sex"
+    ]
+  },
+  {
+    "id": "CON western Men",
+    "iau": "Men",
+    "english": "Table Mountain",
+    "native": "Mensa",
+    "names": [
+      "Mensa",
+      "Table Mountain",
+      "Men"
+    ]
+  },
+  {
+    "id": "CON western Tau",
+    "iau": "Tau",
+    "english": "Bull",
+    "native": "Taurus",
+    "names": [
+      "Taurus",
+      "Bull",
+      "Tau"
+    ]
+  },
+  {
+    "id": "CON western Tel",
+    "iau": "Tel",
+    "english": "Telescope",
+    "native": "Telescopium",
+    "names": [
+      "Telescopium",
+      "Telescope",
+      "Tel"
+    ]
+  },
+  {
+    "id": "CON western Tuc",
+    "iau": "Tuc",
+    "english": "Toucan",
+    "native": "Tucana",
+    "names": [
+      "Tucana",
+      "Toucan",
+      "Tuc"
+    ]
+  },
+  {
+    "id": "CON western Tri",
+    "iau": "Tri",
+    "english": "Triangle",
+    "native": "Triangulum",
+    "names": [
+      "Triangulum",
+      "Triangle",
+      "Tri"
+    ]
+  },
+  {
+    "id": "CON western Tra",
+    "iau": "Tra",
+    "english": "Southern Triangle",
+    "native": "Triangulum Australe",
+    "names": [
+      "Triangulum Australe",
+      "Southern Triangle",
+      "Tra"
+    ]
+  },
+  {
+    "id": "CON western Aqr",
+    "iau": "Aqr",
+    "english": "Water Bearer",
+    "native": "Aquarius",
+    "names": [
+      "Aquarius",
+      "Water Bearer",
+      "Aqr"
+    ]
+  },
+  {
+    "id": "CON western Vir",
+    "iau": "Vir",
+    "english": "Maiden",
+    "native": "Virgo",
+    "names": [
+      "Virgo",
+      "Maiden",
+      "Vir"
+    ]
+  },
+  {
+    "id": "CON western Vel",
+    "iau": "Vel",
+    "english": "Sails",
+    "native": "Vela",
+    "names": [
+      "Vela",
+      "Sails",
+      "Vel"
+    ]
+  }
+]

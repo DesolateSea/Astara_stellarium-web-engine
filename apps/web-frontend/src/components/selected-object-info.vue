@@ -74,13 +74,7 @@
           <div class="data-table">
             <div v-if="constellation" class="data-row">
               <span class="data-label">Constellation</span>
-              <div class="data-value-group">
-                <span class="data-value">{{ constellation }}</span>
-                <div class="nav-arrows">
-                  <span class="chevron">&lt;</span>
-                  <span class="chevron">&gt;</span>
-                </div>
-              </div>
+              <span class="data-value">{{ constellation }}</span>
             </div>
             <div v-if="magnitude()" class="data-row">
               <span class="data-label">Magnitude</span>
@@ -90,24 +84,38 @@
               <span class="data-label">Distance</span>
               <span class="data-value" v-html="distance()"></span>
             </div>
+            <div v-if="phase()" class="data-row">
+              <span class="data-label">Phase</span>
+              <span class="data-value">{{ phase() }}</span>
+            </div>
+            <div v-if="angularSize()" class="data-row">
+              <span class="data-label">Angular Size</span>
+              <span class="data-value">{{ angularSize() }}</span>
+            </div>
+            <div v-if="spectralType()" class="data-row">
+              <span class="data-label">Spectral Type</span>
+              <span class="data-value">{{ spectralType() }}</span>
+            </div>
             <div class="data-row">
-              <span class="data-label">RA/Dec</span>
+              <span class="data-label">RA/Dec (J2000)</span>
               <span class="data-value mono" v-html="radecFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">Az/Alt</span>
               <span class="data-value mono" v-html="azaltFormatted()"></span>
             </div>
-          </div>
-
-          <!-- Wiki Section -->
-          <div v-if="wikipediaDescription" class="wiki-section">
-            <p class="wiki-paragraph">
-              <span class="wiki-highlight">{{ title }}</span>
-              <span v-if="shortName" class="wiki-dim">({{ shortName }})</span>
-              {{ wikipediaDescription }}
-            </p>
-            <a v-if="wikipediaUrl" :href="wikipediaUrl" target="_blank" class="wiki-link-more">more on Wikipedia</a>
+            <div class="data-row">
+              <span class="data-label">Visibility</span>
+              <span class="data-value" :class="visibilityClass()">{{ visibility() }}</span>
+            </div>
+            <div v-if="riseSetTimes()" class="data-row">
+              <span class="data-label">Rise / Set</span>
+              <span class="data-value">{{ riseSetTimes() }}</span>
+            </div>
+            <div v-if="allNames().length > 1" class="data-row names-row">
+              <span class="data-label">Other Names</span>
+              <span class="data-value names-list">{{ allNames().slice(1).join(', ') }}</span>
+            </div>
           </div>
         </div>
       </transition>
@@ -122,8 +130,6 @@ export default {
   data: function () {
     return {
       isExpanded: false,
-      wikipediaDescription: null,
-      wikipediaUrl: null,
       zoomTimeout: null,
       timer: null,
       // Touch state
@@ -172,8 +178,6 @@ export default {
   },
   watch: {
     selectedObject: function (s) {
-      this.wikipediaDescription = null
-      this.wikipediaUrl = null
       if (this.timer) {
         clearInterval(this.timer)
         this.timer = null
@@ -181,7 +185,6 @@ export default {
       if (!s) {
         return
       }
-      this.fetchWikipediaInfo()
       this.timer = setInterval(() => { this.$forceUpdate() }, 100)
     },
     stelSelectionId: function (s) {
@@ -230,6 +233,118 @@ export default {
       const obj = this.$stel.core.selection
       const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
       return this.formatAz(this.$stel.anp(azalt[0])) + '&nbsp;&nbsp;' + this.formatDec(this.$stel.anpm(azalt[1]))
+    },
+    phase: function () {
+      if (!this.$stel || !this.$stel.core.selection) return null
+      const p = this.$stel.core.selection.getInfo('phase')
+      if (p === undefined || isNaN(p)) return null
+      return (p * 100).toFixed(1) + '%'
+    },
+    angularSize: function () {
+      if (!this.$stel || !this.$stel.core.selection) return null
+      const s = this.$stel.core.selection.getInfo('radius')
+      if (!s || isNaN(s) || s <= 0) return null
+      // Radius is in radians, convert to arc-seconds or arc-minutes
+      const arcSec = s * 180 / Math.PI * 3600
+      if (arcSec >= 60) {
+        return (arcSec / 60).toFixed(1) + "'"
+      }
+      return arcSec.toFixed(1) + '"'
+    },
+    spectralType: function () {
+      if (!this.selectedObject || !this.selectedObject.model_data) return null
+      return this.selectedObject.model_data.spect_type || null
+    },
+    visibility: function () {
+      if (!this.$stel || !this.$stel.core.selection) return 'Unknown'
+      const obj = this.$stel.core.selection
+      const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
+      const altDeg = this.$stel.anpm(azalt[1]) * 180 / Math.PI
+
+      if (altDeg > 0) {
+        return 'Above horizon (' + altDeg.toFixed(1) + '°)'
+      } else {
+        return 'Below horizon (' + altDeg.toFixed(1) + '°)'
+      }
+    },
+    visibilityClass: function () {
+      if (!this.$stel || !this.$stel.core.selection) return ''
+      const obj = this.$stel.core.selection
+      const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
+      const altDeg = this.$stel.anpm(azalt[1]) * 180 / Math.PI
+      return altDeg > 0 ? 'visible-yes' : 'visible-no'
+    },
+    riseSetTimes: function () {
+      if (!this.$stel || !this.$stel.core.selection) return null
+
+      try {
+        const obj = this.$stel.core.selection
+        const observer = this.$stel.core.observer
+
+        // Get object RA/Dec (in radians)
+        const radec = obj.getInfo('radec')
+        if (!radec) return null
+        const pos = this.$stel.c2s(radec)
+        const ra = this.$stel.anp(pos[0]) // Right Ascension (0 to 2π)
+        const dec = this.$stel.anpm(pos[1]) // Declination (-π/2 to π/2)
+
+        // Get observer latitude (in radians)
+        const lat = observer.latitude * Math.PI / 180
+
+        // Calculate hour angle at rise/set
+        // cos(H) = -tan(lat) * tan(dec)
+        const cosH = -Math.tan(lat) * Math.tan(dec)
+
+        // Check if object never rises or never sets
+        if (cosH < -1) {
+          return 'Circumpolar (always visible)'
+        }
+        if (cosH > 1) {
+          return 'Never rises'
+        }
+
+        const H = Math.acos(cosH) // Hour angle in radians
+        const Hhours = H * 12 / Math.PI // Convert to hours
+
+        // Get current time and calculate LST
+        const now = new Date()
+        const hours = now.getHours() + now.getMinutes() / 60
+
+        // Approximate Local Sidereal Time (simplified)
+        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000)
+        const lng = observer.longitude
+        const lst = (100.46 + 0.985647 * dayOfYear + lng + 15 * hours) % 360
+        const lstHours = lst / 15
+
+        // RA in hours
+        const raHours = ra * 12 / Math.PI
+
+        // Transit time (when object is at meridian)
+        let transitHours = raHours - lstHours + hours
+        if (transitHours < 0) transitHours += 24
+        if (transitHours >= 24) transitHours -= 24
+
+        // Rise and set times
+        let riseHours = transitHours - Hhours
+        let setHours = transitHours + Hhours
+        if (riseHours < 0) riseHours += 24
+        if (setHours >= 24) setHours -= 24
+
+        const formatTime = (h) => {
+          const hrs = Math.floor(h)
+          const mins = Math.floor((h - hrs) * 60)
+          return String(hrs).padStart(2, '0') + ':' + String(mins).padStart(2, '0')
+        }
+
+        return formatTime(riseHours) + ' / ' + formatTime(setHours)
+      } catch (e) {
+        console.log('Rise/set calculation error:', e)
+        return null
+      }
+    },
+    allNames: function () {
+      if (!this.selectedObject || !this.selectedObject.names) return []
+      return this.selectedObject.names.map(n => swh.cleanupOneSkySourceName(n))
     },
     // Pointer Gestures
     handlePointerStart: function (e) {
@@ -600,36 +715,16 @@ export default {
   color: rgba(255, 255, 255, 0.3);
 }
 
-/* Wiki Section */
-.wiki-section {
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+/* Names List */
+.names-row {
+  flex-wrap: wrap;
 }
 
-.wiki-paragraph {
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 10px;
-}
-
-.wiki-highlight {
-  color: #5AC8FA;
-  font-weight: 600;
-}
-
-.wiki-dim {
-  color: #5AC8FA;
-  opacity: 0.8;
-}
-
-.wiki-link-more {
-  display: block;
-  text-align: right;
-  color: #5AC8FA;
+.names-list {
   font-size: 13px;
-  text-decoration: none;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 60%;
+  text-align: right;
 }
 
 /* Units */
@@ -645,5 +740,14 @@ sub {
 .unit-dim {
   color: rgba(255, 255, 255, 0.4);
   font-size: 12px;
+}
+
+/* Visibility Status */
+.visible-yes {
+  color: #30D158;
+}
+
+.visible-no {
+  color: #FF453A;
 }
 </style>
