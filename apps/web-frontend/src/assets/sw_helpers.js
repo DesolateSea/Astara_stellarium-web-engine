@@ -39,10 +39,34 @@ const swh = {
       },
       onReady: function (lstel) {
         store.commit('replaceStelWebEngine', lstel.getTree())
+        // Initial sync of the tree
+        store.commit('replaceStelWebEngine', lstel.getTree())
+
+        // Throttled sync of essential state
+        let lastUpdateTime = 0
+        let throttleTimer = null
+
         lstel.onValueChanged(function (path, value) {
+          // Data synchronization filtering removed by user request (allow all)
+          // const essentialPaths = ['fov', 'observer.utc', 'observer.latitude', 'observer.longitude']
+          // const allowedPrefixes = ['observer.', 'lines.', 'constellations.', 'landscapes.', 'atmosphere.', 'stars.', 'planets.', 'dsos.', 'satellites.', 'night_mode', 'selection']
+          // if (!essentialPaths.includes(path) && !allowedPrefixes.some(prefix => path.startsWith(prefix))) return
           const tree = store.state.stel
+          if (!tree) return
           _.set(tree, path, value)
-          store.commit('replaceStelWebEngine', tree)
+
+          const now = Date.now()
+          if (now - lastUpdateTime > 66) { // ~15 fps is enough for labels
+            store.commit('replaceStelWebEngine', { ...tree })
+            lastUpdateTime = now
+            if (throttleTimer) { clearTimeout(throttleTimer); throttleTimer = null }
+          } else if (!throttleTimer) {
+            throttleTimer = setTimeout(() => {
+              store.commit('replaceStelWebEngine', { ...tree })
+              lastUpdateTime = Date.now()
+              throttleTimer = null
+            }, 100)
+          }
         })
         Vue.prototype.$stel = lstel
         Vue.prototype.$selectionLayer = lstel.createLayer({ id: 'slayer', z: 50, visible: true })
@@ -332,6 +356,42 @@ const swh = {
     }
     if (obj === null) return undefined
     return obj
+  },
+
+  // Monkey patch to fix a bug in Stellarium Web Engine where /properties is requested instead of /properties.txt
+  // This is a temporary fix until the engine is updated.
+  initMonkeyPatches: function () {
+    const originalFetch = window.fetch
+    window.fetch = function (input, init) {
+      const url = (typeof input === 'string') ? input : (input instanceof URL ? input.href : (input && input.url))
+
+      // Log every fetch tailored to our debug needs
+      if (typeof url === 'string' && url.includes('/hips/')) {
+        console.log('sw_helpers (Fetch): Requesting HiPS asset: ' + url)
+      }
+
+      if (typeof url === 'string' && url.includes('/properties') && !url.includes('/properties.txt')) {
+        const newUrl = url.replace(/\/+properties(\?|$)/, '/properties.txt$1')
+        console.log('sw_helpers (Fetch): Redirecting properties to ' + newUrl)
+        if (typeof input === 'string') input = newUrl
+        else if (input instanceof URL) input = new URL(newUrl)
+      }
+      return originalFetch(input, init)
+    }
+
+    const originalOpen = XMLHttpRequest.prototype.open
+    XMLHttpRequest.prototype.open = function (method, url, ...args) {
+      if (typeof url === 'string' && url.includes('/hips/')) {
+        console.log('sw_helpers (XHR): Requesting HiPS asset: ' + url)
+      }
+
+      if (typeof url === 'string' && url.includes('/properties') && !url.includes('/properties.txt')) {
+        const newUrl = url.replace(/\/+properties(\?|$)/, '/properties.txt$1')
+        console.log('sw_helpers (XHR): Redirecting properties to ' + newUrl)
+        url = newUrl
+      }
+      return originalOpen.call(this, method, url, ...args)
+    }
   },
 
   lookupSkySourceByName: function (name) {

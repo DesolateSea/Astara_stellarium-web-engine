@@ -17,13 +17,18 @@
 
     <!-- Center section: Compass -->
     <div class="bottom-bar-center">
+      <!-- FOV Display (Fixed position, does not rotate) -->
+      <transition name="fade">
+        <div class="fov-display" v-show="showFov">
+          FOV {{ currentFov }}°
+        </div>
+      </transition>
+
       <div class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
-        <!-- Compass diamond pointer -->
         <div class="compass-pointer" ref="compassNeedle">
           <div class="pointer-north"></div>
           <div class="pointer-south"></div>
         </div>
-        <!-- Cardinal directions -->
         <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
         <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
         <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
@@ -40,7 +45,7 @@
 
     <transition name="slide-up">
       <div class="menu-overlay" v-if="showMenuPanel" @click.self="closeMenu">
-        <bottom-menu-panel />
+        <BottomMenuPanel />
       </div>
     </transition>
 
@@ -65,7 +70,9 @@ export default {
     return {
       showMenuPanel: false,
       showTimePicker: false,
-      rafId: null
+      rafId: null,
+      showFov: false,
+      fovTimeout: null
     }
   },
   computed: {
@@ -92,6 +99,10 @@ export default {
         this.$stel.core.observer.utc = m.toDate().getMJD()
       }
     },
+    currentFov: function () {
+      const fovRad = this.$store.state.stel?.fov || 0
+      return (fovRad * 180 / Math.PI).toFixed(1)
+    },
     // Azimuth in degrees (0-360), 0 = North, 90 = East, 180 = South, 270 = West
     azimuthDegrees: function () {
       const yaw = this.$store.state.stel?.observer?.yaw || 0
@@ -116,6 +127,15 @@ export default {
     isWest: function () {
       const az = this.azimuthDegrees
       return az >= 225 && az < 315
+    }
+  },
+  watch: {
+    currentFov: function () {
+      this.showFov = true
+      if (this.fovTimeout) clearTimeout(this.fovTimeout)
+      this.fovTimeout = setTimeout(() => {
+        this.showFov = false
+      }, 2000)
     }
   },
   methods: {
@@ -345,6 +365,29 @@ export default {
 .slide-up-enter,
 .slide-up-leave-to {
   transform: translateY(100%);
+  opacity: 0;
+}
+
+.fov-display {
+  position: absolute;
+  top: -40px; /* Moved up slightly since it's now relative to center container */
+  left: 50%;
+  transform: translateX(-50%); /* Use transform for centering instead of margin */
+  width: 80px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
 }
 </style>

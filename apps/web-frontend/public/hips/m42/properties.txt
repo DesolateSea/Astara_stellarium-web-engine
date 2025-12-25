@@ -1,0 +1,12 @@
+creator_did = ivo://CDS/P/DSS2/color/m42
+obs_title = Orion Nebula
+obs_collection = DSS2 Color m42
+hips_order = 6
+hips_tile_format = jpg
+hips_frame = equatorial
+hips_service_url = http://alasky.cds.unistra.fr/DSS/DSSColor
+hips_status = public
+hips_pixel_scale = 0.01
+hips_initial_ra = 83.8
+hips_initial_dec = -5.3
+hips_initial_fov = 4.0

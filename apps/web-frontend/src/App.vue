@@ -14,9 +14,9 @@
       <v-list dense>
         <template v-for="(item,i) in menuItems">
           <template v-if="$store.state[item.store_show_menu_item] === false"></template>
-          <v-subheader v-else-if="item.header" v-text="item.header" class="grey--text text--darken-1" :key="i"/>
-          <v-divider class="divider_menu" v-else-if="item.divider" :key="i"/>
-          <v-list-item v-else-if="item.switch" @click.stop="toggleStoreValue(item.store_var_name)" :key="i">
+          <v-subheader v-else-if="item.header" v-text="item.header" class="grey--text text--darken-1" :key="'header-' + i"/>
+          <v-divider class="divider_menu" v-else-if="item.divider" :key="'divider-' + i"/>
+          <v-list-item v-else-if="item.switch" @click.stop="toggleStoreValue(item.store_var_name)" :key="'switch-' + i">
             <v-list-item-action>
               <v-switch value :input-value="getStoreValue(item.store_var_name)" label=""></v-switch>
             </v-list-item-action>
@@ -25,21 +25,21 @@
             </v-list-item-content>
           </v-list-item>
           <template v-else>
-            <v-list-item v-if='item.link' target="_blank" rel="noopener" :href='item.link' :key="i">
+            <v-list-item v-if='item.link' target="_blank" rel="noopener" :href='item.link' :key="'link-' + i">
               <v-list-item-icon><v-icon>{{ item.icon }}</v-icon></v-list-item-icon>
               <v-list-item-title v-text="item.title"/>
               <v-icon disabled>mdi-open-in-new</v-icon>
             </v-list-item>
-            <v-list-item v-else-if='item.footer===undefined' @click.stop="toggleStoreValue(item.store_var_name)" :key="i">
+            <v-list-item v-else-if='item.footer===undefined' @click.stop="toggleStoreValue(item.store_var_name)" :key="'menu-' + i">
               <v-list-item-icon><v-icon>{{ item.icon }}</v-icon></v-list-item-icon>
               <v-list-item-title v-text="item.title"/>
             </v-list-item>
           </template>
         </template>
       </v-list>
-      <template v-for="(item,i) in menuComponents">
-        <component :is="item" :key="i"></component>
-      </template>
+      <div v-for="(item,i) in menuComponents" :key="'comp-' + i">
+        <component :is="item"></component>
+      </div>
       <v-spacer></v-spacer>
       <v-list dense>
         <v-divider class="divider_menu"/>
@@ -58,6 +58,7 @@
       <div id="stel" v-bind:class="{ right_panel: $store.state.showSidePanel }">
         <div style="position: relative; width: 100%; height: 100%">
           <component v-bind:is="guiComponent"></component>
+          <dso-sky-overlays v-if="guiComponent === 'Gui'"></dso-sky-overlays>
           <canvas id="stel-canvas" ref='stelCanvas'></canvas>
         </div>
       </div>
@@ -81,6 +82,7 @@
 import _ from 'lodash'
 import Gui from '@/components/gui.vue'
 import GuiLoader from '@/components/gui-loader.vue'
+import DsoSkyOverlays from '@/components/DsoSkyOverlays.vue'
 import swh from '@/assets/sw_helpers.js'
 import Moment from 'moment'
 
@@ -102,7 +104,7 @@ export default {
       gpsErrorSnackbar: false
     }
   },
-  components: { Gui, GuiLoader },
+  components: { Gui, GuiLoader, DsoSkyOverlays },
   methods: {
     getPluginsMenuItems: function () {
       let res = []
@@ -253,24 +255,7 @@ export default {
   mounted: function () {
     var that = this
 
-    // Monkey patch fetch and XHR to handle extensionless 'properties' file on Android
-    // The Android AssetLoader fails to find files without extensions, returning index.html instead.
-    const originalFetch = window.fetch
-    window.fetch = function (input, init) {
-      let url = input
-      if (typeof input === 'string' && url.endsWith('/properties')) {
-        url = url + '.txt'
-      }
-      return originalFetch(url, init)
-    }
-
-    const originalOpen = XMLHttpRequest.prototype.open
-    XMLHttpRequest.prototype.open = function (method, url, ...args) {
-      if (typeof url === 'string' && url.endsWith('/properties')) {
-        url = url + '.txt'
-      }
-      return originalOpen.call(this, method, url, ...args)
-    }
+    swh.initMonkeyPatches()
 
     for (const i in this.$stellariumWebPlugins()) {
       const plugin = this.$stellariumWebPlugins()[i]

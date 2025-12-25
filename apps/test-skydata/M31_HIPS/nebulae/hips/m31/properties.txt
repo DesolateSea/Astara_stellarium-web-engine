@@ -1,0 +1,9 @@
+hips_order = 3
+hips_order_min = 0
+hips_tile_width = 512
+hips_tile_format = png
+hips_frame = equatorial
+hips_release_date = 2024-12-24
+dataproduct_type = image
+obs_title = M31 Andromeda Galaxy
+obs_collection = DSO Images
