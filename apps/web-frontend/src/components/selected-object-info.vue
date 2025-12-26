@@ -16,7 +16,7 @@
        @pointercancel="handlePointerEnd">
 
     <!-- Top Pull Bar / Drag Handle -->
-    <div class="drag-handle-container">
+    <div class="drag-handle-container" @click="toggleExpand">
       <div class="drag-handle"></div>
     </div>
 
@@ -24,10 +24,13 @@
       <!-- Minimized Bar Content -->
       <div class="minimized-header">
         <div class="obj-identity">
-          <div class="obj-icon-container" @click="isExpanded = true">
+          <div class="obj-icon-container" @click.stop="toggleFavourite">
             <img :src="icon" class="obj-type-icon" :alt="type"/>
+            <div v-if="isFavourite" class="fav-badge">
+              <v-icon x-small color="white">mdi-heart</v-icon>
+            </div>
           </div>
-          <div class="obj-title-group" @click="isExpanded = true">
+          <div class="obj-title-group" @click="toggleExpand">
             <h1 class="obj-name">{{ title }}</h1>
             <p class="obj-meta">{{ type }}</p>
           </div>
@@ -60,9 +63,6 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
             </div>
-            <button class="close-btn-circle" @click.stop="unselect">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default {
       timer: null,
       // Touch state
       touchStartY: 0,
-      swipeThreshold: 50,
+      swipeThreshold: 40,
       nextPassTime: null
     }
   },
@@ -353,10 +353,19 @@ export default {
       if (hours > 0) return hours + 'h ' + mins + 'm'
       if (mins > 0) return mins + 'm ' + secs + 's'
       return secs + 's'
+    },
+    isFavourite: function () {
+      if (!this.selectedObject) return false
+      const favs = this.$store.state.favourites || []
+      return favs.some(fav =>
+        (fav.names && this.selectedObject.names && fav.names[0] === this.selectedObject.names[0]) ||
+        (fav.model_data && this.selectedObject.model_data && fav.model_data.norad_number && fav.model_data.norad_number === this.selectedObject.model_data.norad_number)
+      )
     }
   },
   watch: {
     selectedObject: function (s) {
+      this.isExpanded = false
       this.nextPassTime = null
       if (this.timer) {
         clearInterval(this.timer)
@@ -541,18 +550,22 @@ export default {
       this.touchStartY = e.clientY
     },
     handlePointerMove: function (e) {
-      // Avoid browser scrolling while swiping panel
-      if (this.isExpanded && this.$el.querySelector('.sheet-scroll-container').scrollTop > 0) {}
       // Optional: Visual dragging feedback could be added here
     },
     handlePointerEnd: function (e) {
       const touchEndY = e.clientY
       const deltaY = this.touchStartY - touchEndY
+      const scrollContainer = this.$el.querySelector('.sheet-scroll-container')
 
-      if (deltaY > this.swipeThreshold && !this.isExpanded) {
+      if (Math.abs(deltaY) < this.swipeThreshold) return
+
+      if (deltaY > 0 && !this.isExpanded) {
         this.isExpanded = true
-      } else if (deltaY < -this.swipeThreshold && this.isExpanded) {
-        this.isExpanded = false
+      } else if (deltaY < 0 && this.isExpanded) {
+        // Only collapse if at the top of the scroll content
+        if (!scrollContainer || scrollContainer.scrollTop <= 0) {
+          this.isExpanded = false
+        }
       }
     },
     formatInt: function (num, padLen) {
@@ -630,6 +643,10 @@ export default {
       } catch (e) {
         console.error('Next pass calculation failed', e)
       }
+    },
+    toggleFavourite: function () {
+      if (!this.selectedObject) return
+      this.$store.commit('toggleFavourite', this.selectedObject)
     }
   },
   mounted: function () {
@@ -658,6 +675,7 @@ export default {
   background: rgba(28, 28, 30, 0.85);
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
   border-radius: 20px 20px 0 0;
   color: #fff;
   z-index: 1000;
@@ -685,6 +703,7 @@ export default {
   width: 100%;
   padding: 4px 0 2px 0;
   cursor: pointer;
+  touch-action: none;
 }
 
 .drag-handle {
@@ -701,12 +720,17 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0 16px 12px 16px;
+  touch-action: none;
 }
 
 .obj-identity {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.fav-btn {
+  margin-left: -4px; /* Adjust as needed */
 }
 
 .obj-icon-container {
@@ -718,6 +742,22 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  position: relative;
+}
+
+.fav-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #E91E63;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1E1E1E; /* Match background */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .obj-title-group {

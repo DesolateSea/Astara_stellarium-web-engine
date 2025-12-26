@@ -14,8 +14,8 @@ android {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = ''
-            // Prevent compression of skydata files to ensure they're included in APK
-            noCompress 'eph', 'dat', 'gz', 'webp', 'json', 'txt', 'utf8', 'html', 'md', 'po', 'wasm', 'js', 'properties'
+            // // Prevent compression of skydata files to ensure they're included in APK
+            // noCompress 'eph', 'dat', 'gz', 'webp', 'json', 'txt', 'utf8', 'html', 'md', 'po', 'wasm', 'js', 'properties'
         }
     }
     buildTypes {

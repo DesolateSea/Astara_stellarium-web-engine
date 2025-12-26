@@ -38,6 +38,24 @@ const createStore = () => {
       showSettingsPanel: false,
       selectedObject: undefined,
 
+      // Load favourites from local storage
+      favourites: (() => {
+        try {
+          return JSON.parse(localStorage.getItem('stel_favourites') || '[]')
+        } catch (e) {
+          return []
+        }
+      })(),
+
+      // Load recents from local storage
+      recents: (() => {
+        try {
+          return JSON.parse(localStorage.getItem('stel_recents') || '[]')
+        } catch (e) {
+          return []
+        }
+      })(),
+
       showSidePanel: false,
 
       showMainToolBar: true,
@@ -103,6 +121,50 @@ const createStore = () => {
       },
       setSelectedObject (state, newValue) {
         state.selectedObject = newValue
+      },
+      addToFavourites (state, object) {
+        // Check if already exists
+        const exists = state.favourites.some(fav =>
+          (fav.names && object.names && fav.names[0] === object.names[0]) ||
+          (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number)
+        )
+        if (!exists) {
+          state.favourites.push(object)
+          localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
+        }
+      },
+      removeFromFavourites (state, object) {
+        state.favourites = state.favourites.filter(fav =>
+          !((fav.names && object.names && fav.names[0] === object.names[0]) ||
+            (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number))
+        )
+        localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
+      },
+      toggleFavourite (state, object) {
+        const index = state.favourites.findIndex(fav =>
+          (fav.names && object.names && fav.names[0] === object.names[0]) ||
+          (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number)
+        )
+        if (index === -1) {
+          state.favourites.push(object)
+        } else {
+          state.favourites.splice(index, 1)
+        }
+        localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
+      },
+      addToRecents (state, object) {
+        // Remove if already exists (to move to top)
+        state.recents = state.recents.filter(item =>
+          !((item.names && object.names && item.names[0] === object.names[0]) ||
+            (item.model_data && object.model_data && item.model_data.norad_number && item.model_data.norad_number === object.model_data.norad_number))
+        )
+        // Add to top
+        state.recents.unshift(object)
+        // Limit to 20
+        if (state.recents.length > 20) {
+          state.recents = state.recents.slice(0, 20)
+        }
+        localStorage.setItem('stel_recents', JSON.stringify(state.recents))
       }
     }
   })

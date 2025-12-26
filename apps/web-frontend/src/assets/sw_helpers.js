@@ -442,10 +442,22 @@ const swh = {
     return Promise.reject(new Error('Object not found locally: ' + name))
   },
 
-  querySkySources: async function (str, limit) {
+  querySkySources: async function (str, limit, filters) {
     if (!limit) {
       limit = 10
     }
+    // Default filters
+    const defaultFilters = {
+      planets: true,
+      stars: true,
+      constellations: true,
+      dsos: true,
+      satellites: true,
+      favourites: false,
+      favouritesList: []
+    }
+    const useFilters = { ...defaultFilters, ...(filters || {}) }
+
     const $stel = Vue.prototype.$stel
     if (!$stel) {
       return Promise.resolve([])
@@ -454,22 +466,35 @@ const swh = {
     const results = []
     const seenNames = new Set() // Track seen names to avoid duplicates
 
-    // Normalize helper: remove spaces, punctuation, uppercase, strip NAME prefix
+    // Normalize helper
     const normalize = (s) => {
       if (!s) return ''
-      // Remove spaces, periods, and common punctuation
       let n = s.toUpperCase().replace(/[\s.,\-'"]+/g, '')
       if (n.startsWith('NAME')) n = n.substring(4)
       return n
     }
 
     const searchNorm = normalize(str)
-    if (!searchNorm) return results
+    // if (!searchNorm) return results // Allow empty search for browsing if filters are set
 
-    // Helper to add result if not duplicate
+    let searchingGlobals = false
+    let headerAdded = false
+    let favCount = 0
+
+    // Helper to add result
     const addResult = (ss) => {
       const primaryName = ss.names && ss.names[0] ? ss.names[0] : ss.match
       const normName = normalize(primaryName)
+
+      // If we are switching to globals and have favs, inject header once
+      if (searchingGlobals && favCount > 0 && !headerAdded) {
+        // Only inject if this item is NOT a duplicate of a favorite
+        if (!seenNames.has(normName)) {
+          results.push({ header: true, text: 'Other Results' })
+          headerAdded = true
+        }
+      }
+
       if (!seenNames.has(normName)) {
         seenNames.add(normName)
         results.push(ss)
@@ -478,53 +503,108 @@ const swh = {
       return false
     }
 
-    // PRIORITY 1: Search planets first
-    const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
-    for (const planet of planets) {
-      if (results.length >= limit) break
-      if (normalize(planet).includes(searchNorm)) {
-        const obj = $stel.getObj('NAME ' + planet)
-        if (obj) {
-          addResult({
-            names: [planet],
-            types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
-            model: 'jpl_sso',
-            match: planet
+    // 1. Search Favourites First
+    if (useFilters.favouritesList && useFilters.favouritesList.length > 0) {
+      const favs = useFilters.favouritesList
+      for (const fav of favs) {
+        let nameMatch = false
+        if (!searchNorm) {
+          nameMatch = true // Match all if empty query
+        } else {
+          nameMatch = fav.names.some(n => {
+            const nNorm = normalize(n)
+            return nNorm.includes(searchNorm) || searchNorm.includes(nNorm)
           })
+        }
+        if (!nameMatch) continue
+
+        // Check types
+        const t = fav.types ? fav.types[0] : 'unknown'
+        let typeMatch = false
+        // Determine active type filters. If all specific filters are OFF, we might strictly filter?
+        // But usually standard search defaults to specific types ON.
+
+        if (['Sun', 'Moo', 'Pla'].includes(t) && useFilters.planets) typeMatch = true
+        else if (t === 'Star' && useFilters.stars) typeMatch = true
+        else if (t === 'Con' && useFilters.constellations) typeMatch = true
+        else if (['Asa'].includes(t) && useFilters.satellites) typeMatch = true
+        else if (t === 'dso' && useFilters.dsos) typeMatch = true
+        else if (!['Sun', 'Moo', 'Pla', 'Star', 'Con', 'Asa'].includes(t) && useFilters.dsos) typeMatch = true
+
+        if (typeMatch) {
+          addResult(fav)
         }
       }
     }
 
-    // PRIORITY 2: Search stars using name index
-    if (results.length < limit) {
+    favCount = results.length
+    searchingGlobals = true
+
+    // We increase limit because we might have added favorites.
+    // Wait, if favorites fill the limit, should we stop?
+    // User wants "add other types below".
+    // So we should try to fetch at least some globals if possible, but keep total reasonable.
+    // Let's cap total at limit + favCount to be generous, or just limit.
+    // Let's stick to strict `limit` for globals part?
+    // If I have 5 favorites, and limit is 10. I can add 5 globals.
+    // If I have 15 favorites, and limit is 10.
+    // I should probably show all matched favorites?
+    // Let's assume we want to show `limit` amount of globals + whatever favorites matched?
+    // Or just adhere to total `limit`?
+    // User says "add other types heading below".
+    // If I only show favorites due to limit, user won't see "others".
+    // I will interpret `limit` as "limit for globals", or ensure we fetch at least a few globals.
+    // Lets use `results.length < limit + favCount`?
+    // Actually, `swh.querySkySources` caller sets limit=20.
+    // If I return 25 items it's fine.
+
+    const globalLimit = limit + favCount
+
+    // PRIORITY 1: Search planets
+    if (useFilters.planets) {
+      const planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
+      for (const planet of planets) {
+        if (results.length >= globalLimit) break
+        if (normalize(planet).includes(searchNorm)) {
+          const obj = $stel.getObj('NAME ' + planet)
+          if (obj) {
+            addResult({
+              names: [planet],
+              types: [planet === 'Sun' ? 'Sun' : (planet === 'Moon' ? 'Moo' : 'Pla')],
+              model: 'jpl_sso',
+              match: planet
+            })
+          }
+        }
+      }
+    }
+
+    // PRIORITY 2: Search stars
+    if (useFilters.stars && results.length < globalLimit) {
       try {
         const nameIndexLoader = (await import('@/assets/name_index_loader.js')).default
-        const starNames = await nameIndexLoader.searchStars(str, (limit - results.length) * 3) // Get more candidates since some may not be found
+        // We ask for more candidates
+        const starNames = await nameIndexLoader.searchStars(str, limit * 3)
 
         for (const starName of starNames) {
-          if (results.length >= limit) break
+          if (results.length >= globalLimit) break
 
-          // Try multiple formats to find the star in Stellarium
+          // Lookup strategies
           let obj = null
           const lookupAttempts = [
             starName,
             '* ' + starName,
             'NAME ' + starName,
-            starName.replace(/\./g, ''), // Remove periods
+            starName.replace(/\./g, ''),
             '* ' + starName.replace(/\./g, '')
           ]
-
-          // Also try HIP number if present in name
-          if (starName.startsWith('HIP ')) {
-            lookupAttempts.push(starName)
-          }
+          if (starName.startsWith('HIP ')) lookupAttempts.push(starName)
 
           for (const attempt of lookupAttempts) {
             obj = $stel.getObj(attempt)
             if (obj) break
           }
 
-          // Only add to results if we found a valid Stellarium object
           if (obj) {
             const ss = obj.jsonData || {}
             ss.names = ss.names || obj.designations() || [starName]
@@ -533,21 +613,20 @@ const swh = {
             ss.match = starName
             addResult(ss)
           }
-          // Skip stars that can't be found in Stellarium engine
         }
       } catch (e) {
         console.log('Star search via name index failed:', e)
       }
     }
 
-    // PRIORITY 3: Search constellations using constellation index
-    if (results.length < limit) {
+    // PRIORITY 3: Search constellations
+    if (useFilters.constellations && results.length < globalLimit) {
       try {
         const { constellationLoader } = await import('@/assets/name_index_loader.js')
-        const conMatches = await constellationLoader.searchConstellations(str, (limit - results.length) * 2)
+        const conMatches = await constellationLoader.searchConstellations(str, limit * 2)
 
         for (const con of conMatches) {
-          if (results.length >= limit) break
+          if (results.length >= globalLimit) break
 
           const displayName = con.native || con.english || con.iau
           addResult({
@@ -556,7 +635,7 @@ const swh = {
             model: 'constellation',
             model_data: {
               iau_abbreviation: con.iau,
-              con_id: con.id // Store the full ID for direct lookup
+              con_id: con.id
             },
             match: displayName
           })
@@ -566,16 +645,15 @@ const swh = {
       }
     }
 
-    // PRIORITY 4: Search DSOs using name index
-    if (results.length < limit) {
+    // PRIORITY 4: Search DSOs
+    if (useFilters.dsos && results.length < globalLimit) {
       try {
         const nameIndexLoader = (await import('@/assets/name_index_loader.js')).default
-        const dsoNames = await nameIndexLoader.searchDSOs(str, (limit - results.length) * 3)
+        const dsoNames = await nameIndexLoader.searchDSOs(str, limit * 3)
 
         for (const dsoName of dsoNames) {
-          if (results.length >= limit) break
+          if (results.length >= globalLimit) break
 
-          // Try multiple formats to find the DSO in Stellarium
           let obj = null
           const lookupAttempts = [
             dsoName,
@@ -588,7 +666,6 @@ const swh = {
             if (obj) break
           }
 
-          // Only add to results if we found a valid Stellarium object
           if (obj) {
             const ss = obj.jsonData || {}
             ss.names = ss.names || obj.designations() || [dsoName]
@@ -597,22 +674,20 @@ const swh = {
             ss.match = dsoName
             addResult(ss)
           }
-          // Skip DSOs that can't be found in Stellarium engine
         }
       } catch (e) {
         console.log('DSO search via name index failed:', e)
       }
     }
 
-    // PRIORITY 5: Search satellites (JS-based cache)
-    if (results.length < limit) {
+    // PRIORITY 5: Search satellites
+    if (useFilters.satellites && results.length < globalLimit) {
       if (!swh._cachedSatellites) {
         swh._loadSatellites()
       }
       if (swh._cachedSatellites) {
         for (const sat of swh._cachedSatellites) {
-          if (results.length >= limit) break
-          // Check if any satellite name matches (normalized)
+          if (results.length >= globalLimit) break
           const nameMatch = sat.names.some(n => {
             const satNorm = normalize(n)
             return satNorm.includes(searchNorm) || searchNorm.includes(satNorm)
@@ -631,19 +706,37 @@ const swh = {
       }
     }
 
-    // Fallback: Try direct object lookup if no results yet
-    if (results.length === 0) {
+    // Fallback: Direct object lookup
+    if (results.length === (headerAdded ? 1 : 0) && !searchingGlobals) { // Logic check: if no matches found at all
+      // Actually checking if we found ANYTHING via global search
+      // But we can just run this fallback if we want.
+    }
+    // Original fallback logic was "if results.length === 0"
+    // Now we might have favorites.
+    // If no favorites and no global results, try direct lookup.
+    if (results.length === favCount) { // No globals added
       const directObj = $stel.getObj(str) || $stel.getObj('NAME ' + str)
       if (directObj) {
         const ss = directObj.jsonData || {}
         ss.names = ss.names || directObj.designations() || [str]
         ss.types = ss.types || [directObj.type || 'unknown']
         ss.match = str
-        addResult(ss)
+
+        let include = false
+        const t = ss.types[0]
+        if (['Sun', 'Moo', 'Pla'].includes(t) && useFilters.planets) include = true
+        else if (t === 'Star' && useFilters.stars) include = true
+        else if (t === 'Con' && useFilters.constellations) include = true
+        else if (['Asa'].includes(t) && useFilters.satellites) include = true
+        else if (useFilters.dsos) include = true
+
+        if (include) {
+          addResult(ss)
+        }
       }
     }
 
-    return results.slice(0, limit)
+    return results.slice(0, globalLimit + 1) // +1 just to be safe with header
   },
 
   sweObj2SkySource: function (obj) {

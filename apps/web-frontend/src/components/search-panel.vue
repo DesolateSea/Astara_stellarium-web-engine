@@ -7,40 +7,96 @@
 // repository.
 
 <template>
-  <v-dialog v-model="dialogVisible" transition="dialog-top-transition" content-class="search-dialog">
+  <v-dialog v-model="dialogVisible" transition="dialog-top-transition" :content-class="searchDialogClass" fullscreen hide-overlay>
     <v-card v-if="dialogVisible" class="search-panel">
-      <!-- Header with back arrow and search field -->
-      <div class="search-header">
-        <v-btn icon @click="closePanel" class="back-btn">
-          <v-icon>mdi-arrow-left</v-icon>
-        </v-btn>
-        <v-text-field
-          ref="searchInput"
-          v-model="searchText"
-          placeholder="Search"
-          hide-details
-          single-line
-          dense
-          class="search-input"
-          @keyup.native.esc="closePanel"
-        ></v-text-field>
+      <!-- Search Header Component -->
+      <search-header
+        ref="searchHeader"
+        :search-text.sync="searchText"
+        :show-search-input="true"
+        @back="goBack"
+        @close="closePanel"
+        @search="performSearch"
+      />
+
+      <!-- Filter Chips Bar Component -->
+      <filter-chips-bar
+        v-if="currentView === 'results' && searchFromView !== 'favorites'"
+        :active-filters="activeFilters"
+        @remove-filter="removeFilter"
+        @add-filter="navigateToView('browse')"
+      />
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Landing View Component -->
+        <landing-view
+          v-if="currentView === 'landing'"
+          :favorites-count="favourites.length"
+          @navigate="navigateToView"
+        />
+
+        <!-- Browse View Component -->
+        <browse-view
+          v-else-if="currentView === 'browse'"
+          :categories="browseCategories"
+          @select-category="selectBrowseCategory"
+        />
+
+        <!-- Favorites View Component -->
+        <results-list
+          v-else-if="currentView === 'favorites'"
+          :items="favourites"
+          :loading="false"
+          :favorites="favourites"
+          :get-icon="iconForSkySource"
+          :get-name="nameForSkySource"
+          :get-subtitle="getVisibilityString"
+          empty-icon="mdi-heart-outline"
+          empty-message="No favorites yet"
+          empty-subtext="Tap the heart icon on any object to add it here"
+          @select-item="sourceClicked"
+          @toggle-favorite="toggleFavourite"
+        />
+
+        <!-- Recents View Component -->
+        <results-list
+          v-else-if="currentView === 'recents'"
+          :items="recents"
+          :loading="false"
+          :favorites="favourites"
+          :get-icon="iconForSkySource"
+          :get-name="nameForSkySource"
+          :get-subtitle="getVisibilityString"
+          empty-icon="mdi-history"
+          empty-message="No recent searches"
+          @select-item="sourceClicked"
+          @toggle-favorite="toggleFavourite"
+        />
+
+        <!-- Search Results View Component -->
+        <results-list
+          v-else-if="currentView === 'results'"
+          :items="filteredResults"
+          :loading="loading"
+          :favorites="favourites"
+          :get-icon="iconForSkySource"
+          :get-name="nameForSkySource"
+          :get-subtitle="getVisibilityString"
+          empty-icon="mdi-magnify"
+          empty-message="No results found"
+          @select-item="sourceClicked"
+          @toggle-favorite="toggleFavourite"
+        />
       </div>
 
-      <!-- Search Results -->
-      <v-list v-if="searchText && autoCompleteChoices.length > 0" dense class="search-results">
-        <v-list-item v-for="source in autoCompleteChoices" :key="source.names[0]" @click="sourceClicked(source)">
-          <v-list-item-action>
-            <img :src="iconForSkySource(source)" width="24" height="24"/>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>{{ nameForSkySource(source) }}</v-list-item-title>
-            <v-list-item-subtitle>{{ typeToName(source.types[0]) }}</v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-
-      <!-- Categories when not searching -->
-      <div v-else></div>
+      <!-- Filter Dialog Component -->
+      <filter-dialog
+        :visible.sync="showFilterDialog"
+        :categories="browseCategories"
+        :active-filters="activeFilters"
+        @select-category="addFilter"
+      />
     </v-card>
   </v-dialog>
 </template>
@@ -48,16 +104,49 @@
 <script>
 import swh from '@/assets/sw_helpers.js'
 import _ from 'lodash'
+import SearchHeader from './search-panel/SearchHeader.vue'
+import FilterChipsBar from './search-panel/FilterChipsBar.vue'
+import LandingView from './search-panel/LandingView.vue'
+import BrowseView from './search-panel/BrowseView.vue'
+import ResultsList from './search-panel/ResultsList.vue'
+import FilterDialog from './search-panel/FilterDialog.vue'
 
 export default {
+  components: {
+    SearchHeader,
+    FilterChipsBar,
+    LandingView,
+    BrowseView,
+    ResultsList,
+    FilterDialog
+  },
   data: function () {
     return {
       searchText: '',
+      currentView: 'landing', // landing, browse, favorites, recents, results
       autoCompleteChoices: [],
-      lastQuery: undefined
+      lastQuery: undefined,
+      loading: false,
+      showFilterDialog: false,
+      activeFilters: [],
+      browseCategories: [
+        { label: 'Planet', icon: 'mdi-earth', typeFilter: { planets: true, stars: false, dsos: false } },
+        { label: 'Deep Sky Object', icon: 'mdi-weather-night', typeFilter: { planets: false, stars: false, dsos: true }, hasSub: false },
+        { label: 'Star', icon: 'mdi-star-four-points', typeFilter: { planets: false, stars: true, dsos: false }, hasSub: false },
+        { label: 'Artificial Satellite', icon: 'mdi-satellite-uplink', typeFilter: { satellites: true } },
+        { label: 'Constellation', icon: 'mdi-vector-polyline', typeFilter: { constellations: true } }
+        // { label: 'Asterism', icon: 'mdi-dots-hexagon', typeFilter: {} },
+        // { label: 'Meteor Shower', icon: 'mdi-weather-pouring', typeFilter: {} },
+        // { label: 'Minor Planet', icon: 'mdi-asteroid', typeFilter: {} },
+        // { label: 'Comet', icon: 'mdi-weather-windy-variant', typeFilter: {} }
+      ],
+      searchFromView: null
     }
   },
   computed: {
+    searchDialogClass () {
+      return this.currentView === 'landing' ? 'search-dialog search-dialog-transparent' : 'search-dialog search-dialog-black'
+    },
     dialogVisible: {
       get: function () {
         return this.$store.state.showSearchPanel
@@ -65,40 +154,145 @@ export default {
       set: function (val) {
         this.$store.commit('setValue', { varName: 'showSearchPanel', newValue: val })
       }
+    },
+    favourites () {
+      return this.$store.state.favourites || []
+    },
+    recents () {
+      return this.$store.state.recents || []
+    },
+
+    filteredResults () {
+      if (this.activeFilters.length === 0) return this.autoCompleteChoices
+      return this.autoCompleteChoices.filter(item => this.matchesFilters(item))
     }
   },
   watch: {
     dialogVisible: function (val) {
       if (val) {
         this.$nextTick(() => {
-          if (this.$refs.searchInput) {
-            this.$refs.searchInput.focus()
+          if (this.$refs.searchHeader) {
+            this.$refs.searchHeader.focus()
           }
         })
+        this.currentView = 'landing'
+        this.searchFromView = null
+        this.searchText = ''
+        this.activeFilters = []
       } else {
         this.searchText = ''
         this.autoCompleteChoices = []
+        this.activeFilters = []
+        this.searchFromView = null
       }
     },
-    searchText: function () {
-      if (this.searchText === '') {
-        this.autoCompleteChoices = []
-        this.lastQuery = undefined
-        return
+    searchText: function (val) {
+      if (val && val.length > 0) {
+        if (this.currentView !== 'results') {
+          this.searchFromView = this.currentView
+        }
+        this.currentView = 'results'
+        this.refresh()
+      } else if (this.currentView === 'results') {
+        // If user clears text while in results, go back to previous view or landing
+        // UNLESS we have active filters (browsing mode)
+        if (this.activeFilters.length === 0) {
+          this.currentView = this.searchFromView || 'landing'
+          this.searchFromView = null
+        } else {
+          this.refresh()
+        }
       }
-      this.refresh()
     }
   },
   methods: {
-    closePanel: function () {
+    navigateToView (viewName) {
+      this.currentView = viewName
+    },
+    goBack () {
+      if (this.currentView === 'landing') {
+        this.closePanel()
+      } else {
+        this.currentView = 'landing'
+        this.searchText = ''
+        this.activeFilters = []
+      }
+    },
+    closePanel () {
       this.dialogVisible = false
     },
-    sourceClicked: function (source) {
+    toggleFavourite (source) {
+      this.$store.commit('toggleFavourite', source)
+    },
+    addFilter (category) {
+      // Single selection mode
+      this.activeFilters = [{
+        id: Date.now(),
+        label: category.label,
+        icon: category.icon,
+        typeFilter: category.typeFilter
+      }]
+      this.showFilterDialog = false
+    },
+    removeFilter (filterId) {
+      this.activeFilters = this.activeFilters.filter(f => f.id !== filterId)
+    },
+    isFilterActive (category) {
+      return this.activeFilters.some(f => f.label === category.label)
+    },
+    matchesFilters (item) {
+      if (item.header) return true
+      // If no filters, show all
+      if (this.activeFilters.length === 0) return true
+
+      // Item must match at least one filter
+      return this.activeFilters.some(filter => {
+        const typeFilter = filter.typeFilter
+
+        // Check if item matches the filter criteria
+        if (typeFilter.planets && (item.types.includes('Pla') || item.types.includes('Sun') || item.types.includes('Moo'))) {
+          return true
+        }
+        if (typeFilter.stars && item.types.includes('*')) {
+          return true
+        }
+        if (typeFilter.dsos && (item.types.includes('Neb') || item.types.includes('Gal') || item.types.includes('OpC') || item.types.includes('GlC'))) {
+          return true
+        }
+        if (typeFilter.satellites && item.model === 'tle_satellite') {
+          return true
+        }
+        if (typeFilter.constellations && item.types.includes('Con')) {
+          return true
+        }
+
+        return false
+      })
+    },
+    selectBrowseCategory (cat) {
+      // Add this category as a filter and switch to results view
+      this.addFilter(cat)
+      this.currentView = 'results'
+      // Trigger a search with empty string to show all items of this type
+      if (!this.searchText) {
+        this.searchText = ' '
+        this.$nextTick(() => {
+          this.searchText = ''
+        })
+      }
+    },
+    performSearch () {
+      // Triggered on Enter
+    },
+    sourceClicked (source) {
       const $stel = this.$stel
       if (!$stel) {
         this.closePanel()
         return
       }
+
+      // Add to recents
+      this.$store.commit('addToRecents', source)
 
       // Try to get the object from the engine
       let obj = null
@@ -106,10 +300,8 @@ export default {
 
       // Try different lookup strategies based on source type
       if (source.model === 'jpl_sso' || source.types.includes('Pla') || source.types.includes('Sun') || source.types.includes('Moo')) {
-        // Planet/Moon/Sun
         obj = $stel.getObj('NAME ' + name)
       } else if (source.model === 'constellation' || source.types.includes('Con')) {
-        // Constellation - use model_data if available
         if (source.model_data && source.model_data.con_id) {
           obj = $stel.getObj(source.model_data.con_id)
         }
@@ -120,48 +312,64 @@ export default {
           obj = $stel.getObj('CON western ' + name) || $stel.getObj(name)
         }
       } else {
-        // Stars and other objects
         obj = $stel.getObj(name)
       }
 
       if (obj) {
-        // Select the object and point/lock to it
         $stel.core.selection = obj
         $stel.pointAndLock(obj)
       }
 
       this.closePanel()
     },
-
+    getVisibilityString (item) {
+      // Placeholder for visibility calculation shown in screenshot (e.g. "Visible from 21:06 to 06:06")
+      // This requires complex astronomical calculation.
+      // For now returning type or generic info.
+      return this.typeToName(item.types[0])
+    },
     refresh: _.debounce(function () {
       var that = this
-      let str = that.searchText
+      let str = that.searchText || ''
       str = str.toUpperCase()
       str = str.replace(/\s+/g, '')
+
       if (this.lastQuery === str) {
         return
       }
       this.lastQuery = str
-      swh.querySkySources(str, 10).then(results => {
+      this.loading = true
+
+      let options = {}
+      if (that.searchFromView === 'favorites') {
+        options = { favouritesList: that.favourites }
+      }
+      // Search all with favourites priority only if configured
+      swh.querySkySources(str, 20, options).then(results => {
         if (str !== that.lastQuery) {
           return
         }
         that.autoCompleteChoices = results
-      }, err => { console.log(err) })
+        that.loading = false
+      }, err => {
+        console.log(err)
+        that.loading = false
+      })
     }, 200),
-    nameForSkySource: function (s) {
-      const cn = swh.cleanupOneSkySourceName(s.match)
+    nameForSkySource (s) {
       const n = swh.nameForSkySource(s)
+      if (!s.match) return n
+      const cn = swh.cleanupOneSkySourceName(s.match)
       if (cn === n) {
         return n
       } else {
         return cn + ' (' + n + ')'
       }
     },
-    typeToName: function (t) {
+    typeToName (t) {
       return swh.nameForSkySourceType(t)
     },
-    iconForSkySource: function (s) {
+    iconForSkySource (s) {
       return swh.iconForSkySource(s)
     }
   }
@@ -170,57 +378,110 @@ export default {
 
 <style scoped>
 .search-panel {
-  background: rgba(30, 30, 30, 0.98) !important;
-  padding-top: env(safe-area-inset-top, 32px);
-  border-radius: 0 0 16px 16px;
-  max-height: 60vh;
-  overflow-y: auto;
+  background: transparent !important;
+  padding-top: 33px !important;
+  border-radius: 20px !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .search-header {
   display: flex;
   align-items: center;
-  padding: 12px 8px 12px 4px;
-  background: rgba(50, 50, 50, 0.9);
-  border-radius: 8px;
-  margin: 16px 16px 8px 16px;
+  padding: 8px 16px;
+  background: transparent;
+  min-height: 60px;
 }
 
 .back-btn {
   color: white !important;
+  margin-right: 8px;
 }
 
+.clear-btn {
+  margin-left: 4px;
+}
+
+/* Light colored search input - key feature */
 .search-input {
-  flex: 1;
-  margin-left: 8px;
+  background: rgba(130, 140, 170, 0.25) !important; /* Light grayish-blue background */
+  border-radius: 20px; /* More rounded like in the reference */
+  padding: 0 16px;
 }
 
 .search-input >>> .v-input__slot {
+  margin-bottom: 0;
   background: transparent !important;
+}
+
+.search-input >>> .v-input__slot:before,
+.search-input >>> .v-input__slot:after {
+  display: none !important;
 }
 
 .search-input >>> input {
   color: white !important;
+  padding: 10px 0;
 }
 
 .search-input >>> input::placeholder {
   color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.search-results {
-  background: transparent !important;
-  max-height: 40vh;
+/* Filter Chips Bar */
+.filter-chips-bar {
+  padding: 8px 16px 12px 16px;
+  background: transparent;
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-chip {
+  border-radius: 16px !important;
+  font-size: 13px;
+  height: 28px !important;
+  background: rgba(100, 120, 200, 0.25) !important;
+  border: 1px solid rgba(150, 170, 255, 0.3);
+}
+
+.filter-chip >>> .v-chip__close {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+}
+
+.add-filter-btn {
+  border-radius: 16px !important;
+  height: 28px !important;
+  border: 1px solid rgba(180, 140, 200, 0.4) !important;
+  text-transform: none;
+  font-size: 13px;
+  background: rgba(150, 100, 150, 0.15) !important;
+}
+
+.add-filter-btn >>> .v-btn__content {
+  color: rgba(220, 180, 255, 0.9);
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
   overflow-y: auto;
-  margin: 0 16px 16px 16px;
+  overflow-x: hidden;
 }
 </style>
 
 <style>
-/* Global styles for dialog positioning */
-.search-dialog {
-  align-self: flex-start !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-  width: 100% !important;
+.search-dialog-transparent {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.search-dialog-black {
+  background: rgb(23, 23, 23) !important;
 }
 </style>
