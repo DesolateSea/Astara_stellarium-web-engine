@@ -106,26 +106,34 @@ const swh = {
   _loadSatellites: function () {
     if (this._loadingSatellites) return
     this._loadingSatellites = true
-    fetch('skydata/tle_satellite.jsonl')
-      .then(r => r.text())
-      .then(text => {
-        const lines = text.split('\n')
-        this._cachedSatellites = []
-        for (const line of lines) {
-          if (!line.trim()) continue
-          try {
-            const sat = JSON.parse(line)
-            if (sat.names) {
-              this._cachedSatellites.push(sat)
+
+    import('pako').then(pako => {
+      fetch('skydata/tle_satellite.dat')
+        .then(r => r.arrayBuffer())
+        .then(buffer => {
+          // Decompress gzip data
+          const decompressed = pako.ungzip(new Uint8Array(buffer), { to: 'string' })
+          const lines = decompressed.split('\n')
+          this._cachedSatellites = []
+          for (const line of lines) {
+            if (!line.trim()) continue
+            try {
+              const sat = JSON.parse(line)
+              if (sat.names) {
+                this._cachedSatellites.push(sat)
+              }
+            } catch (e) {
+              // ignore bad lines
             }
-          } catch (e) {
-            // ignore bad lines
           }
-        }
-        console.log('Loaded ' + this._cachedSatellites.length + ' satellites for search cache')
-      })
-      .catch(e => console.error('Failed to load satellites for search', e))
-      .finally(() => { this._loadingSatellites = false })
+          console.log('Loaded ' + this._cachedSatellites.length + ' satellites for search cache')
+        })
+        .catch(e => console.error('Failed to load satellites for search', e))
+        .finally(() => { this._loadingSatellites = false })
+    }).catch(e => {
+      console.error('Failed to load pako for decompression', e)
+      this._loadingSatellites = false
+    })
   },
   // Light time for 1 au in s
   ERFA_AULT: 499.004782,
