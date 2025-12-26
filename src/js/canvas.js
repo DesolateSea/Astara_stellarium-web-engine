@@ -70,6 +70,7 @@ Module.afterInit(function() {
     }
 
     canvas.addEventListener('mousedown', function(e) {
+      console.log('[canvas] mousedown: buttons=' + e.buttons + ', pos=' + e.clientX + ',' + e.clientY);
       var that = this;
       e = e || event;
       fixPageXY(e);
@@ -78,6 +79,7 @@ Module.afterInit(function() {
       mouseButtons = e.buttons;
 
       document.onmouseup = function(e) {
+        console.log('[document] mouseup');
         e = e || event;
         fixPageXY(e);
         mouseDown = false;
@@ -85,6 +87,7 @@ Module.afterInit(function() {
         Module._core_on_mouse(0, 0, mousePos.x, mousePos.y, mouseButtons);
       };
       document.onmouseleave = function(e) {
+        console.log('[document] mouseleave');
         mouseDown = false;
       };
 
@@ -96,15 +99,18 @@ Module.afterInit(function() {
     });
 
     canvas.addEventListener('touchstart', function(e) {
+      console.log('[canvas] touchstart: touches=' + e.touches.length + ', changed=' + e.changedTouches.length);
       var rect = canvas.getBoundingClientRect();
       for (var i = 0; i < e.changedTouches.length; i++) {
         var id = e.changedTouches[i].identifier;
         var relX = e.changedTouches[i].pageX - rect.left;
         var relY = e.changedTouches[i].pageY - rect.top;
+        console.log('[canvas]   touch id=' + id + ' pos=' + relX.toFixed(1) + ',' + relY.toFixed(1));
         Module._core_on_mouse(id, 1, relX, relY, 1);
       }
     }, {passive: true});
     canvas.addEventListener('touchmove', function(e) {
+      console.log('[canvas] touchmove: touches=' + e.touches.length);
       e.preventDefault();
       var rect = canvas.getBoundingClientRect();
       for (var i = 0; i < e.changedTouches.length; i++) {
@@ -115,6 +121,7 @@ Module.afterInit(function() {
       }
     }, {passive: false});
     canvas.addEventListener('touchend', function(e) {
+      console.log('[canvas] touchend: touches=' + e.touches.length);
       var rect = canvas.getBoundingClientRect();
       for (var i = 0; i < e.changedTouches.length; i++) {
         var id = e.changedTouches[i].identifier;
@@ -123,6 +130,20 @@ Module.afterInit(function() {
         Module._core_on_mouse(id, 0, relX, relY, 1);
       }
     });
+    canvas.addEventListener('touchcancel', function(e) {
+      console.log('[canvas] touchcancel: touches=' + e.touches.length);
+    });
+
+    // Also add document-level listeners to see if events reach document
+    document.addEventListener('touchstart', function(e) {
+      console.log('[document] touchstart: touches=' + e.touches.length + ', target=' + e.target.tagName + '#' + e.target.id);
+    }, {capture: true});
+    document.addEventListener('touchmove', function(e) {
+      console.log('[document] touchmove: touches=' + e.touches.length);
+    }, {capture: true});
+    document.addEventListener('touchend', function(e) {
+      console.log('[document] touchend');
+    }, {capture: true});
 
     function getMouseWheelDelta(event) {
       var delta = 0;
@@ -140,11 +161,13 @@ Module.afterInit(function() {
     }
 
     var onWheelEvent = function(e) {
+      console.log('[canvas] wheel: type=' + e.type + ', delta=' + (e.wheelDelta || e.detail));
       e.preventDefault();
       fixPageXY(e);
       var pos = getMousePos(e);
       var zoom_factor = 1.05;
       var delta = getMouseWheelDelta(e) * 2;
+      console.log('[canvas] wheel: calling _core_on_zoom with k=' + Math.pow(zoom_factor, delta).toFixed(3));
       Module._core_on_zoom(Math.pow(zoom_factor, delta), pos.x, pos.y);
       return false;
     };

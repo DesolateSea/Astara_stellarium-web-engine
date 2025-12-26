@@ -158,6 +158,38 @@
         </div>
 
         <v-list dense class="settings-list">
+          <!-- Touch Controls Section -->
+          <v-subheader class="settings-subheader">Touch Controls</v-subheader>
+
+          <v-list-item class="slider-item">
+            <v-list-item-content>
+              <div class="d-flex justify-space-between align-center">
+                <v-list-item-title>Mouse Sensitivity</v-list-item-title>
+                <span class="sensitivity-value">{{ Math.round(touchPanSensitivity * 100) }}%</span>
+              </div>
+              <v-slider
+                v-model="touchPanSensitivity"
+                :min="0.1"
+                :max="5.0"
+                :step="0.1"
+                thumb-label
+                hide-details
+                class="settings-slider"
+              ></v-slider>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>Invert Y Axis</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-switch v-model="touchPanInvertY" hide-details class="mt-0"></v-switch>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+
           <v-list-item @click="currentView = 'grids-lines'">
             <v-list-item-content><v-list-item-title>Grids & Lines</v-list-item-title></v-list-item-content>
             <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
@@ -215,7 +247,9 @@ export default {
       sensorsEnabled: false,
       customLat: 0,
       customLng: 0,
-      editCoordType: 'latitude'
+      editCoordType: 'latitude',
+      touchPanSensitivityValue: 1.0,
+      touchPanInvertYValue: false
     }
   },
   computed: {
@@ -228,6 +262,32 @@ export default {
       },
       set: function (val) {
         this.$store.commit('setValue', { varName: 'showSettingsPanel', newValue: val })
+      }
+    },
+    touchPanSensitivity: {
+      get: function () {
+        return this.touchPanSensitivityValue
+      },
+      set: function (val) {
+        this.touchPanSensitivityValue = val
+        if (this.$stel) {
+          this.$stel.setValue('touch_pan_sensitivity', val)
+        }
+        // Persist to localStorage
+        this.saveTouchSettings()
+      }
+    },
+    touchPanInvertY: {
+      get: function () {
+        return this.touchPanInvertYValue
+      },
+      set: function (val) {
+        this.touchPanInvertYValue = val
+        if (this.$stel) {
+          this.$stel.setValue('touch_pan_invert_y', val)
+        }
+        // Persist to localStorage
+        this.saveTouchSettings()
       }
     },
     useAutoLocation: {
@@ -267,9 +327,43 @@ export default {
       if (!val) {
         this.currentView = 'main'
       }
+    },
+    currentView: function (val) {
+      if (val === 'advanced') {
+        this.loadTouchSettings()
+      }
     }
   },
   methods: {
+    loadTouchSettings: function () {
+      // Load from localStorage first
+      try {
+        const saved = JSON.parse(localStorage.getItem('stellarium-touch-settings'))
+        if (saved) {
+          this.touchPanSensitivityValue = saved.sensitivity !== undefined ? saved.sensitivity : 1.0
+          this.touchPanInvertYValue = saved.invertY !== undefined ? saved.invertY : false
+        }
+      } catch (e) {
+        // Use defaults if localStorage fails
+        this.touchPanSensitivityValue = 1.0
+        this.touchPanInvertYValue = false
+      }
+      // Apply to engine
+      if (this.$stel) {
+        this.$stel.setValue('touch_pan_sensitivity', this.touchPanSensitivityValue)
+        this.$stel.setValue('touch_pan_invert_y', this.touchPanInvertYValue)
+      }
+    },
+    saveTouchSettings: function () {
+      try {
+        localStorage.setItem('stellarium-touch-settings', JSON.stringify({
+          sensitivity: this.touchPanSensitivityValue,
+          invertY: this.touchPanInvertYValue
+        }))
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    },
     closePanel: function () {
       this.dialogVisible = false
     },
@@ -341,6 +435,15 @@ export default {
         document.getElementById('nightmode').style.opacity = '0'
       }
       document.getElementById('nightmode').style.visibility = 'hidden'
+
+      // Reset touch settings
+      this.touchPanSensitivity = 1.0
+      this.touchPanInvertY = false
+      try {
+        localStorage.removeItem('stellarium-touch-settings')
+      } catch (e) {
+        // Ignore localStorage errors
+      }
     }
   }
 }
@@ -376,6 +479,28 @@ export default {
 
 .settings-list .v-list-item {
   min-height: 56px;
+}
+
+.settings-subheader {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.slider-item .v-list-item-content {
+  padding: 8px 0;
+}
+
+.settings-slider {
+  margin-top: 8px;
+}
+
+.sensitivity-value {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  min-width: 50px;
+  text-align: right;
 }
 
 .location-value {

@@ -72,6 +72,22 @@ const swh = {
         Vue.prototype.$selectionLayer = lstel.createLayer({ id: 'slayer', z: 50, visible: true })
         Vue.prototype.$observingLayer = lstel.createLayer({ id: 'obslayer', z: 40, visible: true })
         Vue.prototype.$skyHintsLayer = lstel.createLayer({ id: 'skyhintslayer', z: 38, visible: true })
+
+        // Load persisted touch settings
+        try {
+          const saved = JSON.parse(localStorage.getItem('stellarium-touch-settings'))
+          if (saved) {
+            if (saved.sensitivity !== undefined) {
+              lstel.setValue('touch_pan_sensitivity', saved.sensitivity)
+            }
+            if (saved.invertY !== undefined) {
+              lstel.setValue('touch_pan_invert_y', saved.invertY)
+            }
+          }
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+
         callBackOnDone()
       }
     })
