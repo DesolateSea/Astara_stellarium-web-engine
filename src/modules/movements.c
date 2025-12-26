@@ -70,7 +70,7 @@ static int on_pan(const gesture_t *gest, void *user)
     bool invert_y = false;
 
     // Base sensitivity (radians per pixel)
-    const double BASE_SENS = 0.002;
+    const double BASE_SENS = 0.004;
 
     // Reference FOV for sensitivity scaling (90 degrees)
     const double REF_FOV = 90.0 * DD2R;
