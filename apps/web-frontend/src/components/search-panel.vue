@@ -8,7 +8,7 @@
 
 <template>
   <v-dialog v-model="dialogVisible" transition="dialog-top-transition" :content-class="searchDialogClass" fullscreen hide-overlay>
-    <v-card v-if="dialogVisible" class="search-panel">
+    <v-card v-if="dialogVisible" class="search-panel" @click.self="goBack">
       <!-- Search Header Component -->
       <search-header
         ref="searchHeader"
@@ -28,7 +28,7 @@
       />
 
       <!-- Content Area -->
-      <div class="content-area">
+      <div class="content-area" @click.self="goBack">
         <!-- Landing View Component -->
         <landing-view
           v-if="currentView === 'landing'"
@@ -473,6 +473,10 @@ export default {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.search-panel >>> .v-ripple__container {
+  display: none !important;
 }
 </style>
 

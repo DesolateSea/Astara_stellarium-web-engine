@@ -25,7 +25,7 @@
           {{ item.text }}
         </v-subheader>
         <div v-else :key="'i'+index">
-          <v-list-item @click="$emit('select-item', item)">
+          <v-list-item :ripple="false" @click="$emit('select-item', item)">
             <v-list-item-action>
               <img :src="getIcon(item)" width="24" height="24"/>
             </v-list-item-action>
@@ -36,8 +36,8 @@
               </v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
-              <v-btn icon small @click.stop="$emit('toggle-favorite', item)">
-                <v-icon :color="isFavorite(item) ? 'light-red lighten-1' : 'grey darken-1'">
+              <v-btn icon small :ripple="false" @click.stop="$emit('toggle-favorite', item)">
+                <v-icon :color="isFavorite(item) ? 'red lighten-1' : 'grey darken-1'">
                   {{ isFavorite(item) ? 'mdi-heart' : 'mdi-heart-outline' }}
                 </v-icon>
               </v-btn>

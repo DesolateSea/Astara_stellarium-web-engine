@@ -10,7 +10,7 @@
   <div class="landing-container">
     <div class="segmented-menu">
       <v-list dark class="segmented-list">
-        <v-list-item @click="$emit('navigate', 'favorites')">
+        <v-list-item :ripple="false" @click="$emit('navigate', 'favorites')">
           <v-list-item-icon>
             <v-icon color="white">mdi-heart</v-icon>
           </v-list-item-icon>
@@ -24,7 +24,7 @@
 
         <v-divider class="segment-divider"></v-divider>
 
-        <v-list-item @click="$emit('navigate', 'recents')">
+        <v-list-item :ripple="false" @click="$emit('navigate', 'recents')">
           <v-list-item-icon>
             <v-icon color="white">mdi-history</v-icon>
           </v-list-item-icon>
@@ -35,7 +35,7 @@
 
         <v-divider class="segment-divider"></v-divider>
 
-        <v-list-item @click="$emit('navigate', 'browse')">
+        <v-list-item :ripple="false" @click="$emit('navigate', 'browse')">
           <v-list-item-icon>
             <v-icon color="white">mdi-format-list-bulleted</v-icon>
           </v-list-item-icon>

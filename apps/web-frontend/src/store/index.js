@@ -50,7 +50,15 @@ const createStore = () => {
       // Load recents from local storage
       recents: (() => {
         try {
-          return JSON.parse(localStorage.getItem('stel_recents') || '[]')
+          const stored = JSON.parse(localStorage.getItem('stel_recents') || '[]')
+          const lastUpdated = parseInt(localStorage.getItem('stel_recents_timestamp') || '0')
+          const now = Date.now()
+          // 6 hours = 6 * 60 * 60 * 1000 ms
+          if (now - lastUpdated > 21600000) {
+            console.log('Recents expired, clearing.')
+            return []
+          }
+          return stored
         } catch (e) {
           return []
         }
@@ -154,10 +162,16 @@ const createStore = () => {
       },
       addToRecents (state, object) {
         // Remove if already exists (to move to top)
-        state.recents = state.recents.filter(item =>
-          !((item.names && object.names && item.names[0] === object.names[0]) ||
-            (item.model_data && object.model_data && item.model_data.norad_number && item.model_data.norad_number === object.model_data.norad_number))
-        )
+        const getId = (o) => {
+          if (o.model_data && o.model_data.norad_number) return 'sat_' + o.model_data.norad_number
+          if (o.names && o.names.length > 0) return o.names[0]
+          if (o.match) return o.match
+          return JSON.stringify(o)
+        }
+        const objId = getId(object)
+
+        state.recents = state.recents.filter(item => getId(item) !== objId)
+
         // Add to top
         state.recents.unshift(object)
         // Limit to 20
@@ -165,6 +179,7 @@ const createStore = () => {
           state.recents = state.recents.slice(0, 20)
         }
         localStorage.setItem('stel_recents', JSON.stringify(state.recents))
+        localStorage.setItem('stel_recents_timestamp', Date.now().toString())
       }
     }
   })

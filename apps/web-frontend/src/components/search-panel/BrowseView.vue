@@ -12,6 +12,7 @@
       <v-list-item
         v-for="cat in categories"
         :key="cat.label"
+        :ripple="false"
         @click="$emit('select-category', cat)"
       >
         <v-list-item-icon>

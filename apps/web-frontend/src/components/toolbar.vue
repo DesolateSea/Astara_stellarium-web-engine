@@ -9,11 +9,11 @@
 <template>
   <div id="toolbar-image">
     <v-toolbar class="transparent" dense flat>
-      <v-btn icon @click="openSettings" class="menu-btn">
+      <v-btn icon :ripple="false" @click="openSettings" class="menu-btn">
         <v-icon size="28">mdi-menu</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn icon @click="openSearch" class="search-btn">
+      <v-btn icon :ripple="false" @click="openSearch" class="search-btn">
         <v-icon size="28">mdi-magnify</v-icon>
       </v-btn>
     </v-toolbar>
@@ -55,4 +55,5 @@ export default {
 .menu-btn, .search-btn {
   color: white !important;
 }
+
 </style>

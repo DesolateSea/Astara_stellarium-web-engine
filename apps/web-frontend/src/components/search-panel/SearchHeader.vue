@@ -8,7 +8,7 @@
 
 <template>
   <div class="search-header">
-    <v-btn icon @click="$emit('back')" class="back-btn">
+    <v-btn icon :ripple="false" @click="$emit('back')" class="back-btn">
       <v-icon>mdi-arrow-left</v-icon>
     </v-btn>
     <v-text-field
@@ -24,7 +24,7 @@
       @keyup.native.enter="$emit('search')"
       @keyup.native.esc="$emit('close')"
     ></v-text-field>
-    <v-btn icon v-if="searchText" @click="$emit('update:searchText', '')" class="clear-btn">
+    <v-btn icon :ripple="false" v-if="searchText" @click="$emit('update:searchText', '')" class="clear-btn">
       <v-icon small color="grey darken-1">mdi-close-circle</v-icon>
     </v-btn>
   </div>
