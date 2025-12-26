@@ -273,6 +273,8 @@ export default {
         if (this.$stel) {
           this.$stel.setValue('touch_pan_sensitivity', val)
         }
+        // Persist to localStorage
+        this.saveTouchSettings()
       }
     },
     touchPanInvertY: {
@@ -284,6 +286,8 @@ export default {
         if (this.$stel) {
           this.$stel.setValue('touch_pan_invert_y', val)
         }
+        // Persist to localStorage
+        this.saveTouchSettings()
       }
     },
     useAutoLocation: {
@@ -332,11 +336,32 @@ export default {
   },
   methods: {
     loadTouchSettings: function () {
+      // Load from localStorage first
+      try {
+        const saved = JSON.parse(localStorage.getItem('stellarium-touch-settings'))
+        if (saved) {
+          this.touchPanSensitivityValue = saved.sensitivity !== undefined ? saved.sensitivity : 1.0
+          this.touchPanInvertYValue = saved.invertY !== undefined ? saved.invertY : false
+        }
+      } catch (e) {
+        // Use defaults if localStorage fails
+        this.touchPanSensitivityValue = 1.0
+        this.touchPanInvertYValue = false
+      }
+      // Apply to engine
       if (this.$stel) {
-        const sens = this.$stel.getValue('touch_pan_sensitivity')
-        const invert = this.$stel.getValue('touch_pan_invert_y')
-        this.touchPanSensitivityValue = (sens !== undefined && sens !== null) ? sens : 1.0
-        this.touchPanInvertYValue = (invert !== undefined && invert !== null) ? invert : false
+        this.$stel.setValue('touch_pan_sensitivity', this.touchPanSensitivityValue)
+        this.$stel.setValue('touch_pan_invert_y', this.touchPanInvertYValue)
+      }
+    },
+    saveTouchSettings: function () {
+      try {
+        localStorage.setItem('stellarium-touch-settings', JSON.stringify({
+          sensitivity: this.touchPanSensitivityValue,
+          invertY: this.touchPanInvertYValue
+        }))
+      } catch (e) {
+        // Ignore localStorage errors
       }
     },
     closePanel: function () {
@@ -410,6 +435,15 @@ export default {
         document.getElementById('nightmode').style.opacity = '0'
       }
       document.getElementById('nightmode').style.visibility = 'hidden'
+
+      // Reset touch settings
+      this.touchPanSensitivity = 1.0
+      this.touchPanInvertY = false
+      try {
+        localStorage.removeItem('stellarium-touch-settings')
+      } catch (e) {
+        // Ignore localStorage errors
+      }
     }
   }
 }
