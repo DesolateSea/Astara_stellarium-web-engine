@@ -131,17 +131,38 @@ static int on_click(const gesture_t *gest, void *user)
 static int on_pinch(const gesture_t *gest, void *user)
 {
     static double start_fov = 0;
-    double fov;
+    double fov, pos_start[3], pos_end[3];
+    double sal, saz, dal, daz;
     projection_t proj;
 
     if (gest->state == GESTURE_BEGIN) {
         start_fov = core->fov;
     }
-    fov = start_fov / gest->pinch;
+
+    // Get the position under the pinch center before zoom
     core_get_proj(&proj);
+    screen_to_mount(core->observer, &proj, gest->pos, pos_start);
+
+    // Apply the new FOV
+    fov = start_fov / gest->pinch;
     fov = clamp(fov, CORE_MIN_FOV, proj.klass->max_ui_fov);
     core->fov = fov;
+
+    // Get the position under the pinch center after zoom
+    core_get_proj(&proj);
+    screen_to_mount(core->observer, &proj, gest->pos, pos_end);
+
+    // Adjust yaw/pitch to keep the pinch center at the same sky position
+    vec3_to_sphe(pos_start, &saz, &sal);
+    vec3_to_sphe(pos_end, &daz, &dal);
+    core->observer->yaw += (saz - daz);
+    core->observer->pitch += (sal - dal);
+    core->observer->pitch = clamp(core->observer->pitch, -M_PI / 2, +M_PI / 2);
+
+    // Notify the changes
     module_changed((obj_t*)core, "fov");
+    module_changed(&core->observer->obj, "pitch");
+    module_changed(&core->observer->obj, "yaw");
     return 0;
 }
 
