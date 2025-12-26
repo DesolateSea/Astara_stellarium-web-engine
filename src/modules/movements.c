@@ -131,10 +131,16 @@ static int on_click(const gesture_t *gest, void *user)
 static int on_pinch(const gesture_t *gest, void *user)
 {
     static double start_fov = 0;
+    double fov;
+    projection_t proj;
+
     if (gest->state == GESTURE_BEGIN) {
         start_fov = core->fov;
     }
-    core->fov = start_fov / gest->pinch;
+    fov = start_fov / gest->pinch;
+    core_get_proj(&proj);
+    fov = clamp(fov, CORE_MIN_FOV, proj.klass->max_ui_fov);
+    core->fov = fov;
     module_changed((obj_t*)core, "fov");
     return 0;
 }
