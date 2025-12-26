@@ -9,7 +9,6 @@
 import Vue from 'vue'
 import _ from 'lodash'
 import StelWebEngine from '@/assets/js/stellarium-web-engine.js'
-import Moment from 'moment'
 
 var DDDate = Date
 DDDate.prototype.getJD = function () {
@@ -306,26 +305,6 @@ const swh = {
       }
     }
     return ''
-  },
-
-  getShareLink: function (context) {
-    let link = 'https://stellarium-web.org/'
-    if (context.$store.state.selectedObject) {
-      link += 'skysource/' + this.cleanupOneSkySourceName(context.$store.state.selectedObject.names[0], 5).replace(/\s+/g, '')
-    }
-    link += '?'
-    link += 'fov=' + (context.$store.state.stel.fov * 180 / Math.PI).toPrecision(5)
-    const d = new Date()
-    d.setMJD(context.$stel.core.observer.utc)
-    link += '&date=' + new Moment(d).utc().format()
-    link += '&lat=' + (context.$stel.core.observer.latitude * 180 / Math.PI).toFixed(2)
-    link += '&lng=' + (context.$stel.core.observer.longitude * 180 / Math.PI).toFixed(2)
-    link += '&elev=' + context.$stel.core.observer.elevation
-    if (!context.$store.state.selectedObject) {
-      link += '&az=' + (context.$stel.core.observer.yaw * 180 / Math.PI).toPrecision(5)
-      link += '&alt=' + (context.$stel.core.observer.pitch * 180 / Math.PI).toPrecision(5)
-    }
-    return link
   },
 
   // Return a SweObj matching a passed sky source JSON object if it's already instanciated in SWE
