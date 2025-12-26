@@ -195,11 +195,6 @@ static void core_set_default(void)
     core->touch_pan_sensitivity = 1.0;
     core->touch_pan_invert_y = false;
 
-    // Custom fov limit
-    core->fov_use_limit = false;
-    core->fov_lower_limit = 0;
-    core->fov_upper_limit = 0;
-
     observer_update(core->observer, false);
 }
 

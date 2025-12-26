@@ -172,11 +172,6 @@ struct core
     // Custom touch pan controls
     double touch_pan_sensitivity;
     bool touch_pan_invert_y;
-
-    // Custom fov limiting
-    bool fov_use_limit;
-    double fov_lower_limit;
-    double fov_upper_limit;
 };
 
 enum {
