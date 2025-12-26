@@ -72,6 +72,9 @@ static int on_pan(const gesture_t *gest, void *user)
     // Base sensitivity (radians per pixel)
     const double BASE_SENS = 0.002;
 
+    // Reference FOV for sensitivity scaling (90 degrees)
+    const double REF_FOV = 90.0 * DD2R;
+
     // Read frontend-configurable parameters (if present)
 
     // Note to self:
@@ -80,7 +83,11 @@ static int on_pan(const gesture_t *gest, void *user)
     obj_get_attr(&core->obj, "touch_pan_sensitivity", &sens_mul);
     obj_get_attr(&core->obj, "touch_pan_invert_y", &invert_y);
 
-    double sens = BASE_SENS * sens_mul;
+    // Scale sensitivity based on current FOV (zoom level)
+    // When zoomed in (small FOV), pan slower for precision
+    // When zoomed out (large FOV), pan faster
+    double fov_scale = core->fov / REF_FOV;
+    double sens = BASE_SENS * sens_mul * fov_scale;
 
     if (gest->state == GESTURE_BEGIN) {
         start_pitch = core->observer->pitch;
