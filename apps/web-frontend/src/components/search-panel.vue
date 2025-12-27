@@ -134,11 +134,12 @@ export default {
         { label: 'Deep Sky Object', icon: 'mdi-weather-night', typeFilter: { planets: false, stars: false, dsos: true }, hasSub: false },
         { label: 'Star', icon: 'mdi-star-four-points', typeFilter: { planets: false, stars: true, dsos: false }, hasSub: false },
         { label: 'Artificial Satellite', icon: 'mdi-satellite-uplink', typeFilter: { satellites: true } },
-        { label: 'Constellation', icon: 'mdi-vector-polyline', typeFilter: { constellations: true } }
+        { label: 'Constellation', icon: 'mdi-vector-polyline', typeFilter: { constellations: true } },
         // { label: 'Asterism', icon: 'mdi-dots-hexagon', typeFilter: {} },
         // { label: 'Meteor Shower', icon: 'mdi-weather-pouring', typeFilter: {} },
-        // { label: 'Minor Planet', icon: 'mdi-asteroid', typeFilter: {} },
-        // { label: 'Comet', icon: 'mdi-weather-windy-variant', typeFilter: {} }
+        // { label: 'Meteor Shower', icon: 'mdi-weather-pouring', typeFilter: {} },
+        { label: 'Minor Planet', icon: 'mdi-chart-bubble', typeFilter: { minorPlanets: true } },
+        { label: 'Comet', icon: 'mdi-weather-windy-variant', typeFilter: { comets: true } }
       ],
       searchFromView: null
     }
@@ -265,6 +266,12 @@ export default {
         if (typeFilter.constellations && item.types.includes('Con')) {
           return true
         }
+        if (typeFilter.comets && item.types.includes('Com')) {
+          return true
+        }
+        if (typeFilter.minorPlanets && (item.types.includes('MPl') || item.types.includes('Asteroid'))) {
+          return true
+        }
 
         return false
       })
@@ -294,30 +301,14 @@ export default {
       // Add to recents
       this.$store.commit('addToRecents', source)
 
-      // Try to get the object from the engine
-      let obj = null
-      const name = source.names && source.names[0] ? source.names[0] : source.match
-
-      // Try different lookup strategies based on source type
-      if (source.model === 'jpl_sso' || source.types.includes('Pla') || source.types.includes('Sun') || source.types.includes('Moo')) {
-        obj = $stel.getObj('NAME ' + name)
-      } else if (source.model === 'constellation' || source.types.includes('Con')) {
-        if (source.model_data && source.model_data.con_id) {
-          obj = $stel.getObj(source.model_data.con_id)
-        }
-        if (!obj && source.model_data && source.model_data.iau_abbreviation) {
-          obj = $stel.getObj('CON western ' + source.model_data.iau_abbreviation)
-        }
-        if (!obj) {
-          obj = $stel.getObj('CON western ' + name) || $stel.getObj(name)
-        }
-      } else {
-        obj = $stel.getObj(name)
-      }
+      // Use swh helper to resolve the object
+      const obj = swh.skySource2SweObj(source)
 
       if (obj) {
         $stel.core.selection = obj
         $stel.pointAndLock(obj)
+      } else {
+        console.warn('Could not resolve object for:', source)
       }
 
       this.closePanel()

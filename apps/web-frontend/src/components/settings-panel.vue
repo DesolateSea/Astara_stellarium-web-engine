@@ -44,6 +44,19 @@
             </v-list-item-action>
           </v-list-item>
 
+          <v-list-item @click="currentView = 'sky-culture'">
+            <v-list-item-icon>
+              <v-icon color="grey">mdi-creation</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Sky Culture</v-list-item-title>
+              <v-list-item-subtitle>{{ currentSkyCultureName }}</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon>mdi-chevron-right</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+
           <v-list-item @click="currentView = 'advanced'">
             <v-list-item-icon>
               <v-icon color="grey">mdi-cog</v-icon>
@@ -55,6 +68,31 @@
               <v-icon>mdi-chevron-right</v-icon>
             </v-list-item-action>
           </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+
+          <!-- Display Settings Section -->
+          <v-subheader class="settings-subheader">Lines</v-subheader>
+
+          <v-list-item @click="meridianOn = !meridianOn">
+            <v-list-item-content>
+              <v-list-item-title>Meridian Line</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-checkbox v-model="meridianOn" hide-details @click.stop></v-checkbox>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-list-item @click="eclipticOn = !eclipticOn">
+            <v-list-item-content>
+              <v-list-item-title>Ecliptic Line</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-checkbox v-model="eclipticOn" hide-details @click.stop></v-checkbox>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
 
           <v-list-item @click="resetSettings">
             <v-list-item-icon>
@@ -148,6 +186,32 @@
       />
     </div>
 
+      <!-- Sky Culture View -->
+      <div v-else-if="currentView === 'sky-culture'">
+        <div class="settings-header">
+          <v-btn icon @click="currentView = 'main'" class="back-btn">
+            <v-icon>mdi-arrow-left</v-icon>
+          </v-btn>
+          <span class="settings-title">Sky Culture</span>
+        </div>
+
+        <v-list dense class="settings-list sky-culture-list">
+          <v-list-item
+            v-for="culture in skyCultureOptions"
+            :key="culture.key"
+            @click="selectSkyCulture(culture.key)"
+            :class="{ 'selected-culture': currentSkyCulture === culture.key }"
+          >
+            <v-list-item-content>
+              <v-list-item-title>{{ culture.name }}</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action v-if="currentSkyCulture === culture.key">
+              <v-icon color="primary">mdi-check</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+      </div>
+
       <!-- Advanced View -->
       <div v-else-if="currentView === 'advanced'">
         <div class="settings-header">
@@ -185,6 +249,29 @@
             </v-list-item-content>
             <v-list-item-action>
               <v-switch v-model="touchPanInvertY" hide-details class="mt-0"></v-switch>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+
+          <!-- Display Section -->
+          <v-subheader class="settings-subheader">Display</v-subheader>
+
+          <v-list-item @click="milkyWayOn = !milkyWayOn">
+            <v-list-item-content>
+              <v-list-item-title>Milky Way</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-checkbox v-model="milkyWayOn" hide-details @click.stop></v-checkbox>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-list-item @click="dssOn = !dssOn">
+            <v-list-item-content>
+              <v-list-item-title>DSS (Deep Sky Survey)</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-checkbox v-model="dssOn" hide-details @click.stop></v-checkbox>
             </v-list-item-action>
           </v-list-item>
 
@@ -249,7 +336,12 @@ export default {
       customLng: 0,
       editCoordType: 'latitude',
       touchPanSensitivityValue: 1.0,
-      touchPanInvertYValue: false
+      touchPanInvertYValue: false,
+      selectedSkyCulture: 'western',
+      skyCultureOptions: [
+        { key: 'western', name: 'Western' },
+        { key: 'belarusian', name: 'Belarusian' }
+      ]
     }
   },
   computed: {
@@ -320,6 +412,65 @@ export default {
     },
     cityName: function () {
       return this.currentLocation.short_name || 'Unknown'
+    },
+    currentSkyCulture: {
+      get: function () {
+        return this.selectedSkyCulture
+      },
+      set: function (newValue) {
+        this.selectedSkyCulture = newValue
+        if (this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+          const baseUrl = '/'
+          const url = baseUrl + 'skydata/skycultures/' + newValue
+          this.$stel.core.skycultures.addDataSource({ url: url, key: newValue })
+          this.$stel.core.skycultures.current_id = newValue
+          localStorage.setItem('stellarium-skyculture', newValue)
+        }
+      }
+    },
+    currentSkyCultureName: function () {
+      const culture = this.skyCultureOptions.find(c => c.key === this.selectedSkyCulture)
+      return culture ? culture.name : 'Western'
+    },
+    dssOn: {
+      get: function () {
+        return this.$store.state.stel && this.$store.state.stel.dss ? this.$store.state.stel.dss.visible : false
+      },
+      set: function (newValue) {
+        if (this.$stel && this.$stel.core && this.$stel.core.dss) {
+          this.$stel.core.dss.visible = newValue
+        }
+      }
+    },
+    milkyWayOn: {
+      get: function () {
+        return this.$store.state.stel && this.$store.state.stel.milkyway ? this.$store.state.stel.milkyway.visible : false
+      },
+      set: function (newValue) {
+        if (this.$stel && this.$stel.core && this.$stel.core.milkyway) {
+          this.$stel.core.milkyway.visible = newValue
+        }
+      }
+    },
+    meridianOn: {
+      get: function () {
+        return this.$store.state.stel && this.$store.state.stel.lines && this.$store.state.stel.lines.meridian ? this.$store.state.stel.lines.meridian.visible : false
+      },
+      set: function (newValue) {
+        if (this.$stel && this.$stel.core && this.$stel.core.lines && this.$stel.core.lines.meridian) {
+          this.$stel.core.lines.meridian.visible = newValue
+        }
+      }
+    },
+    eclipticOn: {
+      get: function () {
+        return this.$store.state.stel && this.$store.state.stel.lines && this.$store.state.stel.lines.ecliptic ? this.$store.state.stel.lines.ecliptic.visible : false
+      },
+      set: function (newValue) {
+        if (this.$stel && this.$stel.core && this.$stel.core.lines && this.$stel.core.lines.ecliptic) {
+          this.$stel.core.lines.ecliptic.visible = newValue
+        }
+      }
     }
   },
   watch: {
@@ -332,6 +483,13 @@ export default {
       if (val === 'advanced') {
         this.loadTouchSettings()
       }
+    }
+  },
+  mounted: function () {
+    // Load saved sky culture preference
+    const savedCulture = localStorage.getItem('stellarium-skyculture')
+    if (savedCulture) {
+      this.selectedSkyCulture = savedCulture
     }
   },
   methods: {
@@ -369,6 +527,10 @@ export default {
     },
     toggleSensors: function () {
       this.sensorsEnabled = !this.sensorsEnabled
+    },
+    selectSkyCulture: function (key) {
+      this.currentSkyCulture = key
+      this.currentView = 'main'
     },
     updateLocation: function () {
       const lat = Math.max(-90, Math.min(90, this.customLat))
@@ -530,6 +692,20 @@ export default {
 
 .submenu-wrapper {
   padding: 16px;
+}
+
+.sky-culture-list .v-list-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sky-culture-list .selected-culture {
+  background: rgba(33, 150, 243, 0.15) !important;
+  border-left-color: #2196F3;
+}
+
+.sky-culture-list .v-list-item:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 </style>
 

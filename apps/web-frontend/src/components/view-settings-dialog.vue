@@ -11,6 +11,17 @@
 <v-card v-if="$store.state.showViewSettingsDialog" class="secondary white--text">
   <v-card-title><div class="text-h5">{{ $t('View settings') }}</div></v-card-title>
   <v-card-text>
+    <v-select
+      v-model="currentSkyCulture"
+      :items="skyCultureOptions"
+      item-text="name"
+      item-value="key"
+      :label="$t('Sky Culture')"
+      dark
+      dense
+      outlined
+      class="mb-2"
+    ></v-select>
     <v-checkbox hide-details :label="$t('Milky Way')" v-model="milkyWayOn"></v-checkbox>
     <v-checkbox hide-details :label="$t('DSS')" v-model="dssOn"></v-checkbox>
     <v-checkbox hide-details :label="$t('Meridian Line')" v-model="meridianOn"></v-checkbox>
@@ -28,9 +39,37 @@
 export default {
   data: function () {
     return {
+      skyCultureOptions: [
+        { key: 'western', name: 'Western' },
+        { key: 'belarusian', name: 'Belarusian' }
+      ]
     }
   },
   computed: {
+    currentSkyCulture: {
+      get: function () {
+        if (this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+          return this.$stel.core.skycultures.current_id || 'western'
+        }
+        return 'western'
+      },
+      set: function (newValue) {
+        if (this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+          // Check if the data source is already added
+          const baseUrl = '/'
+          const url = baseUrl + 'skydata/skycultures/' + newValue
+
+          // Add the data source if not already present
+          this.$stel.core.skycultures.addDataSource({ url: url, key: newValue })
+
+          // Switch to the new culture
+          this.$stel.core.skycultures.current_id = newValue
+
+          // Save preference
+          localStorage.setItem('stellarium-skyculture', newValue)
+        }
+      }
+    },
     dssOn: {
       get: function () {
         return this.$store.state.stel.dss.visible
@@ -62,6 +101,13 @@ export default {
       set: function (newValue) {
         this.$stel.core.lines.ecliptic.visible = newValue
       }
+    }
+  },
+  mounted: function () {
+    // Load saved sky culture preference
+    const savedCulture = localStorage.getItem('stellarium-skyculture')
+    if (savedCulture && this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+      this.currentSkyCulture = savedCulture
     }
   }
 }

@@ -134,6 +134,77 @@ const swh = {
       this._loadingSatellites = false
     })
   },
+
+  _cachedComets: null,
+  _loadingComets: false,
+  _loadComets: function () {
+    if (this._loadingComets) return Promise.resolve()
+    if (this._cachedComets) return Promise.resolve()
+
+    this._loadingComets = true
+    return fetch('skydata/CometEls.txt')
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.split('\n')
+        this._cachedComets = []
+        // Regex to match the first 12 fields (Desig, Y, M, D, q, e, p, n, i, ep, H, G)
+        const preambleRe = /^\s*(\S+\s+){12}/
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          const match = trimmed.match(preambleRe)
+          if (match) {
+            // The rest is Name and Ref
+            const rest = trimmed.substring(match[0].length)
+            // Name and Ref are separated by >= 2 spaces usually
+            const parts = rest.split(/\s{2,}/)
+            const name = parts[0].trim()
+            if (name) {
+              this._cachedComets.push({
+                names: [name],
+                types: ['Com'],
+                model: 'comet',
+                match: name
+              })
+            }
+          }
+        }
+        console.log('Loaded ' + this._cachedComets.length + ' comets for search cache')
+      })
+      .catch(e => console.error('Failed to load comets for search', e))
+      .finally(() => { this._loadingComets = false })
+  },
+
+  _cachedMinorPlanets: null,
+  _loadingMinorPlanets: false,
+  _loadMinorPlanets: function () {
+    if (this._loadingMinorPlanets) return Promise.resolve()
+    if (this._cachedMinorPlanets) return Promise.resolve()
+
+    this._loadingMinorPlanets = true
+    return fetch('skydata/mpcorb.dat')
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.split('\n')
+        this._cachedMinorPlanets = []
+        for (const line of lines) {
+          // MPC Format, name is cols 167-194 (1-based) => 166-194 (0-based)
+          if (line.length < 194) continue
+          const name = line.substring(166, 194).trim()
+          if (name) {
+            this._cachedMinorPlanets.push({
+              names: [name],
+              types: ['MPl'],
+              model: 'minor_planet',
+              match: name
+            })
+          }
+        }
+        console.log('Loaded ' + this._cachedMinorPlanets.length + ' minor planets for search cache')
+      })
+      .catch(e => console.error('Failed to load minor planets for search', e))
+      .finally(() => { this._loadingMinorPlanets = false })
+  },
   // Light time for 1 au in s
   ERFA_AULT: 499.004782,
   // Seconds per day
@@ -318,45 +389,90 @@ const swh = {
       const id = 'NORAD ' + ss.model_data.norad_number
       obj = $stel.getObj(id)
     } else if (ss.model === 'constellation' && ss.model_data) {
-      // Try direct con_id first, then construct from iau_abbreviation
+      // Try direct con_id first (e.g., "CON belarusian 019" or "CON western Ori")
       if (ss.model_data.con_id) {
         obj = $stel.getObj(ss.model_data.con_id)
       }
+      // Fallback: try IAU abbreviation with western prefix
       if (!obj && ss.model_data.iau_abbreviation) {
         const id = 'CON western ' + ss.model_data.iau_abbreviation
         obj = $stel.getObj(id)
       }
+      // Fallback: try getting by name
+      if (!obj && ss.names && ss.names[0]) {
+        obj = $stel.getObj('NAME ' + ss.names[0]) || $stel.getObj(ss.names[0])
+      }
     }
+    // Generic fallback lookup with type validation
     if (!obj && ss.names && ss.names.length) {
       const name = ss.names[0]
-      // Try direct lookup first
-      obj = $stel.getObj(name)
+      const candidates = []
 
-      // Try with '* ' prefix for Bayer/Flamsteed designations
-      if (!obj) {
-        obj = $stel.getObj('* ' + name)
+      // Collect potential lookup strings
+      candidates.push(name)
+      candidates.push('* ' + name)
+      candidates.push('NAME ' + name)
+      if (name.includes('.')) {
+        candidates.push(name.replace(/\./g, ''))
+        candidates.push('* ' + name.replace(/\./g, ''))
+      }
+      if (ss.match && ss.match !== name) {
+        candidates.push(ss.match)
+        candidates.push('* ' + ss.match)
+        candidates.push('NAME ' + ss.match)
       }
 
-      // Try with 'NAME ' prefix
-      if (!obj) {
-        obj = $stel.getObj('NAME ' + name)
-      }
+      for (const query of candidates) {
+        const candidateObj = $stel.getObj(query)
+        if (candidateObj) {
+          // Check if this is a satellite using designations (more reliable than .type)
+          const desigs = candidateObj.designations() || []
+          const isSat = desigs.some(d => d.startsWith('NORAD '))
 
-      // Try without period (mu. CMa -> mu CMa)
-      if (!obj && name.includes('.')) {
-        const noPeriod = name.replace(/\./g, '')
-        obj = $stel.getObj('* ' + noPeriod) || $stel.getObj(noPeriod)
-      }
+          // If we are looking for a star, prevent matching a satellite
+          if (ss.model === 'star' && isSat) {
+            continue
+          }
+          // If we are looking for a satellite, prevent matching a star
+          if (ss.model === 'tle_satellite' && !isSat) {
+            continue
+          }
 
-      // If match is a different name, also try that
-      if (!obj && ss.match && ss.match !== name) {
-        obj = $stel.getObj(ss.match) || $stel.getObj('* ' + ss.match) || $stel.getObj('NAME ' + ss.match)
+          obj = candidateObj
+          break
+        }
       }
     }
     if (!obj && ss.names && ss.names[0] && ss.names[0].startsWith('Gaia DR2 ')) {
       const gname = ss.names[0].replace(/^Gaia DR2 /, 'GAIA ')
       obj = $stel.getObj(gname)
     }
+
+    // Special handling for Minor Planets (MPC format: "(number) Name")
+    if (!obj && ss.model === 'minor_planet' && ss.names && ss.names[0]) {
+      const name = ss.names[0]
+      const match = name.match(/^\((\d+)\)\s*(.*)$/)
+      if (match) {
+        // Try Name first (e.g. "Vesta")
+        if (match[2]) obj = $stel.getObj(match[2]) || $stel.getObj('NAME ' + match[2])
+        // Try Number (e.g. "4") - Use 'MinorPlanet' prefix if needed? Usually number works or is ambiguous.
+        // Some implementations use "Asteroid number".
+        if (!obj && match[1]) obj = $stel.getObj(match[1])
+      }
+    }
+
+    // Special handling for Comets (MPC format: "Desig (Name)")
+    if (!obj && ss.model === 'comet' && ss.names && ss.names[0]) {
+      const name = ss.names[0]
+      const match = name.match(/^(.*?)\s*\((.*?)\)$/)
+      if (match) {
+        // Try Designation (e.g. "C/1995 O1")
+        if (match[1]) obj = $stel.getObj(match[1])
+        // Try Name (e.g. "Hale-Bopp")
+        if (!obj && match[2]) obj = $stel.getObj(match[2]) || $stel.getObj('NAME ' + match[2])
+      }
+    }
+
     if (obj === null) return undefined
     return obj
   },
@@ -397,7 +513,7 @@ const swh = {
     }
   },
 
-  lookupSkySourceByName: function (name) {
+  lookupSkySourceByName: function (name, typeHint) {
     const ENABLE_API_LOOKUP = false
 
     if (ENABLE_API_LOOKUP) {
@@ -409,33 +525,65 @@ const swh = {
           return response.json()
         }, err => {
           console.warn('API lookup failed for ' + name + ', trying local implementation.', err)
-          return this._lookupSkySourceLocal(name)
+          return this._lookupSkySourceLocal(name, typeHint)
         })
     } else {
-      return this._lookupSkySourceLocal(name)
+      return this._lookupSkySourceLocal(name, typeHint)
     }
   },
 
-  _lookupSkySourceLocal: function (name) {
+  _lookupSkySourceLocal: function (name, expectedType) {
     const $stel = Vue.prototype.$stel
     if ($stel) {
       console.log('lookupSkySourceByName: ' + name)
-      const obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
-      console.log('lookupSkySourceByName: ' + obj)
-      if (obj) {
+
+      // Helper to detect type properties that getInfo('type') misses
+      const getDetectedType = (o) => {
+        const desigs = o.designations() || []
+        if (desigs.some(d => d.startsWith('NORAD '))) return 'Artificial Satellite'
+        return undefined
+      }
+
+      // Helper to valid type
+      const isValid = (o) => {
+        if (!expectedType) return true
+
+        const oType = getDetectedType(o) || 'Celestial' // Assume celestial if not identified as sat
+        const exp = expectedType === 'Artificial Satellite' ? 'Artificial Satellite' : 'Celestial'
+
+        // Strict separation: Satellite vs Celestial
+        if (exp === 'Celestial' && oType === 'Artificial Satellite') return false
+        if (exp === 'Artificial Satellite' && oType !== 'Artificial Satellite') return false
+
+        return true
+      }
+
+      let obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
+      if (obj) console.log('lookupSkySourceByName found type:', getDetectedType(obj))
+
+      // If found object doesn't match expected type, try to find another one by iterating variations or using more specific query
+      if (obj && !isValid(obj)) {
+        // If we wanted Celestial but got Satellite, try Star/Planet checks
+        // e.g. "Arcturus" -> "* Arcturus" to force star
+        obj = $stel.getObj('* ' + name) || $stel.getObj('HIP ' + name)
+      }
+
+      if (obj && isValid(obj)) {
         const ss = obj.jsonData || {}
         ss.names = ss.names || obj.designations() || [name]
         ss.culturalNames = obj.culturalDesignations()
+        ss.type = ss.type || obj.type || getDetectedType(obj)
 
         // Ensure model/types for proper icon display if missing
         if (!ss.types || !ss.types.length) {
-          const t = obj.getInfo('type')
+          const t = ss.type
           ss.types = t ? [t] : ['Star']
         }
         if (!ss.model) {
           const type = ss.types[0]
-          if (['Sun', 'Moo', 'Pla'].includes(type)) ss.model = 'jpl_sso'
+          if (['Sun', 'Moo', 'Pla'].includes(type) || type === 'Planet') ss.model = 'jpl_sso'
           else if (type === 'Star') ss.model = 'star'
+          else if (type === 'Artificial Satellite' || type === 'Asa') ss.model = 'tle_satellite'
           else ss.model = 'dso' // fallback
         }
 
@@ -456,6 +604,8 @@ const swh = {
       constellations: true,
       dsos: true,
       satellites: true,
+      comets: true,
+      minorPlanets: true,
       favourites: false,
       favouritesList: []
     }
@@ -492,14 +642,18 @@ const swh = {
       // If we are switching to globals and have favs, inject header once
       if (searchingGlobals && favCount > 0 && !headerAdded) {
         // Only inject if this item is NOT a duplicate of a favorite
-        if (!seenNames.has(normName)) {
+        // Note: For header check we might be less strict or just check partial match,
+        // but for now let's rely on standard flow.
+        const uniqueKey = normName + '|' + (ss.model || 'unknown')
+        if (!seenNames.has(uniqueKey)) {
           results.push({ header: true, text: 'Other Results' })
           headerAdded = true
         }
       }
 
-      if (!seenNames.has(normName)) {
-        seenNames.add(normName)
+      const uniqueKey = normName + '|' + (ss.model || 'unknown')
+      if (!seenNames.has(uniqueKey)) {
+        seenNames.add(uniqueKey)
         results.push(ss)
         return true
       }
@@ -631,16 +785,29 @@ const swh = {
         for (const con of conMatches) {
           if (results.length >= globalLimit) break
 
-          const displayName = con.native || con.english || con.iau
+          // Determine which name matched the search and use that as display name
+          const normalize = (s) => s ? s.toUpperCase().replace(/[\s.,\-'"]+/g, '') : ''
+          const searchNormalized = normalize(str)
+          let matchedName = con.english || con.native || con.iau
+
+          // Check which name was matched and prioritize that
+          const allNames = [con.english, con.native, con.iau].filter(n => n)
+          for (const name of allNames) {
+            if (normalize(name).includes(searchNormalized) || searchNormalized.includes(normalize(name))) {
+              matchedName = name
+              break
+            }
+          }
+
           addResult({
-            names: [displayName, con.english, con.iau].filter(n => n),
+            names: [matchedName, con.english, con.native, con.iau].filter(n => n),
             types: ['Con'],
             model: 'constellation',
             model_data: {
               iau_abbreviation: con.iau,
               con_id: con.id
             },
-            match: displayName
+            match: matchedName
           })
         }
       } catch (e) {
@@ -709,6 +876,51 @@ const swh = {
       }
     }
 
+    // PRIORITY 6: Search comets
+    if (useFilters.comets && results.length < globalLimit) {
+      if (!swh._cachedComets) {
+        // Trigger load, but don't wait for this search to avoid UI lag on first char type
+        // Actually, for better UX on first search, we might want to wait if it's fast?
+        // fetch is async. Let's fire it.
+        swh._loadComets()
+      }
+      if (swh._cachedComets) {
+        for (const comet of swh._cachedComets) {
+          if (results.length >= globalLimit) break
+          const names = comet.names || [comet.match]
+          const nameMatch = names.some(n => {
+            const cNorm = normalize(n)
+            return cNorm.includes(searchNorm) || searchNorm.includes(cNorm)
+          })
+
+          if (nameMatch) {
+            addResult(comet)
+          }
+        }
+      }
+    }
+
+    // PRIORITY 7: Search Minor Planets
+    if (useFilters.minorPlanets && results.length < globalLimit) {
+      if (!swh._cachedMinorPlanets) {
+        swh._loadMinorPlanets()
+      }
+      if (swh._cachedMinorPlanets) {
+        for (const mp of swh._cachedMinorPlanets) {
+          if (results.length >= globalLimit) break
+          const names = mp.names || [mp.match]
+          const nameMatch = names.some(n => {
+            const mNorm = normalize(n)
+            return mNorm.includes(searchNorm) || searchNorm.includes(mNorm)
+          })
+
+          if (nameMatch) {
+            addResult(mp)
+          }
+        }
+      }
+    }
+
     // Fallback: Direct object lookup
     if (results.length === (headerAdded ? 1 : 0) && !searchingGlobals) { // Logic check: if no matches found at all
       // Actually checking if we found ANYTHING via global search
@@ -750,6 +962,17 @@ const swh = {
       throw new Error("Can't find object without names")
     }
 
+    // Pass the object type to help disambiguate (e.g. Star vs Satellite)
+    // We infer type from NORAD presence in names (reliable)
+    let typeHint = 'Star' // Default to Star/Celestial
+    const dList = obj.designations() || []
+    for (const n of dList) {
+      if (n.startsWith('NORAD ')) {
+        typeHint = 'Artificial Satellite'
+        break
+      }
+    }
+
     // Several artifical satellites share the same common name, so we use
     // the unambiguous NORAD number instead
     for (const j in names) {
@@ -763,10 +986,25 @@ const swh = {
     const printErr = function (n) {
       console.log("Couldn't find online skysource data for name: " + n)
 
-      const ss = obj.jsonData
+      const ss = obj.jsonData || {}
+      if (!ss.names) ss.names = names // Ensure names exist
       if (!ss.model_data) {
         ss.model_data = {}
       }
+
+      // Ensure types/model are populated from engine object as backup
+      if (!ss.types || !ss.types.length) {
+        const t = typeHint || 'dso'
+        ss.types = [t]
+      }
+      if (!ss.model) {
+        const t = ss.types[0]
+        if (['Sun', 'Moo', 'Pla'].includes(t) || t === 'Planet') ss.model = 'jpl_sso'
+        else if (t === 'Star') ss.model = 'star'
+        else if (t === 'Artificial Satellite' || t === 'Asa') ss.model = 'tle_satellite'
+        else ss.model = 'dso'
+      }
+
       // Names fixup
       let i
       for (i in ss.names) {
@@ -778,15 +1016,18 @@ const swh = {
       return ss
     }
 
-    return that.lookupSkySourceByName(names[0]).then(res => {
+    // Helper to call lookup with type hint
+    const doLookup = (n) => that.lookupSkySourceByName(n, typeHint)
+
+    return doLookup(names[0]).then(res => {
       return res
     }, () => {
       if (names.length === 1) return printErr(names)
-      return that.lookupSkySourceByName(names[1]).then(res => {
+      return doLookup(names[1]).then(res => {
         return res
       }, () => {
         if (names.length === 2) return printErr(names)
-        return that.lookupSkySourceByName(names[2]).then(res => {
+        return doLookup(names[2]).then(res => {
           return res
         }, () => {
           return printErr(names[2])

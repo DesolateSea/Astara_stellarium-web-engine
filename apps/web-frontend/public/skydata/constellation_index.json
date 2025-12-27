@@ -966,5 +966,184 @@
       "Sails",
       "Vel"
     ]
+  },
+  {
+    "id": "CON belarusian 001",
+    "english": "Elias's Cart",
+    "native": "Illyouo voz",
+    "names": [
+      "Elias's Cart",
+      "Illyouo voz"
+    ]
+  },
+  {
+    "id": "CON belarusian 002",
+    "english": "The Bride",
+    "native": "Niavesta",
+    "names": [
+      "The Bride",
+      "Niavesta"
+    ]
+  },
+  {
+    "id": "CON belarusian 003",
+    "english": "The Chicks",
+    "native": "Kurki",
+    "names": [
+      "The Chicks",
+      "Kurki"
+    ]
+  },
+  {
+    "id": "CON belarusian 004",
+    "english": "The Cross",
+    "native": "Petrou Krest",
+    "names": [
+      "The Cross",
+      "Petrou Krest"
+    ]
+  },
+  {
+    "id": "CON belarusian 005",
+    "english": "The Crown",
+    "native": "Karona",
+    "names": [
+      "The Crown",
+      "Karona"
+    ]
+  },
+  {
+    "id": "CON belarusian 006",
+    "english": "The Goat",
+    "native": "Kaza",
+    "names": [
+      "The Goat",
+      "Kaza"
+    ]
+  },
+  {
+    "id": "CON belarusian 007",
+    "english": "The Grass Snakes",
+    "native": "Vuzhy",
+    "names": [
+      "The Grass Snakes",
+      "Vuzhy"
+    ]
+  },
+  {
+    "id": "CON belarusian 008",
+    "english": "Poland and Lithuania",
+    "names": [
+      "Poland and Lithuania"
+    ]
+  },
+  {
+    "id": "CON belarusian 009",
+    "english": "The Mowers",
+    "native": "Kastsy",
+    "names": [
+      "The Mowers",
+      "Kastsy"
+    ]
+  },
+  {
+    "id": "CON belarusian 010",
+    "english": "The Nail",
+    "native": "Gvozd",
+    "names": [
+      "The Nail",
+      "Gvozd"
+    ]
+  },
+  {
+    "id": "CON belarusian 011",
+    "english": "The Ploughman",
+    "native": "Rataj",
+    "names": [
+      "The Ploughman",
+      "Rataj"
+    ]
+  },
+  {
+    "id": "CON belarusian 012",
+    "english": "The Rake",
+    "native": "Grabli",
+    "names": [
+      "The Rake",
+      "Grabli"
+    ]
+  },
+  {
+    "id": "CON belarusian 013",
+    "english": "The Ram",
+    "native": "Baran",
+    "names": [
+      "The Ram",
+      "Baran"
+    ]
+  },
+  {
+    "id": "CON belarusian 014",
+    "english": "The Serpent",
+    "native": "Zmej",
+    "names": [
+      "The Serpent",
+      "Zmej"
+    ]
+  },
+  {
+    "id": "CON belarusian 015",
+    "english": "The Sieve",
+    "native": "Sito",
+    "names": [
+      "The Sieve",
+      "Sito"
+    ]
+  },
+  {
+    "id": "CON belarusian 016",
+    "english": "The Small Cart",
+    "native": "Maly Vos",
+    "names": [
+      "The Small Cart",
+      "Maly Vos"
+    ]
+  },
+  {
+    "id": "CON belarusian 017",
+    "english": "The Throne",
+    "native": "Kreselca Pana Jezusa",
+    "names": [
+      "The Throne",
+      "Kreselca Pana Jezusa"
+    ]
+  },
+  {
+    "id": "CON belarusian 018",
+    "english": "The Twins",
+    "native": "Blizniuki",
+    "names": [
+      "The Twins",
+      "Blizniuki"
+    ]
+  },
+  {
+    "id": "CON belarusian 019",
+    "english": "The Wild Goat",
+    "native": "Kaziarog",
+    "names": [
+      "The Wild Goat",
+      "Kaziarog",
+      "Wild Goat"
+    ]
+  },
+  {
+    "id": "CON belarusian 020",
+    "english": "The Goose's Way",
+    "native": "Gusina Daroga",
+    "names": [
+      "The Goose's Way",
+      "Gusina Daroga"
+    ]
   }
 ]
