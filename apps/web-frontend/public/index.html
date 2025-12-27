@@ -9,28 +9,140 @@
     <meta name="description" content="Stellarium Web is a planetarium running in your web browser. It shows a realistic star map, just like what you see with the naked eye, binoculars or a telescope.">
     <meta name="Keywords" content="Stellarium, Stellarium Web, planetarium, star map, sky map, astronomy, software, stars, planets, constellations, meteors, universe, astro, stars, planets, realistic, sky, program, scientific, educational, free, real, time, milky way, moon, mercury, venus, mars, earth, venus, jupiter, saturn, sun, real time, 3D, openGL, graphic, GL, chart, map, twinkle, photo-realistic" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="<%= BASE_URL %>favicon.ico">
-    <meta name="theme-color" content="#000"/>
+    <link rel="icon" type="image/png" href="<%= BASE_URL %>stellarium.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/stellarium.png">
+    <meta name="theme-color" content="#000" />
     <style type="text/css">
-    #nightmode {
-      background: #ff2200;
-      pointer-events: none;
-      height: 100vh;
-      width: 100vw;
-      position: absolute;
-      z-index: 1000;
-      mix-blend-mode: multiply;
-      visibility: hidden;
-    }
+      #nightmode {
+        background: #ff2200;
+        pointer-events: none;
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+        z-index: 1000;
+        mix-blend-mode: multiply;
+        visibility: hidden;
+      }
+
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        background-image: url('splash.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .splash-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px 20px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .app-title {
+        font-family: 'Roboto', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 300;
+        color: #fff;
+        letter-spacing: 3px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        margin: 0;
+      }
+
+      .app-subtitle {
+        font-family: 'Roboto', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 1px;
+        margin: 0 0 15px 0;
+      }
+
+      #splash-screen .loading-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-family: 'Roboto', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+        animation: pulse 2s infinite ease-in-out;
+      }
+
+      @keyframes pulse {
+
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+      #splash-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
     </style>
-  </head>
-  <body>
-    <div id="nightmode"></div>
-    <noscript>
-      <strong>We're sorry but stellarium-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
-    <div id="app">
-      <router-view></router-view>
+</head>
+
+<body>
+  <div id="nightmode"></div>
+  <div id="splash-screen">
+    <div class="splash-overlay">
+      <h1 class="app-title">Stellarium</h1>
+      <p class="app-subtitle">Touch the Sky with Glory</p>
+      <div id="loading-status" class="loading-text">Loading plugin 'Sky Engine'...</div>
     </div>
-  </body>
+  </div>
+  <script>
+    (function () {
+      const messages = [
+        "Loading plugin 'Sky Engine'...",
+        "Loading plugin 'Star Catalog'...",
+        "Loading plugin 'Solar System Editor'...",
+        "Loading plugin 'Constellations'...",
+        "Loading plugin 'Deep Sky Objects'..."
+      ];
+      let currentIdx = 0;
+      const statusElement = document.getElementById('loading-status');
+      if (statusElement) {
+        const interval = setInterval(() => {
+          if (document.getElementById('splash-screen')) {
+            currentIdx = (currentIdx + 1) % messages.length;
+            statusElement.textContent = messages[currentIdx];
+          } else {
+            clearInterval(interval);
+          }
+        }, 2000);
+      }
+    })();
+  </script>
+  <noscript>
+    <strong>We're sorry but stellarium-web doesn't work properly without JavaScript enabled. Please enable it to
+      continue.</strong>
+  </noscript>
+  <div id="app">
+    <router-view></router-view>
+  </div>
+</body>
+
 </html>

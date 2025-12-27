@@ -311,6 +311,16 @@ export default {
 
           that.setStateFromQueryArgs()
           that.guiComponent = 'Gui'
+
+          // Hide splash screen
+          const splash = document.getElementById('splash-screen')
+          if (splash) {
+            splash.classList.add('fade-out')
+            setTimeout(() => {
+              splash.remove()
+            }, 500)
+          }
+
           for (const i in that.$stellariumWebPlugins()) {
             const plugin = that.$stellariumWebPlugins()[i]
             if (plugin.onEngineReady) {

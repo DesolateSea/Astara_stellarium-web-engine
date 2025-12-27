@@ -1,0 +1,22 @@
+{
+  "name": "Stella",
+  "short_name": "Stella",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/stellarium.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/stellarium.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
