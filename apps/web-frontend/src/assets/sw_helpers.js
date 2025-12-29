@@ -9,6 +9,7 @@
 import Vue from 'vue'
 import _ from 'lodash'
 import StelWebEngine from '@/assets/js/stellarium-web-engine.js'
+import { querySkySources as searchEngineQuery } from '@/assets/search_engine.js'
 
 var DDDate = Date
 DDDate.prototype.getJD = function () {
@@ -594,6 +595,24 @@ const swh = {
   },
 
   querySkySources: async function (str, limit, filters) {
+    // Delegate to the separated search engine module
+    // Pass cached data providers for satellites, comets, minor planets
+    const dataProviders = {
+      satellites: this._cachedSatellites,
+      comets: this._cachedComets,
+      minorPlanets: this._cachedMinorPlanets
+    }
+
+    // Ensure data is loading
+    if (!this._cachedSatellites) this._loadSatellites()
+    if (!this._cachedComets) this._loadComets()
+    if (!this._cachedMinorPlanets) this._loadMinorPlanets()
+
+    return searchEngineQuery(str, limit || 10, filters, dataProviders)
+  },
+
+  // Legacy querySkySources implementation kept for reference
+  _querySkySources_legacy: async function (str, limit, filters) {
     if (!limit) {
       limit = 10
     }

@@ -130,14 +130,22 @@ export default {
       showFilterDialog: false,
       activeFilters: [],
       browseCategories: [
-        { label: 'Planet', icon: 'mdi-earth', typeFilter: { planets: true, stars: false, dsos: false } },
-        { label: 'Deep Sky Object', icon: 'mdi-weather-night', typeFilter: { planets: false, stars: false, dsos: true }, hasSub: false },
-        { label: 'Star', icon: 'mdi-star-four-points', typeFilter: { planets: false, stars: true, dsos: false }, hasSub: false },
+        { label: 'Planet', icon: 'mdi-earth', typeFilter: { planets: true } },
+        { label: 'Star', icon: 'mdi-star-four-points', typeFilter: { stars: true } },
+        // DSO with sub-categories (clicking arrow expands, clicking main selects all DSOs)
+        {
+          label: 'Deep Sky Object',
+          icon: 'mdi-weather-night',
+          typeFilter: { dsos: true },
+          subCategories: [
+            { label: 'Galaxy', icon: 'mdi-blur', typeFilter: { dsoGalaxies: true } },
+            { label: 'Nebula', icon: 'mdi-cloud', typeFilter: { dsoNebulae: true } },
+            { label: 'Star Cluster', icon: 'mdi-google-circles-extended', typeFilter: { dsoClusters: true } },
+            { label: 'Other DSO', icon: 'mdi-orbit', typeFilter: { dsoOther: true } }
+          ]
+        },
         { label: 'Artificial Satellite', icon: 'mdi-satellite-uplink', typeFilter: { satellites: true } },
         { label: 'Constellation', icon: 'mdi-vector-polyline', typeFilter: { constellations: true } },
-        // { label: 'Asterism', icon: 'mdi-dots-hexagon', typeFilter: {} },
-        // { label: 'Meteor Shower', icon: 'mdi-weather-pouring', typeFilter: {} },
-        // { label: 'Meteor Shower', icon: 'mdi-weather-pouring', typeFilter: {} },
         { label: 'Minor Planet', icon: 'mdi-chart-bubble', typeFilter: { minorPlanets: true } },
         { label: 'Comet', icon: 'mdi-weather-windy-variant', typeFilter: { comets: true } }
       ],
@@ -249,7 +257,7 @@ export default {
       // Item must match at least one filter
       return this.activeFilters.some(filter => {
         const typeFilter = filter.typeFilter
-
+        console.log(item.types)
         // Check if item matches the filter criteria
         if (typeFilter.planets && (item.types.includes('Pla') || item.types.includes('Sun') || item.types.includes('Moo'))) {
           return true
@@ -257,8 +265,30 @@ export default {
         if (typeFilter.stars && item.types.includes('*')) {
           return true
         }
-        if (typeFilter.dsos && (item.types.includes('Neb') || item.types.includes('Gal') || item.types.includes('OpC') || item.types.includes('GlC'))) {
+        // DSO Sub-category filters
+        const galaxyTypes = ['G', 'GiG', 'GiP', 'LIN', 'EmG', 'rG', 'GiC', 'IG', 'AGN', 'BiC', 'LSB', 'H2G', 'Sy1', 'Sy2', 'SyG', 'SBG', 'PaG', 'bCG', 'PoG', 'GrG', 'Gal']
+        const nebulaTypes = ['Neb', 'PN', 'RNe', 'BNe', 'GNe', 'HII', 'SNR', 'ISM', 'SFR', 'Cld', 'EmO']
+        const clusterTypes = ['OpC', 'GlC', 'Cl*', 'PoC', 'As*', 'MGr']
+        const otherDsoTypes = ['dso', 'QSO', 'Q?', 'Bla', 'BLL', 'MoC', 'C?*', 'HH', 'sh', 'CGb', 'cor', 'reg']
+
+        if (typeFilter.dsoGalaxies && item.types.some(t => galaxyTypes.includes(t))) {
           return true
+        }
+        if (typeFilter.dsoNebulae && item.types.some(t => nebulaTypes.includes(t))) {
+          return true
+        }
+        if (typeFilter.dsoClusters && item.types.some(t => clusterTypes.includes(t))) {
+          return true
+        }
+        if (typeFilter.dsoOther && item.types.some(t => otherDsoTypes.includes(t))) {
+          return true
+        }
+        // Backwards compatibility: dsos: true matches all DSO types
+        if (typeFilter.dsos) {
+          const allDsoTypes = [...galaxyTypes, ...nebulaTypes, ...clusterTypes, ...otherDsoTypes]
+          if (item.types.some(t => allDsoTypes.includes(t))) {
+            return true
+          }
         }
         if (typeFilter.satellites && item.model === 'tle_satellite') {
           return true
