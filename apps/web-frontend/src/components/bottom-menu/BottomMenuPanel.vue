@@ -56,11 +56,21 @@
         </div>
         <div class="menu-label">Night mode</div>
       </div>
+
+      <!-- Gyroscope View Mode -->
+      <div class="menu-item" @click="toggleGyroMode">
+        <div class="menu-icon" :class="{ active: gyroModeActive }">
+          <v-icon large>mdi-rotate-3d-variant</v-icon>
+        </div>
+        <div class="menu-label">Gyroscope</div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import GyroscopeService from '@/assets/gyroscope-service.js'
+
 export default {
   name: 'BottomMenuPanel',
   data () {
@@ -90,6 +100,9 @@ export default {
     },
     nightModeActive () {
       return this.$store.state.nightmode || false
+    },
+    gyroModeActive () {
+      return this.$store.state.gyroModeActive || false
     }
   },
   methods: {
@@ -142,6 +155,28 @@ export default {
         document.getElementById('nightmode').style.opacity = b ? '0.5' : '0'
       }
       document.getElementById('nightmode').style.visibility = b ? 'visible' : 'hidden'
+    },
+    // Toggle Gyroscope View Mode
+    async toggleGyroMode () {
+      console.log('[BottomMenu] toggleGyroMode called')
+      const newVal = !this.gyroModeActive
+      console.log('[BottomMenu] New gyro state:', newVal, 'stel:', !!this.$stel, 'core:', !!this.$stel?.core)
+      if (newVal) {
+        // Start gyroscope control
+        if (this.$stel && this.$stel.core) {
+          const success = await GyroscopeService.start(this.$stel.core)
+          console.log('[BottomMenu] GyroscopeService.start result:', success)
+          if (success) {
+            this.$store.commit('setGyroModeActive', true)
+          } else {
+            console.warn('[BottomMenu] Failed to start gyroscope mode')
+          }
+        }
+      } else {
+        // Stop gyroscope control
+        await GyroscopeService.stop()
+        this.$store.commit('setGyroModeActive', false)
+      }
     }
   }
 }

@@ -2209,7 +2209,15 @@
   resolved "https://registry.npmjs.org/@capacitor/device/-/device-8.0.0.tgz"
   integrity sha512-qFmlTDnAvUwIg93YUF3u3ovqpDFqUl2RFkf2dVIF8Py7vTA+GjQIHQWITcBKfeUENoVXPNn04t5nxg5mAkjNEA==
 
+<<<<<<< HEAD
 >>>>>>> 4298d31b (fix(sensors): correct compass needle orientation via DOM manipulation)
+=======
+"@capacitor/motion@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.npmjs.org/@capacitor/motion/-/motion-8.0.0.tgz"
+  integrity sha512-eCTe9+ZSVw2dQLQLvq5vfp2GGnMmsAy5jn4boKB93CHEenD9ZZojXZYJn1u4zUWhfj9cGXSxu+2j7WaQbkMlPg==
+
+>>>>>>> b89251ca (feat(gyro): add initial gyroscope support)
 "@hapi/address@2.x.x":
 <<<<<<< HEAD
 <<<<<<< HEAD
