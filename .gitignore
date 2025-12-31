@@ -16,4 +16,5 @@ deltat.preds
 hip_main.dat.gz
 
 .ipynb_checkpoints
-data_extraction_space_dataset
+data_extraction_space_datasetIAF/
+IAF/
