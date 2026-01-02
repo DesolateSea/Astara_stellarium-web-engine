@@ -28,7 +28,7 @@
               <v-list-item-subtitle>{{ sensorsEnabled ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
-              <v-switch v-model="sensorsEnabled" @click.stop></v-switch>
+              <v-switch :value="sensorsEnabled" @click.stop="toggleSensors"></v-switch>
             </v-list-item-action>
           </v-list-item>
 
