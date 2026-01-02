@@ -319,6 +319,7 @@ import GridsLinesSubmenu from './bottom-menu/GridsLinesSubmenu.vue'
 import ConstellationsSubmenu from './bottom-menu/ConstellationsSubmenu.vue'
 import AtmosphereSubmenu from './bottom-menu/AtmosphereSubmenu.vue'
 import LabelsSubmenu from './bottom-menu/LabelsSubmenu.vue'
+import GyroscopeService from '@/assets/gyroscope-service.js'
 
 export default {
   components: {
@@ -525,8 +526,21 @@ export default {
     closePanel: function () {
       this.dialogVisible = false
     },
-    toggleSensors: function () {
-      this.sensorsEnabled = !this.sensorsEnabled
+    toggleSensors: async function () {
+      const newVal = !this.sensorsEnabled
+      if (newVal) {
+        // Start gyroscope control
+        if (this.$stel && this.$stel.core) {
+          const success = await GyroscopeService.start(this.$stel.core)
+          if (success) {
+            this.sensorsEnabled = true
+          }
+        }
+      } else {
+        // Stop gyroscope control
+        await GyroscopeService.stop()
+        this.sensorsEnabled = false
+      }
     },
     selectSkyCulture: function (key) {
       this.currentSkyCulture = key
