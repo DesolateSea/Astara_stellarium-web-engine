@@ -100,6 +100,9 @@ const createStore = () => {
 
       useAutoLocation: true,
 
+      // Sensor settings
+      sensorsEnabled: true,
+
       // Gyroscope view control mode
       gyroModeActive: false
     },
@@ -183,6 +186,9 @@ const createStore = () => {
         }
         localStorage.setItem('stel_recents', JSON.stringify(state.recents))
         localStorage.setItem('stel_recents_timestamp', Date.now().toString())
+      },
+      setSensorsEnabled (state, value) {
+        state.sensorsEnabled = value
       },
       setGyroModeActive (state, value) {
         state.gyroModeActive = value

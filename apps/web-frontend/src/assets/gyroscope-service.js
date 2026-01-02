@@ -19,14 +19,21 @@
  *   Back camera points along -Z axis
  */
 
+import { ScreenOrientation } from '@capacitor/screen-orientation'
+
 const DEG_TO_RAD = Math.PI / 180
 
 const GyroscopeService = {
   isActive: false,
   stelCore: null,
   onOrientationBound: null,
+  onTouchStartBound: null,
+  onTouchMoveBound: null,
+  touchStartX: null,
+  touchStartY: null,
   lastUpdate: 0,
   updateInterval: 16, // ~60fps
+  onStopCallback: null,
 
   // Smoothing
   smoothYaw: null,
@@ -37,7 +44,7 @@ const GyroscopeService = {
   async requestPermission () {
     try {
       if (typeof DeviceOrientationEvent !== 'undefined' &&
-          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
         const result = await DeviceOrientationEvent.requestPermission()
         console.log('[GyroService] iOS permission result:', result)
         return result === 'granted'
@@ -49,7 +56,7 @@ const GyroscopeService = {
     }
   },
 
-  async start (stelCore) {
+  async start (stelCore, onStopCallback) {
     console.log('[GyroService] start() called')
 
     if (this.isActive) {
@@ -69,9 +76,17 @@ const GyroscopeService = {
 
     this.stelCore = stelCore
     this.isActive = true
+    this.onStopCallback = onStopCallback
     this.smoothYaw = null
     this.smoothPitch = null
     this.smoothRoll = null
+
+    // Lock to portrait mode
+    try {
+      await ScreenOrientation.lock({ type: 'portrait' })
+    } catch (e) {
+      console.warn('[GyroService] Failed to lock orientation:', e)
+    }
 
     // Save current roll and set ideal FOV for AR/gyro mode (~45°)
     this.savedRoll = stelCore.observer.roll
@@ -85,6 +100,15 @@ const GyroscopeService = {
     } else {
       console.log('[GyroService] Using deviceorientation')
       window.addEventListener('deviceorientation', this.onOrientationBound, true)
+    }
+
+    // Add touch listeners to detect swipe (single-finger pan only, not tap or pinch)
+    this.onTouchStartBound = this.onTouchStart.bind(this)
+    this.onTouchMoveBound = this.onTouchMove.bind(this)
+    const canvas = document.getElementById('stel-canvas')
+    if (canvas) {
+      canvas.addEventListener('touchstart', this.onTouchStartBound, { passive: true })
+      canvas.addEventListener('touchmove', this.onTouchMoveBound, { passive: true })
     }
 
     console.log('[GyroService] Started successfully')
@@ -104,15 +128,38 @@ const GyroscopeService = {
       this.onOrientationBound = null
     }
 
+    // Remove touch listeners
+    const canvas = document.getElementById('stel-canvas')
+    if (canvas) {
+      if (this.onTouchStartBound) {
+        canvas.removeEventListener('touchstart', this.onTouchStartBound)
+        this.onTouchStartBound = null
+      }
+      if (this.onTouchMoveBound) {
+        canvas.removeEventListener('touchmove', this.onTouchMoveBound)
+        this.onTouchMoveBound = null
+      }
+    }
+    this.touchStartX = null
+    this.touchStartY = null
+
     // Reset roll to 0 when gyro is disabled
     if (this.stelCore) {
       this.stelCore.observer.roll = 0
+    }
+
+    // Unlock orientation
+    try {
+      await ScreenOrientation.unlock()
+    } catch (e) {
+      console.warn('[GyroService] Failed to unlock orientation:', e)
     }
 
     this.stelCore = null
     this.smoothYaw = null
     this.smoothPitch = null
     this.smoothRoll = null
+    this.onStopCallback = null
     console.log('[GyroService] Stopped')
   },
 
@@ -219,6 +266,48 @@ const GyroscopeService = {
   lowPass (newVal, oldVal, factor) {
     if (oldVal === null) return newVal
     return oldVal + factor * (newVal - oldVal)
+  },
+
+  /**
+   * Track touch start position (only single-finger touches)
+   */
+  onTouchStart (event) {
+    // Only track single-finger touches (not pinch-zoom)
+    if (event.touches.length === 1) {
+      this.touchStartX = event.touches[0].clientX
+      this.touchStartY = event.touches[0].clientY
+    } else {
+      // Multi-touch - reset, this is a pinch
+      this.touchStartX = null
+      this.touchStartY = null
+    }
+  },
+
+  /**
+   * Detect swipe: single finger moved more than threshold
+   */
+  onTouchMove (event) {
+    // Only trigger on single-finger swipe, not pinch-zoom
+    if (event.touches.length !== 1) {
+      this.touchStartX = null
+      this.touchStartY = null
+      return
+    }
+
+    if (this.touchStartX === null || this.touchStartY === null) return
+
+    const dx = event.touches[0].clientX - this.touchStartX
+    const dy = event.touches[0].clientY - this.touchStartY
+    const distance = Math.sqrt(dx * dx + dy * dy)
+
+    // If moved more than 20px, it's a swipe - disable gyro
+    if (distance > 20) {
+      console.log('[GyroService] Swipe detected, disabling gyro')
+      if (this.onStopCallback) {
+        this.onStopCallback()
+      }
+      this.stop()
+    }
   },
 
   onDeviceOrientation (event) {

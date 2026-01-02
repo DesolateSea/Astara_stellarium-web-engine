@@ -16,7 +16,7 @@
     </div>
 
     <!-- Center section: Compass -->
-    <div class="bottom-bar-center">
+    <div class="bottom-bar-center" @click="onCompassClick">
       <!-- FOV Display (Fixed position, does not rotate) -->
       <transition name="fade">
         <div class="fov-display" v-show="showFov">
@@ -53,6 +53,16 @@
     <v-dialog v-model="showTimePicker" max-width="400">
       <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
     </v-dialog>
+
+    <!-- Gyro Activation Dialog - Pill Banner -->
+    <transition name="fade">
+      <div v-if="showGyroDialog" class="gyro-pill-container">
+        <div class="gyro-pill" @click.stop>
+          <v-icon size="28" color="white">mdi-compass</v-icon>
+          <span class="gyro-pill-text">Point your device up!</span>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -60,6 +70,7 @@
 import DateTimePicker from '@/components/date-time-picker.vue'
 import BottomMenuPanel from '@/components/bottom-menu/BottomMenuPanel.vue'
 import Moment from 'moment'
+import GyroscopeService from '@/assets/gyroscope-service.js'
 
 export default {
   components: {
@@ -72,7 +83,9 @@ export default {
       showTimePicker: false,
       rafId: null,
       showFov: false,
-      fovTimeout: null
+      fovTimeout: null,
+      showGyroDialog: false,
+      pitchListener: null
     }
   },
   computed: {
@@ -151,6 +164,76 @@ export default {
     },
     closeMenu () {
       this.showMenuPanel = false
+    },
+    onCompassClick () {
+      // If sensors are disabled in settings, do nothing
+      if (!this.$store.state.sensorsEnabled) return
+
+      // If gyro is already active, do nothing (swipe will disable it)
+      if (this.$store.state.gyroModeActive) return
+
+      // Show the dialog and start listening for pitch
+      this.showGyroDialog = true
+      this.pitchListener = this.onPitchCheck.bind(this)
+      window.addEventListener('deviceorientation', this.pitchListener, true)
+    },
+    onPitchCheck (event) {
+      // Calculate the angle between device's back camera direction and vertical (zenith)
+      // Using device orientation: beta = front-back tilt, gamma = left-right tilt
+      const beta = event.beta
+      const gamma = event.gamma
+      if (beta === null || gamma === null) return
+
+      // Convert to radians
+      const betaRad = beta * Math.PI / 180
+      const gammaRad = gamma * Math.PI / 180
+
+      // Calculate the z-component (vertical) of the back camera direction vector
+      // When device screen faces up (back camera points down): z = -1
+      // When device is upright (back camera points forward): z = 0
+      // z = cos(beta) * cos(gamma) for back camera direction
+      const zComponent = Math.cos(betaRad) * Math.cos(gammaRad)
+
+      // Zenith angle = angle from vertical axis = acos(|z|)
+      // But we want angle from UP direction, so we use -z (since back camera points down when screen faces sky)
+      // Actually when screen faces sky, beta ≈ 0, gamma ≈ 0, so cos(0)*cos(0) = 1
+      // The back camera points in -Z direction of screen, which is DOWN when screen faces sky
+      // So zenith angle = acos(zComponent) when zComponent > 0 means screen facing up
+
+      const zenithAngleDeg = Math.acos(Math.abs(zComponent)) * 180 / Math.PI
+
+      console.log('[GyroActivation] Zenith angle:', zenithAngleDeg.toFixed(1) + '°')
+
+      // If zenith angle < 60°, device is pointed up enough
+      if (zenithAngleDeg < 60) {
+        this.activateGyro()
+      }
+    },
+    cancelGyroDialog () {
+      this.showGyroDialog = false
+      if (this.pitchListener) {
+        window.removeEventListener('deviceorientation', this.pitchListener, true)
+        this.pitchListener = null
+      }
+    },
+    async activateGyro () {
+      // Stop listening for pitch
+      if (this.pitchListener) {
+        window.removeEventListener('deviceorientation', this.pitchListener, true)
+        this.pitchListener = null
+      }
+      this.showGyroDialog = false
+
+      // Start gyroscope service
+      if (this.$stel && this.$stel.core) {
+        const success = await GyroscopeService.start(this.$stel.core, () => {
+          // Callback when gyro auto-stops (on touch)
+          this.$store.commit('setGyroModeActive', false)
+        })
+        if (success) {
+          this.$store.commit('setGyroModeActive', true)
+        }
+      }
     },
     initCompass () {
       let latestHeading = 0
@@ -389,5 +472,46 @@ export default {
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
+}
+
+/* Gyro Activation Pill Banner */
+.gyro-pill-container {
+  position: fixed;
+  top: 45%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.gyro-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(31, 17, 181, 0.404);
+  border-radius: 20px;
+  padding: 12px 24px 12px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.gyro-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+}
+
+.gyro-pill-text {
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 </style>

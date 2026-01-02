@@ -332,7 +332,6 @@ export default {
   data: function () {
     return {
       currentView: 'main',
-      sensorsEnabled: false,
       customLat: 0,
       customLng: 0,
       editCoordType: 'latitude',
@@ -348,6 +347,9 @@ export default {
   computed: {
     editCoordValue () {
       return this.editCoordType === 'latitude' ? this.customLat : this.customLng
+    },
+    sensorsEnabled () {
+      return this.$store.state.sensorsEnabled
     },
     dialogVisible: {
       get: function () {
@@ -526,20 +528,13 @@ export default {
     closePanel: function () {
       this.dialogVisible = false
     },
-    toggleSensors: async function () {
-      const newVal = !this.sensorsEnabled
-      if (newVal) {
-        // Start gyroscope control
-        if (this.$stel && this.$stel.core) {
-          const success = await GyroscopeService.start(this.$stel.core)
-          if (success) {
-            this.sensorsEnabled = true
-          }
-        }
-      } else {
-        // Stop gyroscope control
-        await GyroscopeService.stop()
-        this.sensorsEnabled = false
+    toggleSensors: function () {
+      const newVal = !this.$store.state.sensorsEnabled
+      this.$store.commit('setSensorsEnabled', newVal)
+      // If turning off sensors, also stop any active gyro
+      if (!newVal && this.$store.state.gyroModeActive) {
+        GyroscopeService.stop()
+        this.$store.commit('setGyroModeActive', false)
       }
     },
     selectSkyCulture: function (key) {

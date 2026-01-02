@@ -25,7 +25,7 @@ const FullscreenService = {
    * Initialize the service and enable fullscreen
    * Should be called on app startup
    */
-  async init() {
+  async init () {
     // Check if running in Capacitor
     this.isCapacitor = typeof window !== 'undefined' &&
       window.Capacitor &&
@@ -55,7 +55,7 @@ const FullscreenService = {
   /**
    * Set up listener to re-hide bars after user swipes to reveal them
    */
-  setupRehideListener() {
+  setupRehideListener () {
     if (!this.isCapacitor) return
 
     // Re-hide bars on any touch end (user finished interacting)
@@ -72,7 +72,7 @@ const FullscreenService = {
   /**
    * Schedule re-hiding of system bars after a delay
    */
-  scheduleRehide() {
+  scheduleRehide () {
     if (this.rehideTimeout) {
       clearTimeout(this.rehideTimeout)
     }
@@ -84,7 +84,7 @@ const FullscreenService = {
   /**
    * Enable fullscreen/immersive mode (hide both status bar and navigation bar)
    */
-  async enable() {
+  async enable () {
     if (this.StatusBar) {
       try {
         await this.StatusBar.setOverlaysWebView({ overlay: true })
