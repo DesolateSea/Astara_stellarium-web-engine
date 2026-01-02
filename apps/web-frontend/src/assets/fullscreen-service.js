@@ -8,20 +8,21 @@
 
 /**
  * Fullscreen Service for Android Immersive Mode
- * Hides the status bar and navigation bar for a true fullscreen experience.
+ * Always enables fullscreen (hides status bar and navigation bar).
  * Uses SystemBars API from @capacitor/core (Capacitor 8+).
+ * Re-hides bars automatically when user swipes to reveal them.
  */
 
-const STORAGE_KEY = 'stellarium-fullscreen'
-
 const FullscreenService = {
-  isEnabled: true, // Enabled by default
   SystemBars: null,
   SystemBarType: null,
+  SystemBarsStyle: null,
   isCapacitor: false,
+  rehideTimeout: null,
+  rehideDelay: 2000, // Re-hide after 2 seconds
 
   /**
-   * Initialize the service
+   * Initialize the service and enable fullscreen
    * Should be called on app startup
    */
   async init () {
@@ -36,67 +37,67 @@ const FullscreenService = {
     if (this.isCapacitor) {
       try {
         // SystemBars is built into @capacitor/core in Capacitor 8+
-        const { SystemBars, SystemBarType } = await import('@capacitor/core')
+        const { SystemBars, SystemBarType, SystemBarsStyle } = await import('@capacitor/core')
         this.SystemBars = SystemBars
         this.SystemBarType = SystemBarType
+        this.SystemBarsStyle = SystemBarsStyle
         console.log('[FullscreenService] SystemBars API loaded successfully')
       } catch (e) {
         console.warn('[FullscreenService] Failed to load SystemBars API:', e)
       }
     }
 
-    // Load saved preference (default is true/enabled)
-    this.loadPreference()
+    // Always enable fullscreen
+    await this.enable()
 
-    // Apply initial state
-    if (this.isEnabled) {
-      await this.enable()
-    }
-
-    return this.isEnabled
+    // Set up listener to re-hide bars when user interaction ends
+    this.setupRehideListener()
   },
 
   /**
-   * Load fullscreen preference from localStorage
+   * Set up listener to re-hide bars after user swipes to reveal them
    */
-  loadPreference () {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved !== null) {
-        this.isEnabled = saved === 'true'
-      } else {
-        // Default to enabled
-        this.isEnabled = true
-      }
-    } catch (e) {
-      this.isEnabled = true
-    }
-    console.log('[FullscreenService] Loaded preference:', this.isEnabled)
+  setupRehideListener () {
+    if (!this.isCapacitor) return
+
+    // Re-hide bars on any touch end (user finished interacting)
+    document.addEventListener('touchend', () => {
+      this.scheduleRehide()
+    }, { passive: true })
+
+    // Also re-hide periodically to catch any missed events
+    setInterval(() => {
+      this.enable()
+    }, 5000)
   },
 
   /**
-   * Save fullscreen preference to localStorage
+   * Schedule re-hiding of system bars after a delay
    */
-  savePreference () {
-    try {
-      localStorage.setItem(STORAGE_KEY, String(this.isEnabled))
-    } catch (e) {
-      // Ignore storage errors
+  scheduleRehide () {
+    if (this.rehideTimeout) {
+      clearTimeout(this.rehideTimeout)
     }
+    this.rehideTimeout = setTimeout(() => {
+      this.enable()
+    }, this.rehideDelay)
   },
 
   /**
    * Enable fullscreen/immersive mode (hide both status bar and navigation bar)
    */
   async enable () {
-    this.isEnabled = true
-    this.savePreference()
-
     if (this.SystemBars && this.SystemBarType) {
+      try {
+        // Set dark style (light icons on dark background)
+        await this.SystemBars.setStyle({ style: this.SystemBarsStyle.Dark })
+      } catch (e) {
+        // Ignore style errors
+      }
+
       try {
         // Hide status bar (top)
         await this.SystemBars.hide({ bar: this.SystemBarType.StatusBar })
-        console.log('[FullscreenService] Status bar hidden')
       } catch (e) {
         console.warn('[FullscreenService] Failed to hide status bar:', e)
       }
@@ -104,7 +105,6 @@ const FullscreenService = {
       try {
         // Hide navigation bar (bottom)
         await this.SystemBars.hide({ bar: this.SystemBarType.NavigationBar })
-        console.log('[FullscreenService] Navigation bar hidden')
       } catch (e) {
         console.warn('[FullscreenService] Failed to hide navigation bar:', e)
       }
@@ -118,66 +118,6 @@ const FullscreenService = {
         // User gesture may be required
       }
     }
-
-    return true
-  },
-
-  /**
-   * Disable fullscreen/immersive mode (show system bars)
-   */
-  async disable () {
-    this.isEnabled = false
-    this.savePreference()
-
-    if (this.SystemBars && this.SystemBarType) {
-      try {
-        // Show status bar
-        await this.SystemBars.show({ bar: this.SystemBarType.StatusBar })
-        console.log('[FullscreenService] Status bar shown')
-      } catch (e) {
-        console.warn('[FullscreenService] Failed to show status bar:', e)
-      }
-
-      try {
-        // Show navigation bar
-        await this.SystemBars.show({ bar: this.SystemBarType.NavigationBar })
-        console.log('[FullscreenService] Navigation bar shown')
-      } catch (e) {
-        console.warn('[FullscreenService] Failed to show navigation bar:', e)
-      }
-    }
-
-    // Exit web fullscreen if active
-    if (!this.isCapacitor && document.fullscreenElement) {
-      try {
-        await document.exitFullscreen()
-      } catch (e) {
-        // Ignore
-      }
-    }
-
-    return true
-  },
-
-  /**
-   * Toggle fullscreen mode
-   * @returns {Promise<boolean>} New state
-   */
-  async toggle () {
-    if (this.isEnabled) {
-      await this.disable()
-    } else {
-      await this.enable()
-    }
-    return this.isEnabled
-  },
-
-  /**
-   * Get current fullscreen state
-   * @returns {boolean}
-   */
-  getState () {
-    return this.isEnabled
   }
 }
 

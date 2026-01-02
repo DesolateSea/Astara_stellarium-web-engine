@@ -32,19 +32,6 @@
             </v-list-item-action>
           </v-list-item>
 
-          <v-list-item @click="toggleFullscreen">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-fullscreen</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Fullscreen</v-list-item-title>
-              <v-list-item-subtitle>{{ fullscreenEnabled ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-switch :value="fullscreenEnabled" @click.stop="toggleFullscreen"></v-switch>
-            </v-list-item-action>
-          </v-list-item>
-
           <v-list-item @click="currentView = 'location'">
             <v-list-item-icon>
               <v-icon color="grey">mdi-map-marker</v-icon>
@@ -333,7 +320,6 @@ import ConstellationsSubmenu from './bottom-menu/ConstellationsSubmenu.vue'
 import AtmosphereSubmenu from './bottom-menu/AtmosphereSubmenu.vue'
 import LabelsSubmenu from './bottom-menu/LabelsSubmenu.vue'
 import GyroscopeService from '@/assets/gyroscope-service.js'
-import FullscreenService from '@/assets/fullscreen-service.js'
 
 export default {
   components: {
@@ -347,7 +333,6 @@ export default {
     return {
       currentView: 'main',
       sensorsEnabled: false,
-      fullscreenEnabled: true,
       customLat: 0,
       customLng: 0,
       editCoordType: 'latitude',
@@ -501,16 +486,12 @@ export default {
       }
     }
   },
-  mounted: async function () {
+  mounted: function () {
     // Load saved sky culture preference
     const savedCulture = localStorage.getItem('stellarium-skyculture')
     if (savedCulture) {
       this.selectedSkyCulture = savedCulture
     }
-
-    // Initialize fullscreen service and sync state
-    await FullscreenService.init()
-    this.fullscreenEnabled = FullscreenService.getState()
   },
   methods: {
     loadTouchSettings: function () {
@@ -560,10 +541,6 @@ export default {
         await GyroscopeService.stop()
         this.sensorsEnabled = false
       }
-    },
-    toggleFullscreen: async function () {
-      const newState = await FullscreenService.toggle()
-      this.fullscreenEnabled = newState
     },
     selectSkyCulture: function (key) {
       this.currentSkyCulture = key
@@ -643,10 +620,6 @@ export default {
       } catch (e) {
         // Ignore localStorage errors
       }
-
-      // Reset fullscreen to default (enabled)
-      FullscreenService.enable()
-      this.fullscreenEnabled = true
     }
   }
 }

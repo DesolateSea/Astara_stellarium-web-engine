@@ -2826,12 +2826,15 @@
   "resolved" "https://registry.npmjs.org/@capacitor/motion/-/motion-8.0.0.tgz"
   "version" "8.0.0"
 
+<<<<<<< HEAD
 "@capacitor/status-bar@^8.0.0":
   "integrity" "sha512-aIj3bc7z8lfPgOen8HlrBrkfnxpFnh21OCx6jCUx4Mvv+B6eEkUQ49b32DOddgVfr+igRHLX2SYi7duqIsNDXg=="
   "resolved" "https://registry.npmjs.org/@capacitor/status-bar/-/status-bar-8.0.0.tgz"
   "version" "8.0.0"
 
 >>>>>>> b89251ca (feat(gyro): add initial gyroscope support)
+=======
+>>>>>>> da093099 (feat(android): transparent auto-hiding navigation bar)
 "@hapi/address@2.x.x":
 <<<<<<< HEAD
 <<<<<<< HEAD
