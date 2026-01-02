@@ -8,10 +8,7 @@
     },
     "android": {
         "allowMixedContent": true,
-<<<<<<< HEAD
-        "webContentsDebuggingEnabled": false
-=======
-        "webContentsDebuggingEnabled": true,
+        "webContentsDebuggingEnabled": false,
         "adjustMarginsForEdgeToEdge": "force"
     },
     "plugins": {
@@ -20,6 +17,5 @@
             "hidden": true,
             "insetsHandling": "css"
         }
->>>>>>> refs/rewritten/master-6
     }
 }
