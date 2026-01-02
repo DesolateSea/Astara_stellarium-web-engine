@@ -71,6 +71,9 @@ const GyroscopeService = {
     this.smoothYaw = null
     this.smoothPitch = null
 
+    // Set ideal FOV for AR/gyro mode (~45°)
+    stelCore.fov = 45 * Math.PI / 180
+
     this.onOrientationBound = this.onDeviceOrientation.bind(this)
 
     if ('ondeviceorientationabsolute' in window) {
