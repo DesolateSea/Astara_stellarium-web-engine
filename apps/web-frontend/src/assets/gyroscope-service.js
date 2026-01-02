@@ -31,6 +31,7 @@ const GyroscopeService = {
   // Smoothing
   smoothYaw: null,
   smoothPitch: null,
+  smoothRoll: null,
   smoothingFactor: 0.35,
 
   async requestPermission () {
@@ -70,8 +71,10 @@ const GyroscopeService = {
     this.isActive = true
     this.smoothYaw = null
     this.smoothPitch = null
+    this.smoothRoll = null
 
-    // Set ideal FOV for AR/gyro mode (~45°)
+    // Save current roll and set ideal FOV for AR/gyro mode (~45°)
+    this.savedRoll = stelCore.observer.roll
     stelCore.fov = 45 * Math.PI / 180
 
     this.onOrientationBound = this.onDeviceOrientation.bind(this)
@@ -101,14 +104,21 @@ const GyroscopeService = {
       this.onOrientationBound = null
     }
 
+    // Reset roll to 0 when gyro is disabled
+    if (this.stelCore) {
+      this.stelCore.observer.roll = 0
+    }
+
     this.stelCore = null
     this.smoothYaw = null
     this.smoothPitch = null
+    this.smoothRoll = null
     console.log('[GyroService] Stopped')
   },
 
   /**
    * Transform the device's -Z axis (back camera direction) to world coordinates.
+   * Also calculates the roll angle (rotation around the view axis) for horizon alignment.
    *
    * Using W3C rotation matrix R = Rz(alpha) * Rx(beta) * Ry(gamma)
    * The -Z axis [0, 0, -1] transforms to the third column of R, negated.
@@ -117,7 +127,7 @@ const GyroscopeService = {
    *   World X = East, World Y = North, World Z = Up
    *   (This is the standard geographic frame from W3C spec)
    */
-  getBackCameraDirection (alpha, beta, gamma) {
+  getOrientationData (alpha, beta, gamma) {
     const a = alpha * DEG_TO_RAD
     const b = beta * DEG_TO_RAD
     const g = gamma * DEG_TO_RAD
@@ -129,21 +139,65 @@ const GyroscopeService = {
     const cG = Math.cos(g)
     const sG = Math.sin(g)
 
-    // Rotation matrix R = Rz(alpha) * Rx(beta) * Ry(gamma)
+    // Full rotation matrix R = Rz(alpha) * Rx(beta) * Ry(gamma)
+    // From W3C spec Example A.2
+    // const m11 = cA * cG - sA * sB * sG
+    const m12 = -sA * cB
+    // const m21 = sA * cG + cA * sB * sG
+    const m22 = cA * cB
+
     // Third column of R gives where device +Z goes in world coords
     // We want -Z (back camera), so negate
-    //
-    // R[0][2] = cA*sG + sA*sB*cG  -> for -Z: -(cA*sG + sA*sB*cG)
-    // R[1][2] = sA*sG - cA*sB*cG  -> for -Z: -(sA*sG - cA*sB*cG)
-    // R[2][2] = cB*cG             -> for -Z: -cB*cG
-    //
-    // These are in W3C world frame: X=East, Y=North, Z=Up
+    const m13 = cA * sG + sA * sB * cG
+    const m23 = sA * sG - cA * sB * cG
+    const m33 = cB * cG
 
-    const worldX = -(cA * sG + sA * sB * cG) // East
-    const worldY = -(sA * sG - cA * sB * cG) // North
-    const worldZ = -(cB * cG) // Up
+    // Back camera direction (-Z axis) in world frame: X=East, Y=North, Z=Up
+    const east = -m13
+    const north = -m23
+    const up = -m33
 
-    return { east: worldX, north: worldY, up: worldZ }
+    // Calculate roll: the rotation of the device's "up" (+Y axis) around the view axis
+    // Device +Y axis in world coordinates:
+    const devUpEast = m12
+    const devUpNorth = m22
+    const devUpUp = sB // m32 = sin(beta)
+
+    // Project device up onto the plane perpendicular to view direction
+    // and calculate angle relative to world up projected onto same plane
+    // This gives us the roll angle for horizon alignment
+
+    // For roll calculation, we need to find the angle between:
+    // 1. The device's "up" vector projected perpendicular to view direction
+    // 2. The world "up" vector projected perpendicular to view direction
+
+    // Simplified roll calculation using the device's orientation relative to gravity
+    // When looking at the sky, roll is how much the horizon should rotate
+    const viewHorizontal = Math.sqrt(east * east + north * north)
+
+    let roll = 0
+    if (viewHorizontal > 0.01) {
+      // Calculate the "right" vector of the view (perpendicular to view direction in horizontal plane)
+      const rightEast = -north / viewHorizontal
+      const rightNorth = east / viewHorizontal
+
+      // Project device up onto the horizontal plane and calculate angle
+      const devUpHorizEast = devUpEast
+      const devUpHorizNorth = devUpNorth
+
+      // Roll is the angle of device up relative to the "up" direction in view space
+      // Cross product component gives sin of angle, dot product gives cos
+      const dotRight = devUpHorizEast * rightEast + devUpHorizNorth * rightNorth
+      const dotUp = devUpUp
+
+      // Negate to correct the roll direction
+      roll = -Math.atan2(dotRight, dotUp)
+    } else {
+      // Looking straight up or down - use gamma for roll
+      roll = g
+    }
+
+    return { east, north, up, roll }
   },
 
   /**
@@ -186,16 +240,16 @@ const GyroscopeService = {
       if (alpha >= 360) alpha -= 360
     }
 
-    // Get back camera direction in world coordinates
-    const dir = this.getBackCameraDirection(alpha, beta, gamma)
+    // Get orientation data including roll for horizon alignment
+    const data = this.getOrientationData(alpha, beta, gamma)
 
     // Convert to Stellarium's coordinate system
     // Stellarium: X=North, Y=East, Z=Up
     // W3C World: X=East, Y=North, Z=Up
     // So: stel_X = world_Y (North), stel_Y = world_X (East), stel_Z = world_Z (Up)
-    const stelX = dir.north // North component
-    const stelY = dir.east // East component
-    const stelZ = dir.up // Up component
+    const stelX = data.north // North component
+    const stelY = data.east // East component
+    const stelZ = data.up // Up component
 
     // Calculate yaw and pitch using Stellarium's convention
     // yaw = atan2(Y, X) = atan2(East, North)
@@ -207,6 +261,7 @@ const GyroscopeService = {
     // Apply smoothing
     this.smoothYaw = this.smoothAngle(yaw, this.smoothYaw, this.smoothingFactor)
     this.smoothPitch = this.lowPass(pitch, this.smoothPitch, this.smoothingFactor)
+    this.smoothRoll = this.smoothAngle(data.roll, this.smoothRoll, this.smoothingFactor)
 
     // Clamp pitch
     this.smoothPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.smoothPitch))
@@ -214,6 +269,7 @@ const GyroscopeService = {
     try {
       this.stelCore.observer.yaw = this.smoothYaw
       this.stelCore.observer.pitch = this.smoothPitch
+      this.stelCore.observer.roll = this.smoothRoll
     } catch (e) {
       console.warn('[GyroService] Error updating view:', e)
     }
