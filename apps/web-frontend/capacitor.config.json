@@ -10,5 +10,12 @@
         "allowMixedContent": true,
         "webContentsDebuggingEnabled": true,
         "adjustMarginsForEdgeToEdge": "force"
+    },
+    "plugins": {
+        "SystemBars": {
+            "style": "DARK",
+            "hidden": true,
+            "insetsHandling": "css"
+        }
     }
 }
