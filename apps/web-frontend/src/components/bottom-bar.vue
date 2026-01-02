@@ -221,7 +221,7 @@ export default {
   align-items: flex-end;
   justify-content: space-between;
   padding: 20px 24px;
-  padding-bottom: 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 

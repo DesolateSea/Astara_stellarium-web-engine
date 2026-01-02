@@ -85,6 +85,7 @@ import GuiLoader from '@/components/gui-loader.vue'
 import DsoSkyOverlays from '@/components/DsoSkyOverlays.vue'
 import swh from '@/assets/sw_helpers.js'
 import Moment from 'moment'
+import FullscreenService from '@/assets/fullscreen-service.js'
 
 export default {
   data (context) {
@@ -254,6 +255,9 @@ export default {
   },
   mounted: function () {
     var that = this
+
+    // Initialize fullscreen mode (enabled by default)
+    FullscreenService.init()
 
     swh.initMonkeyPatches()
 

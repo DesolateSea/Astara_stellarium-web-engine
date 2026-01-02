@@ -8,6 +8,18 @@
     },
     "android": {
         "allowMixedContent": true,
+<<<<<<< HEAD
         "webContentsDebuggingEnabled": false
+=======
+        "webContentsDebuggingEnabled": true,
+        "adjustMarginsForEdgeToEdge": "force"
+    },
+    "plugins": {
+        "SystemBars": {
+            "style": "DARK",
+            "hidden": true,
+            "insetsHandling": "css"
+        }
+>>>>>>> refs/rewritten/master-6
     }
 }

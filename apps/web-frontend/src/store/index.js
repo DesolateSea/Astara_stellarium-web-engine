@@ -98,7 +98,10 @@ const createStore = () => {
         accuracy: 5000
       },
 
-      useAutoLocation: true
+      useAutoLocation: true,
+
+      // Gyroscope view control mode
+      gyroModeActive: false
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -180,6 +183,9 @@ const createStore = () => {
         }
         localStorage.setItem('stel_recents', JSON.stringify(state.recents))
         localStorage.setItem('stel_recents_timestamp', Date.now().toString())
+      },
+      setGyroModeActive (state, value) {
+        state.gyroModeActive = value
       }
     }
   })

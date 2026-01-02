@@ -152,6 +152,7 @@ export default {
   background: rgba(30, 30, 35, 0.95);
   border-radius: 16px 16px 0 0;
   padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   width: 100%;
   max-width: 400px;
 }

@@ -6,6 +6,9 @@
 # The terms of the AGPL v3 license can be found in the main directory of this
 # repository.
 
+# App ID from capacitor.config.json
+APP_ID := $(shell grep -o '"appId"[[:space:]]*:[[:space:]]*"[^"]*"' capacitor.config.json | sed 's/.*"appId"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
+
 .PHONY: setup build dev start
 
 gen-es6:
@@ -69,4 +72,12 @@ open-android:
 
 install-apk:
 	adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+uninstall:
+	@if adb shell pm list packages | grep -q $(APP_ID); then \
+		echo "Uninstalling app $(APP_ID)"; \
+		adb uninstall $(APP_ID); \
+	else \
+		echo "App $(APP_ID) is not installed"; \
+	fi
 
