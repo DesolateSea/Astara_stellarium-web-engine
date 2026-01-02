@@ -1,17 +1,7 @@
-// Stellarium Web - Copyright (c) 2022 - Stellarium Labs SRL
-//
-// This program is licensed under the terms of the GNU AGPL v3, or
-// alternatively under a commercial licence.
-//
-// The terms of the AGPL v3 license can be found in the main directory of this
-// repository.
-
 /**
  * Gyroscope Service for Sky View Control
- * Controls the Stellarium view direction based on device orientation sensors.
- *
- * Uses Web DeviceOrientation API since @capacitor/motion doesn't provide
- * device orientation (alpha/beta/gamma) - it only provides accelerometer data.
+ * Controls the Stellarium view direction based on device orientation.
+ * Uses device orientation events to map phone orientation to sky view.
  */
 
 const GyroscopeService = {
@@ -19,51 +9,42 @@ const GyroscopeService = {
   stelCore: null,
   onOrientationBound: null,
   lastUpdate: 0,
-  updateInterval: 16, // ~60fps throttle
+  updateInterval: 16, // ~60fps
 
-  /**
-     * Request motion sensor permission (required for iOS 13+)
-     * @returns {Promise<boolean>} true if permission granted
-     */
+  // Smoothing
+  smoothYaw: 0,
+  smoothPitch: 0,
+  smoothingFactor: 0.15, // Lower = smoother but more lag
+
   async requestPermission () {
-    console.log('[GyroService] Requesting permission...')
     try {
-      // iOS 13+ requires explicit permission request
       if (typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
         const result = await DeviceOrientationEvent.requestPermission()
         console.log('[GyroService] iOS permission result:', result)
         return result === 'granted'
       }
-      // Android and other browsers - permission not needed
-      console.log('[GyroService] No permission request needed (Android/Web)')
       return true
     } catch (e) {
-      console.log('[GyroService] Permission request error:', e)
-      return true // Assume granted on error
+      console.log('[GyroService] Permission error:', e)
+      return true
     }
   },
 
-  /**
-     * Start gyroscope-controlled view mode
-     * @param {Object} stelCore - The Stellarium engine core ($stel.core)
-     * @returns {Promise<boolean>} true if started successfully
-     */
   async start (stelCore) {
     console.log('[GyroService] start() called')
 
     if (this.isActive) {
-      console.log('[GyroService] Already active, returning true')
+      console.log('[GyroService] Already active')
       return true
     }
 
     if (!stelCore) {
-      console.error('[GyroService] stelCore is null/undefined!')
+      console.error('[GyroService] stelCore is null!')
       return false
     }
 
-    const hasPermission = await this.requestPermission()
-    if (!hasPermission) {
+    if (!await this.requestPermission()) {
       console.warn('[GyroService] Permission denied')
       return false
     }
@@ -71,33 +52,29 @@ const GyroscopeService = {
     this.stelCore = stelCore
     this.isActive = true
 
-    // Bind the handler to preserve 'this' context
+    // Initialize smooth values from current view
+    this.smoothYaw = stelCore.observer.yaw || 0
+    this.smoothPitch = stelCore.observer.pitch || 0
+
     this.onOrientationBound = this.onDeviceOrientation.bind(this)
 
-    // Use deviceorientationabsolute for absolute compass heading (Android)
-    // Fall back to deviceorientation (iOS and others)
+    // Use absolute orientation if available (includes compass heading)
     if ('ondeviceorientationabsolute' in window) {
-      console.log('[GyroService] Using deviceorientationabsolute event')
+      console.log('[GyroService] Using deviceorientationabsolute')
       window.addEventListener('deviceorientationabsolute', this.onOrientationBound, true)
     } else {
-      console.log('[GyroService] Using deviceorientation event')
+      console.log('[GyroService] Using deviceorientation')
       window.addEventListener('deviceorientation', this.onOrientationBound, true)
     }
 
-    console.log('[GyroService] Gyroscope view control STARTED successfully')
+    console.log('[GyroService] Started successfully')
     return true
   },
 
-  /**
-     * Stop gyroscope-controlled view mode
-     */
   async stop () {
     console.log('[GyroService] stop() called')
 
-    if (!this.isActive) {
-      console.log('[GyroService] Not active, nothing to stop')
-      return
-    }
+    if (!this.isActive) return
 
     this.isActive = false
 
@@ -108,17 +85,20 @@ const GyroscopeService = {
     }
 
     this.stelCore = null
-    console.log('[GyroService] Gyroscope view control STOPPED')
+    console.log('[GyroService] Stopped')
   },
 
   /**
-     * Handle device orientation event
-     * @param {DeviceOrientationEvent} event
-     */
+   * Handle device orientation event
+   * Coordinate system:
+   * - alpha: compass heading (0-360), 0 = North
+   * - beta: front-back tilt (-180 to 180), 0 = flat, 90 = vertical
+   * - gamma: left-right tilt (-90 to 90)
+   */
   onDeviceOrientation (event) {
-    if (!this.stelCore || !this.isActive) return
+    if (!this.isActive || !this.stelCore) return
 
-    // Throttle updates for performance
+    // Throttle updates
     const now = Date.now()
     if (now - this.lastUpdate < this.updateInterval) return
     this.lastUpdate = now
@@ -126,37 +106,61 @@ const GyroscopeService = {
     // Get orientation values
     let alpha = event.alpha // Compass heading (0-360)
     const beta = event.beta // Front-back tilt (-180 to 180)
-    const gamma = event.gamma // Left-right tilt (-90 to 90)
+    // gamma (left-right tilt) not used for basic sky viewing
 
-    // Use webkitCompassHeading for iOS if available (more accurate)
+    // iOS uses webkitCompassHeading (more accurate, already in correct direction)
     if (event.webkitCompassHeading !== undefined) {
       alpha = event.webkitCompassHeading
     }
 
-    console.log('[GyroService] Orientation:', 'alpha=' + alpha, 'beta=' + beta, 'gamma=' + gamma)
-
-    if (alpha === null || beta === null) {
-      console.log('[GyroService] alpha or beta is null, skipping')
-      return
-    }
+    if (alpha === null || beta === null) return
 
     // Convert to Stellarium's coordinate system
-    // azimuth (yaw): horizontal direction, 0 = North
-    // For webkitCompassHeading, 0 = North, increases clockwise (correct)
-    // For standard alpha, 0 = North, increases counterclockwise, so negate
-    const azimuthDeg = event.webkitCompassHeading !== undefined ? alpha : (360 - alpha)
-    const azimuthRad = azimuthDeg * Math.PI / 180
+    // Azimuth (yaw): horizontal direction
+    // Standard alpha: 0 = North, increases counterclockwise
+    // We need: 0 = North, increases clockwise (looking down at map)
+    // webkitCompassHeading is already clockwise
+    let azimuthDeg
+    if (event.webkitCompassHeading !== undefined) {
+      azimuthDeg = alpha
+    } else {
+      azimuthDeg = (360 - alpha) % 360
+    }
+    const targetYaw = azimuthDeg * Math.PI / 180
 
-    // altitude (pitch): vertical angle
-    // When phone vertical (beta=90), user looks at horizon (pitch=0)
-    // When phone tilted up (beta decreases), looking up at sky
-    const altitudeDeg = Math.max(-90, Math.min(90, 90 - beta))
-    const altitudeRad = altitudeDeg * Math.PI / 180
+    // Altitude (pitch): vertical angle
+    // beta = 0: phone flat, looking straight up
+    // beta = 90: phone vertical, looking at horizon
+    // beta = 180/-180: phone upside down flat, looking straight down
+    // We want: pitch = 0 at horizon, positive = looking up, negative = looking down
+    let targetPitch
+    if (beta >= 0 && beta <= 180) {
+      // Phone tilted from flat (0) to vertical (90) to upside down (180)
+      targetPitch = (beta - 90) * Math.PI / 180
+    } else {
+      // beta is negative (-180 to 0)
+      targetPitch = (beta - 90) * Math.PI / 180
+    }
 
-    // Update Stellarium observer view
+    // Clamp pitch to valid range
+    targetPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetPitch))
+
+    // Apply smoothing using exponential moving average
+    // Handle yaw wraparound (0 to 2π)
+    let yawDiff = targetYaw - this.smoothYaw
+    if (yawDiff > Math.PI) yawDiff -= 2 * Math.PI
+    if (yawDiff < -Math.PI) yawDiff += 2 * Math.PI
+    this.smoothYaw += yawDiff * this.smoothingFactor
+    // Normalize to 0-2π
+    if (this.smoothYaw < 0) this.smoothYaw += 2 * Math.PI
+    if (this.smoothYaw >= 2 * Math.PI) this.smoothYaw -= 2 * Math.PI
+
+    this.smoothPitch += (targetPitch - this.smoothPitch) * this.smoothingFactor
+
+    // Apply to Stellarium
     try {
-      this.stelCore.observer.yaw = azimuthRad
-      this.stelCore.observer.pitch = altitudeRad
+      this.stelCore.observer.yaw = this.smoothYaw
+      this.stelCore.observer.pitch = this.smoothPitch
     } catch (e) {
       console.warn('[GyroService] Error updating view:', e)
     }
