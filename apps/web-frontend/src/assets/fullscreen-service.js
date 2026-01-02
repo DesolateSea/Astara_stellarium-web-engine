@@ -25,7 +25,7 @@ const FullscreenService = {
    * Initialize the service and enable fullscreen
    * Should be called on app startup
    */
-  async init () {
+  async init() {
     // Check if running in Capacitor
     this.isCapacitor = typeof window !== 'undefined' &&
       window.Capacitor &&
@@ -36,14 +36,12 @@ const FullscreenService = {
 
     if (this.isCapacitor) {
       try {
-        // SystemBars is built into @capacitor/core in Capacitor 8+
-        const { SystemBars, SystemBarType, SystemBarsStyle } = await import('@capacitor/core')
-        this.SystemBars = SystemBars
-        this.SystemBarType = SystemBarType
-        this.SystemBarsStyle = SystemBarsStyle
-        console.log('[FullscreenService] SystemBars API loaded successfully')
+        // Use the installed @capacitor/status-bar plugin
+        const { StatusBar } = await import('@capacitor/status-bar')
+        this.StatusBar = StatusBar
+        console.log('[FullscreenService] StatusBar plugin loaded successfully')
       } catch (e) {
-        console.warn('[FullscreenService] Failed to load SystemBars API:', e)
+        console.warn('[FullscreenService] Failed to load StatusBar plugin:', e)
       }
     }
 
@@ -57,7 +55,7 @@ const FullscreenService = {
   /**
    * Set up listener to re-hide bars after user swipes to reveal them
    */
-  setupRehideListener () {
+  setupRehideListener() {
     if (!this.isCapacitor) return
 
     // Re-hide bars on any touch end (user finished interacting)
@@ -74,7 +72,7 @@ const FullscreenService = {
   /**
    * Schedule re-hiding of system bars after a delay
    */
-  scheduleRehide () {
+  scheduleRehide() {
     if (this.rehideTimeout) {
       clearTimeout(this.rehideTimeout)
     }
@@ -86,27 +84,13 @@ const FullscreenService = {
   /**
    * Enable fullscreen/immersive mode (hide both status bar and navigation bar)
    */
-  async enable () {
-    if (this.SystemBars && this.SystemBarType) {
+  async enable() {
+    if (this.StatusBar) {
       try {
-        // Set dark style (light icons on dark background)
-        await this.SystemBars.setStyle({ style: this.SystemBarsStyle.Dark })
-      } catch (e) {
-        // Ignore style errors
-      }
-
-      try {
-        // Hide status bar (top)
-        await this.SystemBars.hide({ bar: this.SystemBarType.StatusBar })
+        await this.StatusBar.setOverlaysWebView({ overlay: true })
+        await this.StatusBar.hide()
       } catch (e) {
         console.warn('[FullscreenService] Failed to hide status bar:', e)
-      }
-
-      try {
-        // Hide navigation bar (bottom)
-        await this.SystemBars.hide({ bar: this.SystemBarType.NavigationBar })
-      } catch (e) {
-        console.warn('[FullscreenService] Failed to hide navigation bar:', e)
       }
     }
 
