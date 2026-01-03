@@ -35,11 +35,17 @@ const GyroscopeService = {
   updateInterval: 16, // ~60fps
   onStopCallback: null,
 
-  // Smoothing
+  // Adaptive Smoothing Parameters
+  // Uses exponential adaptive gain: factor = minFactor + (maxFactor - minFactor) * (1 - e^(-k * (|diff| - d0)))
+  // Small movements → strong smoothing (stable)
+  // Large movements → weak smoothing (responsive)
   smoothYaw: null,
   smoothPitch: null,
   smoothRoll: null,
-  smoothingFactor: 0.35,
+  minFactor: 0.06, // Strong smoothing when still (prevents jitter)
+  maxFactor: 0.7, // Fast response when moving
+  k: 4.0, // Sensitivity - how quickly factor ramps up
+  d0: 0.02, // Dead-zone threshold (~1.1°) - below this, use minFactor
 
   async requestPermission () {
     try {
@@ -248,24 +254,56 @@ const GyroscopeService = {
   },
 
   /**
-   * Smooth angle with wraparound handling
+   * Adaptive smooth angle with wraparound handling
+   * Uses exponential adaptive gain - small movements get heavy smoothing,
+   * large movements get light smoothing for responsiveness
    */
-  smoothAngle (newAngle, oldAngle, factor) {
+  adaptiveSmoothAngle (newAngle, oldAngle) {
     if (oldAngle === null) return newAngle
 
+    // Handle angle wraparound
     let diff = newAngle - oldAngle
     if (diff > Math.PI) diff -= 2 * Math.PI
     if (diff < -Math.PI) diff += 2 * Math.PI
+
+    const absDiff = Math.abs(diff)
+
+    // Calculate adaptive factor
+    let factor
+    if (absDiff < this.d0) {
+      // Below dead-zone: use minimum factor (stable, prevents jitter)
+      factor = this.minFactor
+    } else {
+      // Exponential adaptive gain: ramps up smoothly from minFactor to maxFactor
+      const t = absDiff - this.d0
+      const response = 1 - Math.exp(-this.k * t)
+      factor = this.minFactor + (this.maxFactor - this.minFactor) * response
+    }
 
     return oldAngle + factor * diff
   },
 
   /**
-   * Low-pass filter
+   * Adaptive low-pass filter for non-angle values (like pitch)
+   * Uses the same adaptive gain principle
    */
-  lowPass (newVal, oldVal, factor) {
+  adaptiveLowPass (newVal, oldVal) {
     if (oldVal === null) return newVal
-    return oldVal + factor * (newVal - oldVal)
+
+    const diff = newVal - oldVal
+    const absDiff = Math.abs(diff)
+
+    // Calculate adaptive factor
+    let factor
+    if (absDiff < this.d0) {
+      factor = this.minFactor
+    } else {
+      const t = absDiff - this.d0
+      const response = 1 - Math.exp(-this.k * t)
+      factor = this.minFactor + (this.maxFactor - this.minFactor) * response
+    }
+
+    return oldVal + factor * diff
   },
 
   /**
@@ -347,10 +385,10 @@ const GyroscopeService = {
     const horizontalDist = Math.sqrt(stelX * stelX + stelY * stelY)
     const pitch = Math.atan2(stelZ, horizontalDist)
 
-    // Apply smoothing
-    this.smoothYaw = this.smoothAngle(yaw, this.smoothYaw, this.smoothingFactor)
-    this.smoothPitch = this.lowPass(pitch, this.smoothPitch, this.smoothingFactor)
-    this.smoothRoll = this.smoothAngle(data.roll, this.smoothRoll, this.smoothingFactor)
+    // Apply adaptive smoothing
+    this.smoothYaw = this.adaptiveSmoothAngle(yaw, this.smoothYaw)
+    this.smoothPitch = this.adaptiveLowPass(pitch, this.smoothPitch)
+    this.smoothRoll = this.adaptiveSmoothAngle(data.roll, this.smoothRoll)
 
     // Clamp pitch
     this.smoothPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.smoothPitch))

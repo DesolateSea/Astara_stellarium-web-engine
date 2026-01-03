@@ -137,7 +137,7 @@ const createStore = () => {
       setSelectedObject (state, newValue) {
         state.selectedObject = newValue
         // When gyro mode is active and an object is selected, set it as the target for direction overlay
-        if (state.gyroModeActive && newValue) {
+        if (state.gyroModeActive) {
           state.gyroTargetObject = newValue
         }
       },
