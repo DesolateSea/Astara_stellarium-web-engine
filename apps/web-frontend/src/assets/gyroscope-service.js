@@ -41,7 +41,6 @@ const GyroscopeService = {
   // Large movements → weak smoothing (responsive)
   smoothYaw: null,
   smoothPitch: null,
-  smoothRoll: null,
   minFactor: 0.06, // Strong smoothing when still (prevents jitter)
   maxFactor: 0.7, // Fast response when moving
   k: 4.0, // Sensitivity - how quickly factor ramps up
@@ -80,12 +79,18 @@ const GyroscopeService = {
       return false
     }
 
+    // Check if device is in landscape orientation - don't start gyro in landscape
+    const isLandscape = window.innerWidth > window.innerHeight
+    if (isLandscape) {
+      console.warn('[GyroService] Cannot start in landscape mode. Please rotate to portrait.')
+      return false
+    }
+
     this.stelCore = stelCore
     this.isActive = true
     this.onStopCallback = onStopCallback
     this.smoothYaw = null
     this.smoothPitch = null
-    this.smoothRoll = null
 
     // Lock to portrait mode
     try {
@@ -164,7 +169,6 @@ const GyroscopeService = {
     this.stelCore = null
     this.smoothYaw = null
     this.smoothPitch = null
-    this.smoothRoll = null
     this.onStopCallback = null
     console.log('[GyroService] Stopped')
   },
@@ -284,26 +288,28 @@ const GyroscopeService = {
   },
 
   /**
-   * Adaptive low-pass filter for non-angle values (like pitch)
-   * Uses the same adaptive gain principle
+   * Adaptive smooth for pitch (no wraparound needed since pitch is bounded to ±π/2)
+   * Uses the same adaptive gain principle as adaptiveSmoothAngle
    */
-  adaptiveLowPass (newVal, oldVal) {
-    if (oldVal === null) return newVal
+  adaptiveSmoothPitch (newPitch, oldPitch) {
+    if (oldPitch === null) return newPitch
 
-    const diff = newVal - oldVal
+    const diff = newPitch - oldPitch
     const absDiff = Math.abs(diff)
 
     // Calculate adaptive factor
     let factor
     if (absDiff < this.d0) {
+      // Below dead-zone: use minimum factor (stable, prevents jitter)
       factor = this.minFactor
     } else {
+      // Exponential adaptive gain: ramps up smoothly from minFactor to maxFactor
       const t = absDiff - this.d0
       const response = 1 - Math.exp(-this.k * t)
       factor = this.minFactor + (this.maxFactor - this.minFactor) * response
     }
 
-    return oldVal + factor * diff
+    return oldPitch + factor * diff
   },
 
   /**
@@ -385,10 +391,9 @@ const GyroscopeService = {
     const horizontalDist = Math.sqrt(stelX * stelX + stelY * stelY)
     const pitch = Math.atan2(stelZ, horizontalDist)
 
-    // Apply adaptive smoothing
+    // Apply adaptive smoothing to yaw and pitch (not roll)
     this.smoothYaw = this.adaptiveSmoothAngle(yaw, this.smoothYaw)
-    this.smoothPitch = this.adaptiveLowPass(pitch, this.smoothPitch)
-    this.smoothRoll = this.adaptiveSmoothAngle(data.roll, this.smoothRoll)
+    this.smoothPitch = this.adaptiveSmoothPitch(pitch, this.smoothPitch)
 
     // Clamp pitch
     this.smoothPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.smoothPitch))
@@ -396,7 +401,7 @@ const GyroscopeService = {
     try {
       this.stelCore.observer.yaw = this.smoothYaw
       this.stelCore.observer.pitch = this.smoothPitch
-      this.stelCore.observer.roll = this.smoothRoll
+      this.stelCore.observer.roll = data.roll
     } catch (e) {
       console.warn('[GyroService] Error updating view:', e)
     }
