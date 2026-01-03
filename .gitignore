@@ -3,6 +3,7 @@
 *~
 *.obj
 *.pyc
+__pycache__/
 *.vimrc
 *.ycm_extra_conf.py
 /todo
