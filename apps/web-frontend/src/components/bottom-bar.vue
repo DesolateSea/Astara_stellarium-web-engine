@@ -172,6 +172,9 @@ export default {
       // If gyro is already active, do nothing (swipe will disable it)
       if (this.$store.state.gyroModeActive) return
 
+      // If device is in landscape orientation, do nothing (gyro only works in portrait)
+      if (window.innerWidth > window.innerHeight) return
+
       // Show the dialog and start listening for pitch
       this.showGyroDialog = true
       this.pitchListener = this.onPitchCheck.bind(this)

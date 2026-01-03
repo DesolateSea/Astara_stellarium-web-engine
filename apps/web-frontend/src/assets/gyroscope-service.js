@@ -29,6 +29,7 @@ const GyroscopeService = {
   onOrientationBound: null,
   onTouchStartBound: null,
   onTouchMoveBound: null,
+  onResizeBound: null,
   touchStartX: null,
   touchStartY: null,
   lastUpdate: 0,
@@ -122,6 +123,10 @@ const GyroscopeService = {
       canvas.addEventListener('touchmove', this.onTouchMoveBound, { passive: true })
     }
 
+    // Add resize listener to stop gyro if screen rotates to landscape
+    this.onResizeBound = this.onResize.bind(this)
+    window.addEventListener('resize', this.onResizeBound)
+
     console.log('[GyroService] Started successfully')
     return true
   },
@@ -153,6 +158,12 @@ const GyroscopeService = {
     }
     this.touchStartX = null
     this.touchStartY = null
+
+    // Remove resize listener
+    if (this.onResizeBound) {
+      window.removeEventListener('resize', this.onResizeBound)
+      this.onResizeBound = null
+    }
 
     // Reset roll to 0 when gyro is disabled
     if (this.stelCore) {
@@ -347,6 +358,20 @@ const GyroscopeService = {
     // If moved more than 20px, it's a swipe - disable gyro
     if (distance > 20) {
       console.log('[GyroService] Swipe detected, disabling gyro')
+      if (this.onStopCallback) {
+        this.onStopCallback()
+      }
+      this.stop()
+    }
+  },
+
+  /**
+   * Detect screen rotation to landscape and stop gyro
+   */
+  onResize () {
+    // If screen rotates to landscape, stop gyro
+    if (window.innerWidth > window.innerHeight) {
+      console.log('[GyroService] Screen rotated to landscape, disabling gyro')
       if (this.onStopCallback) {
         this.onStopCallback()
       }
