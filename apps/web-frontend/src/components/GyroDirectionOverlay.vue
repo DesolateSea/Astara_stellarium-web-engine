@@ -115,6 +115,15 @@ export default {
       } else {
         this.stopUpdating()
       }
+    },
+    // Watch for target object changes to update direction immediately
+    targetObject (newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        // Trigger immediate update when target changes
+        this.$nextTick(() => {
+          this.updateDirection()
+        })
+      }
     }
   },
   methods: {
@@ -141,12 +150,28 @@ export default {
 
         // Get target's position in ICRF (cartesian unit vector)
         let targetRadec = null
-        if (target.getInfo) {
-          targetRadec = target.getInfo('radec')
-        } else if (target.model_data && target.model_data.ra !== undefined) {
-          const raRad = target.model_data.ra * 15 * Math.PI / 180
-          const decRad = target.model_data.dec * Math.PI / 180
-          targetRadec = this.$stel.s2c([raRad, decRad])
+
+        // First, try to use the current Stellarium selection if it matches our target
+        if (this.$stel.core.selection) {
+          targetRadec = this.$stel.core.selection.getInfo('radec')
+        }
+
+        // If no selection or it failed, try to look up by name
+        if (!targetRadec && target.names && target.names.length > 0) {
+          const obj = this.$stel.getObjByName(target.names[0])
+          if (obj) {
+            targetRadec = obj.getInfo('radec')
+          }
+        }
+
+        // Fallback: use stored RA/Dec from model_data
+        if (!targetRadec && target.model_data) {
+          if (target.model_data.ra !== undefined && target.model_data.dec !== undefined) {
+            // RA in hours, Dec in degrees
+            const raRad = target.model_data.ra * 15 * Math.PI / 180
+            const decRad = target.model_data.dec * Math.PI / 180
+            targetRadec = this.$stel.s2c([raRad, decRad])
+          }
         }
 
         if (!targetRadec) return

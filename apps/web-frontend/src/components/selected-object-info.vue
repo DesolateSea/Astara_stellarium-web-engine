@@ -246,6 +246,8 @@ export default {
       return swh.iconForSkySource(this.selectedObject)
     },
     showPointToButton: function () {
+      // In gyro mode, don't show center button - show zoom controls instead
+      if (this.$store.state.gyroModeActive) return false
       if (!this.$store.state.stel.lock) return true
       if (this.$store.state.stel.lock !== this.$store.state.stel.selection) return true
       return false
