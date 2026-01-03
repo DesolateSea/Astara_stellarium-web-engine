@@ -3392,6 +3392,11 @@
   resolved "https://registry.npmjs.org/@capacitor/android/-/android-8.0.0.tgz"
   integrity sha512-FrBSvVAC5JuLaYHNyDnwQny0/SYnP+xDQbc/KA4wInmRkMXLDv22fkx9aBJIDrxjuUVd+jsRih4SAt8FgMEzCw==
 
+"@capacitor/camera@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.npmjs.org/@capacitor/camera/-/camera-8.0.0.tgz"
+  integrity sha512-Iu8j2oxoIhY2mLuoEckbL7PFgw1XFm1nqmeWdIkILpcT3H9A+BrSDUDlzWqM/EeaDKo6JnhR59tYHwUhOdXaUg==
+
 "@capacitor/cli@^8.0.0":
   version "8.0.0"
   resolved "https://registry.npmjs.org/@capacitor/cli/-/cli-8.0.0.tgz"

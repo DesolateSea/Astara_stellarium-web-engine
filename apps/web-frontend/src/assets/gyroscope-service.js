@@ -100,9 +100,9 @@ const GyroscopeService = {
       console.warn('[GyroService] Failed to lock orientation:', e)
     }
 
-    // Save current roll and set ideal FOV for AR/gyro mode (~45°)
+    // Save current roll and set ideal FOV for AR/gyro mode (32.7°)
     this.savedRoll = stelCore.observer.roll
-    stelCore.fov = 45 * Math.PI / 180
+    stelCore.fov = 32.7 * Math.PI / 180
 
     this.onOrientationBound = this.onDeviceOrientation.bind(this)
 
@@ -168,6 +168,8 @@ const GyroscopeService = {
     // Reset roll to 0 when gyro is disabled
     if (this.stelCore) {
       this.stelCore.observer.roll = 0
+      // Reset FOV to default 45 degrees when AR stops
+      this.stelCore.fov = 45 * Math.PI / 180
     }
 
     // Unlock orientation
@@ -427,6 +429,8 @@ const GyroscopeService = {
       this.stelCore.observer.yaw = this.smoothYaw
       this.stelCore.observer.pitch = this.smoothPitch
       this.stelCore.observer.roll = data.roll
+      // Lock FOV to 32.7 degrees for AR mode
+      this.stelCore.fov = 32.7 * Math.PI / 180
     } catch (e) {
       console.warn('[GyroService] Error updating view:', e)
     }

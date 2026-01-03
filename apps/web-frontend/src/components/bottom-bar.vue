@@ -15,8 +15,8 @@
       </v-btn>
     </div>
 
-    <!-- Center section: Compass -->
-    <div class="bottom-bar-center" @click="onCompassClick">
+    <!-- Center section: Compass or AR Camera toggle -->
+    <div class="bottom-bar-center" @click="onCenterClick">
       <!-- FOV Display (Fixed position, does not rotate) -->
       <transition name="fade">
         <div class="fov-display" v-show="showFov">
@@ -24,16 +24,31 @@
         </div>
       </transition>
 
-      <div class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
-        <div class="compass-pointer" ref="compassNeedle">
-          <div class="pointer-north"></div>
-          <div class="pointer-south"></div>
+      <!-- Camera icon when gyro is active -->
+      <transition name="fade" mode="out-in">
+        <div v-if="gyroModeActive" key="camera" class="ar-toggle-container">
+          <v-btn
+            icon
+            class="ar-toggle-btn"
+            :class="{ 'ar-active': arModeActive }"
+            @click.stop="toggleArMode"
+          >
+            <v-icon size="36">{{ arModeActive ? 'mdi-camera-off' : 'mdi-camera' }}</v-icon>
+          </v-btn>
         </div>
-        <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
-        <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
-        <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
-        <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
-      </div>
+
+        <!-- Compass when gyro is not active -->
+        <div v-else key="compass" class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
+          <div class="compass-pointer" ref="compassNeedle">
+            <div class="pointer-north"></div>
+            <div class="pointer-south"></div>
+          </div>
+          <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
+          <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
+          <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
+          <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
+        </div>
+      </transition>
     </div>
 
     <!-- Right section: Time -->
@@ -140,6 +155,12 @@ export default {
     isWest: function () {
       const az = this.azimuthDegrees
       return az >= 225 && az < 315
+    },
+    gyroModeActive () {
+      return this.$store.state.gyroModeActive
+    },
+    arModeActive () {
+      return this.$store.state.arModeActive
     }
   },
   watch: {
@@ -164,6 +185,17 @@ export default {
     },
     closeMenu () {
       this.showMenuPanel = false
+    },
+    onCenterClick () {
+      if (this.gyroModeActive) {
+        // If clicked on center area while gyro is active, do nothing
+        // The camera button inside handles the click
+        return
+      }
+      this.onCompassClick()
+    },
+    toggleArMode () {
+      this.$store.commit('setArModeActive', !this.arModeActive)
     },
     onCompassClick () {
       // If sensors are disabled in settings, do nothing
@@ -516,5 +548,37 @@ export default {
   font-size: 18px;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.ar-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+}
+
+.ar-toggle-btn {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.3s ease;
+}
+
+.ar-toggle-btn.ar-active {
+  background: rgba(255, 60, 60, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  animation: pulse-recording 2s infinite;
+}
+
+@keyframes pulse-recording {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 60, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 60, 60, 0);
+  }
 }
 </style>

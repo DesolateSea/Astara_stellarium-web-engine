@@ -55,8 +55,9 @@
 
   <v-main>
     <v-container class="fill-height" fluid style="padding: 0">
-      <div id="stel" v-bind:class="{ right_panel: $store.state.showSidePanel }">
+      <div id="stel" v-bind:class="{ right_panel: $store.state.showSidePanel, 'ar-transparent': arModeActive }">
         <div style="position: relative; width: 100%; height: 100%">
+          <ARCameraPreview />
           <component v-bind:is="guiComponent"></component>
           <dso-sky-overlays v-if="guiComponent === 'Gui'"></dso-sky-overlays>
           <canvas id="stel-canvas" ref='stelCanvas'></canvas>
@@ -105,7 +106,7 @@ export default {
       gpsErrorSnackbar: false
     }
   },
-  components: { Gui, GuiLoader, DsoSkyOverlays },
+  components: { Gui, GuiLoader, DsoSkyOverlays, ARCameraPreview: () => import('@/components/AR-camera-preview.vue') },
   methods: {
     getPluginsMenuItems: function () {
       let res = []
@@ -210,6 +211,9 @@ export default {
     }
   },
   computed: {
+    arModeActive () {
+      return this.$store.state.arModeActive
+    },
     useAutoLocation: function () {
       return this.$store.state.useAutoLocation
     },
@@ -451,6 +455,17 @@ html, body, #app {
 
 .v-application--wrap {
   min-height: 100%!important;
+}
+
+/* AR Mode - Make canvas background transparent (black becomes transparent) */
+.ar-transparent #stel-canvas {
+  mix-blend-mode: screen;
+}
+
+.ar-transparent .v-main,
+.ar-transparent .v-application,
+.ar-transparent #stel {
+  background: transparent !important;
 }
 
 </style>

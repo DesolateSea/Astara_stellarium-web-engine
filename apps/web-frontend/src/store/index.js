@@ -105,7 +105,10 @@ const createStore = () => {
 
       // Gyroscope view control mode
       gyroModeActive: false,
-      gyroTargetObject: null // Object to track direction for in gyro mode
+      gyroTargetObject: null, // Object to track direction for in gyro mode
+
+      // AR (Augmented Reality) camera mode - shows camera behind star view
+      arModeActive: false
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -197,13 +200,18 @@ const createStore = () => {
       },
       setGyroModeActive (state, value) {
         state.gyroModeActive = value
-        // Clear target when gyro mode is disabled
+        // Clear target and disable AR when gyro mode is disabled
         if (!value) {
           state.gyroTargetObject = null
+          state.arModeActive = false
         }
       },
       setGyroTargetObject (state, value) {
         state.gyroTargetObject = value
+      },
+      setArModeActive (state, value) {
+        // AR can only be active if gyro is active
+        state.arModeActive = value && state.gyroModeActive
       }
     }
   })
