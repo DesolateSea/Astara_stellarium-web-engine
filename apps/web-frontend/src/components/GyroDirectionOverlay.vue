@@ -177,60 +177,79 @@ export default {
         if (!targetRadec) return
 
         // Convert target from ICRF to OBSERVED frame
+        // OBSERVED frame: X = North, Y = East, Z = Zenith (up)
         const targetObsRaw = this.$stel.convertFrame(observer, 'ICRF', 'OBSERVED', targetRadec)
 
-        // Normalize target vector 't' for consistent vector math
-        const tLen = Math.sqrt(targetObsRaw[0] * targetObsRaw[0] + targetObsRaw[1] * targetObsRaw[1] + targetObsRaw[2] * targetObsRaw[2])
+        // Normalize target vector 't'
+        const tLen = Math.sqrt(targetObsRaw[0] ** 2 + targetObsRaw[1] ** 2 + targetObsRaw[2] ** 2)
         const t = [targetObsRaw[0] / tLen, targetObsRaw[1] / tLen, targetObsRaw[2] / tLen]
 
-        // Observer vec = 'o'
-        const yaw = observer.yaw
-        const pitch = observer.pitch
+        // Get observer view angles
+        const yaw = observer.yaw // Azimuth: 0 = North, positive = East
+        const pitch = observer.pitch // Elevation: 0 = horizon, positive = up
+        const roll = observer.roll || 0 // Roll: rotation of screen around view axis
 
-        // Use standard yaw (positive).
-        const mathYaw = yaw
+        const cosPitch = Math.cos(pitch)
+        const sinPitch = Math.sin(pitch)
+        const cosYaw = Math.cos(yaw)
+        const sinYaw = Math.sin(yaw)
 
-        const cp = Math.cos(pitch)
-        const sp = Math.sin(pitch)
-        const cy = Math.cos(mathYaw)
-        const sy = Math.sin(mathYaw)
-
-        // View direction (o)
+        // View direction 'o' in OBSERVED frame
         const o = [
-          cp * cy,
-          cp * sy,
-          sp
+          cosPitch * cosYaw, // North component
+          cosPitch * sinYaw, // East component
+          sinPitch // Up component
         ]
 
-        // Direction d = t - o
-        const d = [
-          t[0] - o[0],
-          t[1] - o[1],
-          t[2] - o[2]
+        // Calculate angular distance: angle = acos(t · o)
+        const tDotO = t[0] * o[0] + t[1] * o[1] + t[2] * o[2]
+        const angle = Math.acos(Math.max(-1, Math.min(1, tDotO))) * 180 / Math.PI
+        this.angleToTarget = Math.round(angle)
+
+        // --- Planar Projection (More accurate than t - o) ---
+        // Project target 't' onto the plane perpendicular to view 'o'
+        // v_proj = t - (t·o)o
+        const tProj = [
+          t[0] - tDotO * o[0],
+          t[1] - tDotO * o[1],
+          t[2] - tDotO * o[2]
         ]
 
-        // Screen Basis Vectors (Camera Frame)
-        const rx = sy
-        const ry = -cy
+        // Handle case where target is directly forward or backward
+        if (Math.abs(tDotO) > 0.9999) {
+          // Keep arrow rotation as is or zero it
+          return
+        }
+
+        // --- Horizon Basis Vectors (Device Roll = 0) ---
+        // Right vector in horizontal plane (perpendicular to view)
+        // Original logic: rx = sinYaw (East-ish), but used with negation later
+        const rx = sinYaw
+        const ry = -cosYaw
         const rz = 0
 
+        // Up vector: perpendicular to both forward and right
         const ux = ry * o[2] - rz * o[1]
         const uy = rz * o[0] - rx * o[2]
         const uz = rx * o[1] - ry * o[0]
 
-        // Project direction 'd' onto screen plane
-        // Negate screenX to fix horizontal mirroring (Left/Right swap)
-        const screenX = -(d[0] * rx + d[1] * ry + d[2] * rz)
-        const screenY = d[0] * ux + d[1] * uy + d[2] * uz
+        // Project onto Horizon-aligned screen plane
+        // Negate horizontal component to match screen coordinates (East is Right)
+        const xHoriz = -(tProj[0] * rx + tProj[1] * ry + tProj[2] * rz)
+        const yHoriz = tProj[0] * ux + tProj[1] * uy + tProj[2] * uz
 
-        // Calculate arrow angle: atan2(screenX, screenY) -> 0° = up, 90° = right (CW)
-        const arrowAngle = Math.atan2(screenX, screenY) * 180 / Math.PI
+        // --- Apply Roll Correction ---
+        // Rotate the 2D vector (xHoriz, yHoriz) by +roll to compensate for screen rotation
+        // If device rotates CW (roll > 0), we must rotate arrow CCW (positive angle)
+        const cosRoll = Math.cos(roll)
+        const sinRoll = Math.sin(roll)
+
+        const xScreen = xHoriz * cosRoll - yHoriz * sinRoll
+        const yScreen = xHoriz * sinRoll + yHoriz * cosRoll
+
+        // Arrow angle: 0° = up, 90° = right (CW from up)
+        const arrowAngle = Math.atan2(xScreen, yScreen) * 180 / Math.PI
         this.arrowRotation = arrowAngle
-
-        // Calculate angular distance: angle = acos(t . o)
-        const cosAngle = t[0] * o[0] + t[1] * o[1] + t[2] * o[2]
-        const angle = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180 / Math.PI
-        this.angleToTarget = Math.round(angle)
       } catch (e) {
         console.warn('[GyroDirection] Error calculating direction:', e)
       }
