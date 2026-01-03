@@ -18,6 +18,7 @@
     <component :is="item" :key="i + pluginsGuiComponents.length"></component>
   </template>
   <selected-object-info class="get-click"></selected-object-info>
+  <gyro-direction-overlay></gyro-direction-overlay>
   <progress-bars style="position: absolute; bottom: 54px; right: 12px;"></progress-bars>
   <bottom-bar style="position:absolute; width: 100%; justify-content: center; bottom: 0; display:flex; margin-bottom: 0px" class="get-click"></bottom-bar>
   <search-panel class="get-click"></search-panel>
@@ -39,6 +40,7 @@ import LocationDialog from '@/components/location-dialog.vue'
 import ObservingPanel from '@/components/observing-panel.vue'
 import SearchPanel from '@/components/search-panel.vue'
 import SettingsPanel from '@/components/settings-panel.vue'
+import GyroDirectionOverlay from '@/components/GyroDirectionOverlay.vue'
 
 export default {
   data: function () {
@@ -74,7 +76,7 @@ export default {
       return res
     }
   },
-  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ProgressBars, ObservingPanel, SearchPanel, SettingsPanel }
+  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ProgressBars, ObservingPanel, SearchPanel, SettingsPanel, GyroDirectionOverlay }
 }
 </script>
 

@@ -104,7 +104,8 @@ const createStore = () => {
       sensorsEnabled: true,
 
       // Gyroscope view control mode
-      gyroModeActive: false
+      gyroModeActive: false,
+      gyroTargetObject: null // Object to track direction for in gyro mode
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -192,6 +193,13 @@ const createStore = () => {
       },
       setGyroModeActive (state, value) {
         state.gyroModeActive = value
+        // Clear target when gyro mode is disabled
+        if (!value) {
+          state.gyroTargetObject = null
+        }
+      },
+      setGyroTargetObject (state, value) {
+        state.gyroTargetObject = value
       }
     }
   })

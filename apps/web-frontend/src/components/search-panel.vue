@@ -336,7 +336,14 @@ export default {
 
       if (obj) {
         $stel.core.selection = obj
-        $stel.pointAndLock(obj)
+
+        // In gyro mode: don't center, just set as target for direction overlay (this.$store.state.gyroModeActive) set to true for all
+        if (this.$store.state.gyroModeActive) {
+          this.$store.commit('setGyroTargetObject', obj)
+        } else {
+          // Normal mode: center on object
+          $stel.pointAndLock(obj)
+        }
       } else {
         console.warn('Could not resolve object for:', source)
       }
