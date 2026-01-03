@@ -108,7 +108,8 @@ const createStore = () => {
       gyroTargetObject: null, // Object to track direction for in gyro mode
 
       // AR (Augmented Reality) camera mode - shows camera behind star view
-      arModeActive: false
+      arModeActive: false,
+      arFullFov: true
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -212,6 +213,9 @@ const createStore = () => {
       setArModeActive (state, value) {
         // AR can only be active if gyro is active
         state.arModeActive = value && state.gyroModeActive
+      },
+      setArFullFov (state, value) {
+        state.arFullFov = value
       }
     }
   })

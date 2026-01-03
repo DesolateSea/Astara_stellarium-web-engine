@@ -102,10 +102,75 @@ const CameraService = {
   },
 
   /**
-     * Check if camera is currently active
-     */
+   * Check if camera is currently active
+   */
   getIsActive () {
     return this.isActive
+  },
+
+  /**
+   * Capture the current video frame as an image
+   * @returns {string|null} - Data URL of the captured image
+   */
+  capture () {
+    if (!this.isActive || !this.videoElement) {
+      console.warn('[CameraService] Cannot capture, camera not active')
+      return null
+    }
+
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = this.videoElement.videoWidth
+      canvas.height = this.videoElement.videoHeight
+
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(this.videoElement, 0, 0, canvas.width, canvas.height)
+
+      // Convert to data URL (JPEG format)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
+
+      // Trigger download
+      const link = document.createElement('a')
+      link.download = 'stellarium-ar-' + new Date().toISOString().replace(/[:.]/g, '-') + '.jpg'
+      link.href = dataUrl
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      return dataUrl
+    } catch (e) {
+      console.error('[CameraService] Capture failed:', e)
+      return null
+    }
+  },
+
+  /**
+   * Pause the video stream (e.g. when app goes locally background)
+   */
+  pause () {
+    if (this.videoElement && !this.videoElement.paused) {
+      this.videoElement.pause()
+    }
+  },
+
+  /**
+   * Resume the video stream
+   */
+  async resume () {
+    if (this.videoElement && this.videoElement.paused) {
+      try {
+        await this.videoElement.play()
+      } catch (e) {
+        console.warn('[CameraService] Resume failed:', e)
+        // If resume fails, might need to restart stream completely
+        if (this.isActive) {
+          // Attempt full restart if we have reference to element
+          const vid = this.videoElement
+          this.stop()
+          await this.start(vid)
+        }
+      }
+    }
   }
 }
 

@@ -4,10 +4,12 @@
       <video
         ref="cameraVideo"
         class="camera-video"
+        :class="{ 'is-playing': isPlaying }"
         autoplay
         playsinline
         webkit-playsinline
         muted
+        @playing="onPlaying"
       ></video>
     </div>
   </transition>
@@ -18,6 +20,11 @@ import CameraService from '@/assets/camera-service.js'
 
 export default {
   name: 'ARCameraPreview',
+  data () {
+    return {
+      isPlaying: false
+    }
+  },
   computed: {
     arModeActive () {
       return this.$store.state.arModeActive
@@ -32,8 +39,16 @@ export default {
       }
     }
   },
+  beforeDestroy () {
+    this.removeVisibilityListener()
+    this.stopCamera()
+  },
   methods: {
+    onPlaying () {
+      this.isPlaying = true
+    },
     async startCamera () {
+      this.isPlaying = false
       // Wait for video element to be rendered
       await this.$nextTick()
 
@@ -43,6 +58,8 @@ export default {
         return
       }
 
+      this.addVisibilityListener()
+
       const success = await CameraService.start(videoEl)
       if (!success) {
         console.warn('[ARCameraPreview] Failed to start camera, disabling AR mode')
@@ -51,15 +68,26 @@ export default {
     },
     stopCamera () {
       CameraService.stop()
+      this.removeVisibilityListener()
+    },
+    addVisibilityListener () {
+      if (!this._visibilityHandler) {
+        this._visibilityHandler = () => {
+          if (document.hidden) {
+            CameraService.pause()
+          } else {
+            CameraService.resume()
+          }
+        }
+        document.addEventListener('visibilitychange', this._visibilityHandler)
+      }
+    },
+    removeVisibilityListener () {
+      if (this._visibilityHandler) {
+        document.removeEventListener('visibilitychange', this._visibilityHandler)
+        this._visibilityHandler = null
+      }
     }
-  },
-  mounted () {
-    if (this.arModeActive) {
-      this.startCamera()
-    }
-  },
-  beforeDestroy () {
-    this.stopCamera()
   }
 }
 </script>
@@ -81,6 +109,12 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover; /* Fill the screen */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.camera-video.is-playing {
+  opacity: 1;
 }
 
 /* Hide default video controls */

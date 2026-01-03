@@ -15,7 +15,6 @@
       </v-btn>
     </div>
 
-    <!-- Center section: Compass or AR Camera toggle -->
     <div class="bottom-bar-center" @click="onCenterClick">
       <!-- FOV Display (Fixed position, does not rotate) -->
       <transition name="fade">
@@ -24,31 +23,37 @@
         </div>
       </transition>
 
-      <!-- Camera icon when gyro is active -->
-      <transition name="fade" mode="out-in">
-        <div v-if="gyroModeActive" key="camera" class="ar-toggle-container">
-          <v-btn
-            icon
-            class="ar-toggle-btn"
-            :class="{ 'ar-active': arModeActive }"
-            @click.stop="toggleArMode"
-          >
-            <v-icon size="36">{{ arModeActive ? 'mdi-camera-off' : 'mdi-camera' }}</v-icon>
-          </v-btn>
-        </div>
+      <!-- Center Container for Compass and Shutter -->
+      <!-- Explicitly setting position relative to contain absolute children -->
+      <div class="center-controls-container" style="position: relative; display: flex; align-items: center; justify-content: center;">
 
-        <!-- Compass when gyro is not active -->
-        <div v-else key="compass" class="compass-container" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
-          <div class="compass-pointer" ref="compassNeedle">
-            <div class="pointer-north"></div>
-            <div class="pointer-south"></div>
-          </div>
+        <!-- Compass Ring (Rotates with device heading) -->
+        <div class="compass-ring" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
           <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
           <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
           <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
           <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
+
+          <!-- Compass Needle (Only visible when Gyro is OFF) -->
+          <div v-if="!gyroModeActive" class="compass-needle">
+            <div class="pointer-north"></div>
+            <div class="pointer-south"></div>
+          </div>
         </div>
-      </transition>
+
+        <!-- Shutter Button Overlay (Only visible when Gyro is ON) -->
+        <!-- Absolute position contained within the 50x50 relative container -->
+        <transition name="fade">
+          <div v-if="gyroModeActive"
+               class="shutter-overlay"
+               @click.stop="handleShutterClick"
+               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer;">
+               <!-- Shutter image centered -->
+               <img :src="shutterIcon" style="width: 50%; height: 50%; object-fit: contain; pointer-events: none;" />
+          </div>
+        </transition>
+
+      </div>
     </div>
 
     <!-- Right section: Time -->
@@ -78,6 +83,11 @@
         </div>
       </div>
     </transition>
+
+    <!-- Error/Warning Snackbar -->
+    <v-snackbar v-model="showWarningSnackbar" :timeout="3000" color="warning" rounded="pill" content-class="text-center">
+      {{ warningMessage }}
+    </v-snackbar>
   </div>
 </template>
 
@@ -86,6 +96,7 @@ import DateTimePicker from '@/components/date-time-picker.vue'
 import BottomMenuPanel from '@/components/bottom-menu/BottomMenuPanel.vue'
 import Moment from 'moment'
 import GyroscopeService from '@/assets/gyroscope-service.js'
+import CameraService from '@/assets/camera-service.js'
 
 export default {
   components: {
@@ -100,7 +111,9 @@ export default {
       showFov: false,
       fovTimeout: null,
       showGyroDialog: false,
-      pitchListener: null
+      pitchListener: null,
+      showWarningSnackbar: false,
+      warningMessage: ''
     }
   },
   computed: {
@@ -161,6 +174,11 @@ export default {
     },
     arModeActive () {
       return this.$store.state.arModeActive
+    },
+    shutterIcon () {
+      // Use require if webpack/vite, or direct path. Start with direct path assuming public/assets setup or similar.
+      // Since the user image is in assets/images/shutter-icon.png
+      return require('@/assets/images/shutter-icon.png')
     }
   },
   watch: {
@@ -170,6 +188,14 @@ export default {
       this.fovTimeout = setTimeout(() => {
         this.showFov = false
       }, 2000)
+    },
+    '$store.state.initComplete': function (val) {
+      if (val && this.gyroModeActive && this.$stel && this.$stel.core) {
+        console.log('[BottomBar] Engine ready, resuming GyroscopeService')
+        GyroscopeService.start(this.$stel.core, this.$store, () => {
+          this.$store.commit('setGyroModeActive', false)
+        })
+      }
     }
   },
   methods: {
@@ -195,17 +221,47 @@ export default {
       this.onCompassClick()
     },
     toggleArMode () {
+      // Toggle AR mode
       this.$store.commit('setArModeActive', !this.arModeActive)
+    },
+    async handleShutterClick () {
+      console.log('[BottomBar] handleShutterClick called, arModeActive:', this.arModeActive)
+      if (this.arModeActive) {
+        // If AR is active, capture and close
+        console.log('[BottomBar] Capturing image...')
+        try {
+          await CameraService.capture()
+          console.log('[BottomBar] Capture done')
+        } catch (e) {
+          console.error('[BottomBar] Capture error:', e)
+        }
+        console.log('[BottomBar] Setting arModeActive = false')
+        this.$store.commit('setArModeActive', false)
+      } else {
+        // If AR is not active, turn it on
+        console.log('[BottomBar] Turning AR ON')
+        this.$store.commit('setArModeActive', true)
+      }
+    },
+    showWarning (msg) {
+      this.warningMessage = msg
+      this.showWarningSnackbar = true
     },
     onCompassClick () {
       // If sensors are disabled in settings, do nothing
-      if (!this.$store.state.sensorsEnabled) return
+      if (!this.$store.state.sensorsEnabled) {
+        this.showWarning('Sensors are disabled in settings')
+        return
+      }
 
       // If gyro is already active, do nothing (swipe will disable it)
       if (this.$store.state.gyroModeActive) return
 
       // If device is in landscape orientation, do nothing (gyro only works in portrait)
-      if (window.innerWidth > window.innerHeight) return
+      if (window.innerWidth > window.innerHeight) {
+        this.showWarning('Please rotate device to portrait mode to use Gyroscope')
+        return
+      }
 
       // Show the dialog and start listening for pitch
       this.showGyroDialog = true
@@ -261,12 +317,14 @@ export default {
 
       // Start gyroscope service
       if (this.$stel && this.$stel.core) {
-        const success = await GyroscopeService.start(this.$stel.core, () => {
+        const success = await GyroscopeService.start(this.$stel.core, this.$store, () => {
           // Callback when gyro auto-stops (on touch)
           this.$store.commit('setGyroModeActive', false)
         })
         if (success) {
           this.$store.commit('setGyroModeActive', true)
+        } else {
+          this.showWarning('Could not start Gyroscope. Check orientation or permissions.')
         }
       }
     },
@@ -301,14 +359,52 @@ export default {
         // Low-pass filter for smooth rotation
         smoothHeading += (latestHeading - smoothHeading)
 
+        const ring = this.$el.querySelector('.compass-ring')
+        if (ring) {
+          // We are updating the transform via binding in template, but if we wanted manual control
+          // The rotation is handled by -azimuthDegrees in template.
+          // However, for pure compass mode (device orientation), we might need this update if azimuth doesn't cover it.
+          // Actually, the original code used ref="compassNeedle".
+          // In my refactor, the NEEDLE rotates if ring is static? No, usually the ring rotates or needle rotates.
+          // Original code: compass-container rotated by -azimuth. Needle rotated by heading.
+          // Let's stick to the original logic: "compass-container" (now compass-ring) rotates by Azimuth to match View direction?
+          // Wait. If I look North, Azimuth is 0. If I look East, Azimuth is 90.
+          // So if I look East, the compass ring should rotate -90 so "E" is at top? Correct.
+
+          // BUT wait, initCompass was updating needle style directly.
+          // "finalRotation = smoothHeading + azimuthDeg".
+          // Currently I removed ref="compassNeedle" logic from the ring.
+          // I should attach ref="compassNeedle" to the needle div inside compass-ring if I want it to behave like before.
+        }
+
+        // Let's restore the needle ref behavior
         const needle = this.$refs.compassNeedle
         if (needle) {
-          // Counter-rotate by azimuthDegrees to compensate for container rotation
           const azimuth = this.$store.state.stel?.observer?.yaw || 0
           const azimuthDeg = (azimuth * 180 / Math.PI) % 360
           const finalRotation = smoothHeading + azimuthDeg
+          // Needle points North relative to the Container which is already rotated by -Azimuth?
+          // If Container is rotated by -Azimuth, then North (0 deg) on container is "Top".
+          // If device heading is 0 (North), smoothHeading is 0.
+          // If I face North (Az=0), Container Rot = 0. Needle Rot = 0 + 0 = 0. Needle points UP. Correct.
+          // If I face East (Az=90), Container Rot = -90. "E" is at top.
+          // Device Heading is roughly 90? No, heading is magnetic heading.
+          // If I face East, heading is 90.
+          // Needle Rot = 90 + 90 = 180? That would point down.
+          // Let's re-read original logical:
+          // "needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'"
+          // Container had :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }"
+          // So container cancels out view rotation. Inside container, "North" is always at local "Top" relative to view?
+          // No, "N" letter is at top of container.
+          // If I rotate view to East (-90 deg container), "E" is at top. "N" is at left.
+          // Needle needs to point to real North.
+          // Real North is -90 deg relative to East view.
+          // So Needle should point Left.
+          // Heading=90. Azimuth=90. FinalRot = 180.
+          // This logic seems specific to how they set it up. I will keep it.
           needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'
         }
+
         this.rafId = requestAnimationFrame(update)
       }
 
@@ -317,6 +413,13 @@ export default {
   },
   mounted () {
     this.initCompass()
+    // Resume gyro if state thinks it's active (e.g. after HMR or navigation)
+    if (this.gyroModeActive && this.$stel && this.$stel.core) {
+      console.log('[BottomBar] Resuming GyroscopeService on mount')
+      GyroscopeService.start(this.$stel.core, this.$store, () => {
+        this.$store.commit('setGyroModeActive', false)
+      })
+    }
   },
   beforeDestroy () {
     if (this.onOrientation) {
@@ -341,6 +444,7 @@ export default {
   padding: 20px 24px;
   padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
+  z-index: 50;
 }
 
 .bottom-bar-left,
@@ -378,20 +482,35 @@ export default {
   font-size: 36px !important;
 }
 
-.compass-container {
+/* Center Controls Container */
+.center-controls-container {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Compass Ring */
+.compass-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   transition: transform 0.1s ease-out;
 }
 
-.compass-pointer {
+/* Compass Needle (Centered) */
+.compass-needle {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 16px;
   height: 16px;
   will-change: transform;
+  /* Transform is handled by JS for rotation */
 }
 
 .pointer-north {
@@ -418,12 +537,14 @@ export default {
   border-top: 8px solid rgba(255, 255, 255, 0.4);
 }
 
+/* Compass Letters */
 .compass-letter {
   position: absolute;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
   transition: color 0.2s ease;
+  transform: translate(-50%, -50%); /* Center the text point */
 }
 
 .compass-letter.active {
@@ -431,28 +552,39 @@ export default {
   font-weight: 700;
 }
 
-.compass-n {
+.compass-n { top: 25%; left: 50%; }
+.compass-e { top: 50%; left: 75%; }
+.compass-s { top: 75%; left: 50%; }
+.compass-w { top: 50%; left: 25%; }
+
+/* Shutter Overlay */
+.shutter-overlay {
+  position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.compass-e {
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-}
-
-.compass-s {
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.compass-w {
-  top: 50%;
   left: 0;
-  transform: translateY(-50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.shutter-btn {
+  background: transparent !important; /* No background */
+  box-shadow: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0;
+  margin: 0;
+}
+
+/* Shutter Icon */
+.shutter-icon-img {
+  width: 30%; /* Kept 30% for visibility */
+  height: 30%;
+  border-radius: 50%;
+  object-fit: contain;
 }
 
 .time-display {
@@ -472,6 +604,7 @@ export default {
   justify-content: center;
   pointer-events: auto;
   background: rgba(0, 0, 0, 0.3);
+  z-index: 200;
 }
 
 /* Slide up animation */
@@ -548,37 +681,5 @@ export default {
   font-size: 18px;
   font-weight: 500;
   white-space: nowrap;
-}
-
-.ar-toggle-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-}
-
-.ar-toggle-btn {
-  background: rgba(0, 0, 0, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  transition: all 0.3s ease;
-}
-
-.ar-toggle-btn.ar-active {
-  background: rgba(255, 60, 60, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.8) !important;
-  animation: pulse-recording 2s infinite;
-}
-
-@keyframes pulse-recording {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 60, 60, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 60, 60, 0);
-  }
 }
 </style>

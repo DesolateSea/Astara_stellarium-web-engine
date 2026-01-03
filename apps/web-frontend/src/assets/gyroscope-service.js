@@ -62,7 +62,7 @@ const GyroscopeService = {
     }
   },
 
-  async start (stelCore, onStopCallback) {
+  async start (stelCore, store, onStopCallback) {
     console.log('[GyroService] start() called')
 
     if (this.isActive) {
@@ -88,6 +88,7 @@ const GyroscopeService = {
     }
 
     this.stelCore = stelCore
+    this.store = store
     this.isActive = true
     this.onStopCallback = onStopCallback
     this.smoothYaw = null
@@ -100,9 +101,15 @@ const GyroscopeService = {
       console.warn('[GyroService] Failed to lock orientation:', e)
     }
 
-    // Save current roll and set ideal FOV for AR/gyro mode (32.7°)
+    // Save current roll
     this.savedRoll = stelCore.observer.roll
-    stelCore.fov = 32.7 * Math.PI / 180
+
+    // Set ideal FOV for AR mode only if AR is active, otherwise default to 45°
+    if (this.store && this.store.state.arModeActive) {
+      stelCore.fov = 32.7 * Math.PI / 180
+    } else {
+      stelCore.fov = 45 * Math.PI / 180
+    }
 
     this.onOrientationBound = this.onDeviceOrientation.bind(this)
 
@@ -168,8 +175,10 @@ const GyroscopeService = {
     // Reset roll to 0 when gyro is disabled
     if (this.stelCore) {
       this.stelCore.observer.roll = 0
-      // Reset FOV to default 45 degrees when AR stops
-      this.stelCore.fov = 45 * Math.PI / 180
+      // Reset FOV to default 45 degrees ONLY if AR mode was active
+      if (this.store && this.store.state.arModeActive) {
+        this.stelCore.fov = 45 * Math.PI / 180
+      }
     }
 
     // Unlock orientation
@@ -180,6 +189,7 @@ const GyroscopeService = {
     }
 
     this.stelCore = null
+    this.store = null
     this.smoothYaw = null
     this.smoothPitch = null
     this.onStopCallback = null
@@ -429,8 +439,11 @@ const GyroscopeService = {
       this.stelCore.observer.yaw = this.smoothYaw
       this.stelCore.observer.pitch = this.smoothPitch
       this.stelCore.observer.roll = data.roll
-      // Lock FOV to 32.7 degrees for AR mode
-      this.stelCore.fov = 32.7 * Math.PI / 180
+
+      // Lock FOV to 32.7 degrees ONLY if AR mode is active
+      if (this.store && this.store.state.arModeActive) {
+        this.stelCore.fov = 32.7 * Math.PI / 180
+      }
     } catch (e) {
       console.warn('[GyroService] Error updating view:', e)
     }

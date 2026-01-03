@@ -254,6 +254,21 @@
 
           <v-divider class="my-2"></v-divider>
 
+          <!-- AR Settings Section -->
+          <v-subheader class="settings-subheader">AR Camera</v-subheader>
+
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>Full FOV</v-list-item-title>
+              <v-list-item-subtitle>Use maximum camera field of view</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-switch v-model="arFullFov" hide-details class="mt-0"></v-switch>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+
           <!-- Display Section -->
           <v-subheader class="settings-subheader">Display</v-subheader>
 
@@ -350,6 +365,22 @@ export default {
     },
     sensorsEnabled () {
       return this.$store.state.sensorsEnabled
+    },
+    showAtmosphere: {
+      get () {
+        return this.$store.state.stel && this.$store.state.stel.landscape.atmosphere_visible
+      },
+      set (val) {
+        this.$store.commit('setValue', { varName: 'stel.landscape.atmosphere_visible', newValue: val })
+      }
+    },
+    arFullFov: {
+      get () {
+        return this.$store.state.arFullFov
+      },
+      set (val) {
+        this.$store.commit('setArFullFov', val)
+      }
     },
     dialogVisible: {
       get: function () {
