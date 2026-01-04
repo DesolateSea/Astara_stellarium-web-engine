@@ -59,7 +59,12 @@ export default {
         this.$stel.getObj('NAME Mars'),
         this.$stel.getObj('NAME Jupiter'),
         this.$stel.getObj('NAME Saturn')
-      ]
+      ],
+      // Cache for expensive sunBackgroundStr calculation
+      cachedSunBackground: null,
+      cachedStartDate: null,
+      cachedLocationLat: null,
+      cachedLocationLng: null
     }
   },
   methods: {
@@ -95,21 +100,22 @@ export default {
         ret += "<div style='z-index: 100; position: absolute; background-color: rgb(200, 200, 50); right: 0%; min-width: " + (100 - riseP) + "%; top: 7px; height: 8px;'></div>"
         return ret
       }
-    }
-  },
-  computed: {
-    objsWithVisibility: function () {
-      // Cache visibility calculations - compute once instead of 3x per planet
-      return this.objs.map(obj => {
-        const visibility = obj.computeVisibility()[0]
-        return {
-          obj: obj,
-          name: swh.cleanupOneSkySourceName(obj.designations()[0]),
-          visibility: visibility
-        }
-      })
     },
-    sunBackgroundStr: function () {
+    getSunBackgroundWithCache: function () {
+      // Check if we can use cached result
+      const currentDate = this.startDate.format('YYYY-MM-DD HH:mm')
+      const currentLat = this.$store.state.currentLocation.lat
+      const currentLng = this.$store.state.currentLocation.lng
+
+      // Return cached value if date and location haven't changed
+      if (this.cachedSunBackground !== null &&
+          this.cachedStartDate === currentDate &&
+          this.cachedLocationLat === currentLat &&
+          this.cachedLocationLng === currentLng) {
+        return this.cachedSunBackground
+      }
+
+      // Perform expensive calculation
       var sun = this.$stel.getObj('NAME Sun')
       const brightness = []
       const d = new Moment(this.startDate)
@@ -136,7 +142,30 @@ export default {
         }
       }
       txt += '); min-width: 100%; height: 100%'
+
+      // Cache the result
+      this.cachedSunBackground = txt
+      this.cachedStartDate = currentDate
+      this.cachedLocationLat = currentLat
+      this.cachedLocationLng = currentLng
+
       return txt
+    }
+  },
+  computed: {
+    objsWithVisibility: function () {
+      // Cache visibility calculations - compute once instead of 3x per planet
+      return this.objs.map(obj => {
+        const visibility = obj.computeVisibility()[0]
+        return {
+          obj: obj,
+          name: swh.cleanupOneSkySourceName(obj.designations()[0]),
+          visibility: visibility
+        }
+      })
+    },
+    sunBackgroundStr: function () {
+      return this.getSunBackgroundWithCache()
     },
     startDate: function () {
       var sun = this.$stel.getObj('NAME Sun')

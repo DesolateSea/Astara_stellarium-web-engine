@@ -655,7 +655,7 @@ export default {
     // Store reference to event listener for proper cleanup
     this._pointerUpHandler = () => this.stopZoom()
     window.addEventListener('pointerup', this._pointerUpHandler)
-    
+
     // Start update timer if object is already selected on mount
     if (this.selectedObject) {
       if (this.isSatellite) this.calculateNextPass()
@@ -668,7 +668,7 @@ export default {
       window.removeEventListener('pointerup', this._pointerUpHandler)
       this._pointerUpHandler = null
     }
-    
+
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = null

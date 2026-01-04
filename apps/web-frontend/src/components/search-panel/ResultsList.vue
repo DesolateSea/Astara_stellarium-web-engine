@@ -98,7 +98,7 @@ export default {
       const name = (item.names && item.names[0]) || item.match || index
       const model = item.model || 'unknown'
       const type = (item.types && item.types[0]) || 'unknown'
-      return `${name}-${model}-${type}`
+      return name + '-' + model + '-' + type
     },
     isFavorite (item) {
       return this.favorites.some(fav =>

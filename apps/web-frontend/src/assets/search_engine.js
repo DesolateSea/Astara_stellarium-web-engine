@@ -13,7 +13,7 @@ import { constellationLoader } from './name_index_loader'
  * - Converts to uppercase
  * - Strips "NAME " prefix
  */
-export function normalize(s) {
+export function normalize (s) {
   if (!s) return ''
   let n = s.toUpperCase().replace(/[\s.,\-'"]+/g, '')
   if (n.startsWith('NAME')) n = n.substring(4)
@@ -43,7 +43,7 @@ export const defaultFilters = {
  * @param {object} dataProviders - Object providing cached data (satellites, comets, etc.)
  * @returns {Promise<Array>} Search results
  */
-export async function querySkySources(str, limit = 10, filters = {}, dataProviders = {}) {
+export async function querySkySources (str, limit = 10, filters = {}, dataProviders = {}) {
   const useFilters = { ...defaultFilters, ...filters }
   const $stel = Vue.prototype.$stel
   if (!$stel) {
