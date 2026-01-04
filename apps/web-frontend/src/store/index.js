@@ -109,7 +109,9 @@ const createStore = () => {
 
       // AR (Augmented Reality) camera mode - shows camera behind star view
       arModeActive: false,
-      arFullFov: true
+      arFullFov: true,
+      arZoom: 1.0,
+      arOpacity: 0.5
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -216,6 +218,12 @@ const createStore = () => {
       },
       setArFullFov (state, value) {
         state.arFullFov = value
+      },
+      setArZoom (state, value) {
+        state.arZoom = value
+      },
+      setArOpacity (state, value) {
+        state.arOpacity = value
       }
     }
   })

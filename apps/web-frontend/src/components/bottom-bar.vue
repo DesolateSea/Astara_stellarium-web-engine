@@ -318,7 +318,7 @@ export default {
       // The back camera points in -Z direction of screen, which is DOWN when screen faces sky
       // So zenith angle = acos(zComponent) when zComponent > 0 means screen facing up
 
-      const zenithAngleDeg = Math.acos(zComponent) * 180 / Math.PI
+      const zenithAngleDeg = Math.acos(-1 * zComponent) * 180 / Math.PI // z axis inverted
 
       // If zenith angle < 60°, device is pointed up enough
       if (zenithAngleDeg < 60) {

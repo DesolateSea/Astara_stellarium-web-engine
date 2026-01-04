@@ -28,6 +28,9 @@ export default {
   computed: {
     arModeActive () {
       return this.$store.state.arModeActive
+    },
+    arZoom () {
+      return this.$store.state.arZoom
     }
   },
   watch: {
@@ -37,6 +40,9 @@ export default {
       } else {
         this.stopCamera()
       }
+    },
+    arZoom () {
+      this.updateZoom()
     }
   },
   beforeDestroy () {
@@ -64,11 +70,18 @@ export default {
       if (!success) {
         console.warn('[ARCameraPreview] Failed to start camera, disabling AR mode')
         this.$store.commit('setArModeActive', false)
+      } else {
+        // Apply initial zoom
+        this.updateZoom()
       }
     },
     stopCamera () {
       CameraService.stop()
       this.removeVisibilityListener()
+    },
+    updateZoom () {
+      // Camera zoom is controlled directly by the arZoom setting
+      CameraService.setZoom(this.arZoom)
     },
     addVisibilityListener () {
       if (!this._visibilityHandler) {

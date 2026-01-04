@@ -101,6 +101,8 @@ const CameraService = {
     }
 
     if (this.videoElement) {
+      // Reset any CSS zoom transform
+      this.videoElement.style.transform = ''
       this.videoElement.srcObject = null
       this.videoElement = null
     }
@@ -179,6 +181,63 @@ const CameraService = {
         }
       }
     }
+  },
+
+  /**
+   * Set the camera zoom level
+   * Uses hardware zoom if available, otherwise falls back to CSS transform (digital zoom)
+   * @param {number} level - Zoom level (1.0 = no zoom, higher = zoom in)
+   */
+  async setZoom (level) {
+    if (!this.stream || !this.videoElement) {
+      console.warn('[CameraService] Cannot set zoom: stream or video element not available')
+      return
+    }
+
+    const [track] = this.stream.getVideoTracks()
+    if (!track) {
+      console.warn('[CameraService] Cannot set zoom: no video track')
+      return
+    }
+
+    // Try hardware zoom first
+    const capabilities = track.getCapabilities ? track.getCapabilities() : {}
+    const supportsHardwareZoom = capabilities.zoom && capabilities.zoom.min !== undefined
+
+    if (supportsHardwareZoom) {
+      try {
+        // Clamp zoom level to device capabilities
+        const clampedLevel = Math.max(capabilities.zoom.min, Math.min(capabilities.zoom.max, level))
+        await track.applyConstraints({
+          advanced: [{ zoom: clampedLevel }]
+        })
+        console.log('[CameraService] Hardware zoom set to:', clampedLevel)
+        // Reset any CSS zoom if using hardware
+        this.videoElement.style.transform = ''
+        return
+      } catch (e) {
+        console.warn('[CameraService] Hardware zoom failed, falling back to CSS zoom:', e)
+      }
+    }
+
+    // Fallback: CSS transform-based digital zoom
+    // This scales the video element, creating a zoom effect
+    console.log('[CameraService] Using CSS zoom:', level)
+    this.videoElement.style.transform = 'scale(' + level + ')'
+    this.videoElement.style.transformOrigin = 'center center'
+  },
+
+  /**
+   * Get zoom capabilities
+   * @returns {object} - { min, max, step }
+   */
+  getZoomCapabilities () {
+    if (!this.stream) return null
+    const [track] = this.stream.getVideoTracks()
+    if (!track || !track.getCapabilities) return null
+
+    const caps = track.getCapabilities()
+    return caps.zoom || null
   }
 }
 

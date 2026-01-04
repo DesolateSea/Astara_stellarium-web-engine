@@ -104,8 +104,8 @@ const GyroscopeService = {
     // Save current roll
     this.savedRoll = stelCore.observer.roll
 
-    // Set ideal FOV for AR mode only if AR is active, otherwise default to 45°
-    if (this.store && this.store.state.arModeActive) {
+    // Set ideal FOV for AR mode only if AR is active and matching enabled, otherwise default to 45°
+    if (this.store && this.store.state.arModeActive && this.store.state.arFullFov) {
       stelCore.fov = 32.7 * Math.PI / 180
     } else {
       stelCore.fov = 45 * Math.PI / 180
@@ -440,8 +440,9 @@ const GyroscopeService = {
       this.stelCore.observer.pitch = this.smoothPitch
       this.stelCore.observer.roll = data.roll
 
-      // Lock FOV to 32.7 degrees ONLY if AR mode is active
-      if (this.store && this.store.state.arModeActive) {
+      // Lock FOV to 32.7 degrees ONLY if AR mode is active AND Sky Match (Fixed FOV) is enabled
+      // 'arFullFov' in store corresponds to "Fixed Wide FOV" in UI which actually means matching the camera FOV (approx 32.7)
+      if (this.store && this.store.state.arModeActive && this.store.state.arFullFov) {
         this.stelCore.fov = 32.7 * Math.PI / 180
       }
     } catch (e) {

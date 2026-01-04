@@ -60,7 +60,7 @@
           <ARCameraPreview />
           <component v-bind:is="guiComponent"></component>
           <dso-sky-overlays v-if="guiComponent === 'Gui'"></dso-sky-overlays>
-          <canvas id="stel-canvas" ref='stelCanvas'></canvas>
+          <canvas id="stel-canvas" ref='stelCanvas' :style="arCanvasStyle"></canvas>
         </div>
       </div>
     </v-container>
@@ -229,6 +229,12 @@ export default {
     },
     storeCurrentLocation: function () {
       return this.$store.state.currentLocation
+    },
+    arCanvasStyle () {
+      if (this.arModeActive) {
+        return { opacity: this.$store.state.arOpacity }
+      }
+      return {}
     }
   },
   watch: {
@@ -460,6 +466,7 @@ html, body, #app {
 /* AR Mode - Make canvas background transparent (black becomes transparent) */
 .ar-transparent #stel-canvas {
   mix-blend-mode: screen;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .ar-transparent .v-main,

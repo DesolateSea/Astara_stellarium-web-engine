@@ -32,6 +32,19 @@
             </v-list-item-action>
           </v-list-item>
 
+          <v-list-item @click="toggleArMode">
+            <v-list-item-icon>
+              <v-icon color="grey">mdi-camera</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Augmented Reality</v-list-item-title>
+              <v-list-item-subtitle>{{ arEnabled ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-switch :input-value="arEnabled" @click.stop="toggleArMode"></v-switch>
+            </v-list-item-action>
+          </v-list-item>
+
           <v-list-item @click="currentView = 'location'">
             <v-list-item-icon>
               <v-icon color="grey">mdi-map-marker</v-icon>
@@ -63,6 +76,18 @@
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>Advanced</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon>mdi-chevron-right</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-list-item @click="currentView = 'ar'">
+            <v-list-item-icon>
+              <v-icon color="grey">mdi-camera-metering-center</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Camera Settings</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon>mdi-chevron-right</v-icon>
@@ -212,6 +237,75 @@
         </v-list>
       </div>
 
+      <!-- AR View -->
+      <div v-else-if="currentView === 'ar'">
+        <div class="settings-header">
+          <v-btn icon @click="currentView = 'main'" class="back-btn">
+            <v-icon>mdi-arrow-left</v-icon>
+          </v-btn>
+          <span class="settings-title">Camera Settings</span>
+        </div>
+
+        <v-list dense class="settings-list">
+          <v-subheader class="settings-subheader">Field of View</v-subheader>
+
+          <!-- Fixed Wide FOV Toggle (for Stellarium view) -->
+          <v-list-item @click="arFullFov = !arFullFov">
+            <v-list-item-content>
+              <v-list-item-title>Fixed Wide FOV</v-list-item-title>
+              <v-list-item-subtitle>Lock Stellarium view to wide angle</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-switch :input-value="arFullFov" @click.stop="arFullFov = !arFullFov"></v-switch>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+          <v-subheader class="settings-subheader">Camera</v-subheader>
+
+          <!-- Camera Zoom Slider (always visible, controls camera zoom) -->
+          <v-list-item class="slider-item">
+            <v-list-item-content>
+              <div class="d-flex justify-space-between align-center">
+                <v-list-item-title>Camera Zoom</v-list-item-title>
+                <span class="sensitivity-value">{{ arZoom.toFixed(1) }}x</span>
+              </div>
+              <v-slider
+                v-model="arZoom"
+                :min="1.0"
+                :max="5.0"
+                :step="0.1"
+                thumb-label
+                hide-details
+                class="settings-slider"
+              ></v-slider>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+          <v-subheader class="settings-subheader">Display</v-subheader>
+
+          <!-- Opacity Slider -->
+          <v-list-item class="slider-item">
+            <v-list-item-content>
+              <div class="d-flex justify-space-between align-center">
+                <v-list-item-title>Overlay Opacity</v-list-item-title>
+                <span class="sensitivity-value">{{ Math.round(arOpacity * 100) }}%</span>
+              </div>
+              <v-slider
+                v-model="arOpacity"
+                :min="0.1"
+                :max="1.0"
+                :step="0.05"
+                thumb-label
+                hide-details
+                class="settings-slider"
+              ></v-slider>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </div>
+
       <!-- Advanced View -->
       <div v-else-if="currentView === 'advanced'">
         <div class="settings-header">
@@ -249,21 +343,6 @@
             </v-list-item-content>
             <v-list-item-action>
               <v-switch v-model="touchPanInvertY" hide-details class="mt-0"></v-switch>
-            </v-list-item-action>
-          </v-list-item>
-
-          <v-divider class="my-2"></v-divider>
-
-          <!-- AR Settings Section -->
-          <v-subheader class="settings-subheader">AR Camera</v-subheader>
-
-          <v-list-item>
-            <v-list-item-content>
-              <v-list-item-title>Full FOV</v-list-item-title>
-              <v-list-item-subtitle>Use maximum camera field of view</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-switch v-model="arFullFov" hide-details class="mt-0"></v-switch>
             </v-list-item-action>
           </v-list-item>
 
@@ -341,6 +420,30 @@ export default {
       },
       set (val) {
         this.$store.commit('setArFullFov', val)
+      }
+    },
+    arEnabled: {
+      get () {
+        return this.$store.state.arModeActive
+      },
+      set (val) {
+        this.$store.commit('setArModeActive', val)
+      }
+    },
+    arZoom: {
+      get () {
+        return this.$store.state.arZoom || 1.0
+      },
+      set (val) {
+        this.$store.commit('setArZoom', val)
+      }
+    },
+    arOpacity: {
+      get () {
+        return this.$store.state.arOpacity
+      },
+      set (val) {
+        this.$store.commit('setArOpacity', val)
       }
     },
     dialogVisible: {
@@ -527,6 +630,30 @@ export default {
       if (!newVal && this.$store.state.gyroModeActive) {
         GyroscopeService.stop()
         this.$store.commit('setGyroModeActive', false)
+      }
+    },
+    toggleArMode: async function () {
+      const newVal = !this.arEnabled
+      if (newVal) {
+        this.$store.commit('setSensorsEnabled', true)
+
+        // Ensure Gyro is active
+        let gyroActive = this.$store.state.gyroModeActive
+        if (!gyroActive && this.$stel && this.$stel.core) {
+          const success = await GyroscopeService.start(this.$stel.core, this.$store, () => {
+            this.$store.commit('setGyroModeActive', false)
+          })
+          if (success) {
+            this.$store.commit('setGyroModeActive', true)
+            gyroActive = true
+          }
+        }
+
+        if (gyroActive) {
+          this.$store.commit('setArModeActive', true)
+        }
+      } else {
+        this.$store.commit('setArModeActive', false)
       }
     },
     selectSkyCulture: function (key) {
