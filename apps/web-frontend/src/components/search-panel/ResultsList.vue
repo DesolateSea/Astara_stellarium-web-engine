@@ -21,10 +21,10 @@
         Loading...
       </div>
       <template v-for="(item, index) in items">
-        <v-subheader v-if="item.header" :key="'h'+index" class="text-uppercase text-caption font-weight-bold grey--text text--lighten-1">
+        <v-subheader v-if="item.header" :key="'header-'+item.text" class="text-uppercase text-caption font-weight-bold grey--text text--lighten-1">
           {{ item.text }}
         </v-subheader>
-        <div v-else :key="'i'+index">
+        <div v-else :key="getItemKey(item, index)">
           <v-list-item :ripple="false" @click="$emit('select-item', item)">
             <v-list-item-action>
               <img :src="getIcon(item)" width="24" height="24"/>
@@ -93,6 +93,13 @@ export default {
     }
   },
   methods: {
+    getItemKey (item, index) {
+      // Create unique key from name + model + type
+      const name = (item.names && item.names[0]) || item.match || index
+      const model = item.model || 'unknown'
+      const type = (item.types && item.types[0]) || 'unknown'
+      return `${name}-${model}-${type}`
+    },
     isFavorite (item) {
       return this.favorites.some(fav =>
         (fav.names && item.names && fav.names[0] === item.names[0]) ||

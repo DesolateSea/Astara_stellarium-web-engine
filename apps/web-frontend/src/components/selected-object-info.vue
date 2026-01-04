@@ -652,7 +652,10 @@ export default {
     }
   },
   mounted: function () {
-    window.addEventListener('pointerup', () => this.stopZoom())
+    // Store reference to event listener for proper cleanup
+    this._pointerUpHandler = () => this.stopZoom()
+    window.addEventListener('pointerup', this._pointerUpHandler)
+    
     // Start update timer if object is already selected on mount
     if (this.selectedObject) {
       if (this.isSatellite) this.calculateNextPass()
@@ -660,6 +663,12 @@ export default {
     }
   },
   beforeDestroy: function () {
+    // Clean up event listener to prevent memory leak
+    if (this._pointerUpHandler) {
+      window.removeEventListener('pointerup', this._pointerUpHandler)
+      this._pointerUpHandler = null
+    }
+    
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = null

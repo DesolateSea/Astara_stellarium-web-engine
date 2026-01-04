@@ -22,11 +22,11 @@
             </v-row>
           </v-col>
         </v-row>
-        <template v-for="obj in objs">
-        <v-row no-gutters :key="obj.v">
-          <v-col cols="2">{{cleanName(obj)}}</v-col>
-          <v-col cols="1">{{formatTime(obj.computeVisibility()[0].rise)}}</v-col>
-          <v-col cols="1">{{formatTime(obj.computeVisibility()[0].set)}}</v-col>
+        <template v-for="obj in objsWithVisibility">
+        <v-row no-gutters :key="obj.name">
+          <v-col cols="2">{{obj.name}}</v-col>
+          <v-col cols="1">{{formatTime(obj.visibility.rise)}}</v-col>
+          <v-col cols="1">{{formatTime(obj.visibility.set)}}</v-col>
           <v-col cols="8">
             <div :style='sunBackgroundStr'>&nbsp;
               <div v-html="planetBackgroundStr(obj)"></div>
@@ -75,10 +75,10 @@ export default {
     },
     planetBackgroundStr: function (obj) {
       const d = new Date()
-      d.setMJD(obj.computeVisibility()[0].rise)
+      d.setMJD(obj.visibility.rise)
       const rise = Moment.utc(d)
       rise.local()
-      d.setMJD(obj.computeVisibility()[0].set)
+      d.setMJD(obj.visibility.set)
       const set = Moment.utc(d)
       set.local()
 
@@ -98,6 +98,17 @@ export default {
     }
   },
   computed: {
+    objsWithVisibility: function () {
+      // Cache visibility calculations - compute once instead of 3x per planet
+      return this.objs.map(obj => {
+        const visibility = obj.computeVisibility()[0]
+        return {
+          obj: obj,
+          name: swh.cleanupOneSkySourceName(obj.designations()[0]),
+          visibility: visibility
+        }
+      })
+    },
     sunBackgroundStr: function () {
       var sun = this.$stel.getObj('NAME Sun')
       const brightness = []
