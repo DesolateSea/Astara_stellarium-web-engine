@@ -290,59 +290,20 @@
             </v-list-item-action>
           </v-list-item>
 
-          <v-divider class="my-2"></v-divider>
-
-          <v-list-item @click="currentView = 'grids-lines'">
-            <v-list-item-content><v-list-item-title>Grids & Lines</v-list-item-title></v-list-item-content>
-            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
-          </v-list-item>
-          <v-list-item @click="currentView = 'constellations-settings'">
-            <v-list-item-content><v-list-item-title>Constellations</v-list-item-title></v-list-item-content>
-            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
-          </v-list-item>
-          <v-list-item @click="currentView = 'atmosphere-settings'">
-            <v-list-item-content><v-list-item-title>Atmosphere</v-list-item-title></v-list-item-content>
-            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
-          </v-list-item>
-          <v-list-item @click="currentView = 'labels-settings'">
-            <v-list-item-content><v-list-item-title>Labels</v-list-item-title></v-list-item-content>
-            <v-list-item-action><v-icon>mdi-chevron-right</v-icon></v-list-item-action>
-          </v-list-item>
         </v-list>
       </div>
 
-      <!-- Specific Settings Views -->
-      <div v-else-if="currentView === 'grids-lines'" class="submenu-wrapper">
-        <grids-lines-submenu in-settings @back="currentView = 'advanced'" />
-      </div>
-      <div v-else-if="currentView === 'constellations-settings'" class="submenu-wrapper">
-        <constellations-submenu in-settings @back="currentView = 'advanced'" />
-      </div>
-      <div v-else-if="currentView === 'atmosphere-settings'" class="submenu-wrapper">
-        <atmosphere-submenu in-settings @back="currentView = 'advanced'" />
-      </div>
-      <div v-else-if="currentView === 'labels-settings'" class="submenu-wrapper">
-        <labels-submenu in-settings @back="currentView = 'advanced'" />
-      </div>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
 import CoordinateEditor from './coordinate-editor.vue'
-import GridsLinesSubmenu from './bottom-menu/GridsLinesSubmenu.vue'
-import ConstellationsSubmenu from './bottom-menu/ConstellationsSubmenu.vue'
-import AtmosphereSubmenu from './bottom-menu/AtmosphereSubmenu.vue'
-import LabelsSubmenu from './bottom-menu/LabelsSubmenu.vue'
 import GyroscopeService from '@/assets/gyroscope-service.js'
 
 export default {
   components: {
-    CoordinateEditor,
-    GridsLinesSubmenu,
-    ConstellationsSubmenu,
-    AtmosphereSubmenu,
-    LabelsSubmenu
+    CoordinateEditor
   },
   data: function () {
     return {

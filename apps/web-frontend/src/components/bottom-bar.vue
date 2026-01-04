@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <div class="bottom-bar-container">
+  <div class="bottom-bar-container" :class="{ 'selection-visible': hasSelectedObject }">
     <!-- Left section: Menu trigger -->
     <div class="bottom-bar-left">
       <v-btn icon class="menu-trigger" @click="toggleMenuPanel">
@@ -25,31 +25,37 @@
 
       <!-- Center Container for Compass and Shutter -->
       <!-- Explicitly setting position relative to contain absolute children -->
-      <div class="center-controls-container" style="position: relative; display: flex; align-items: center; justify-content: center;">
+      <div class="center-controls-container">
+        <!-- Compass Ring (Rotates with view direction) -->
+        <div class="compass-ring" :style="{ transform: 'rotate(' + (-smoothedAzimuth) + 'deg)' }">
+          <!-- Intercardinal dots (NE, SE, SW, NW) -->
+          <span class="compass-dot compass-ne">•</span>
+          <span class="compass-dot compass-se">•</span>
+          <span class="compass-dot compass-sw">•</span>
+          <span class="compass-dot compass-nw">•</span>
 
-        <!-- Compass Ring (Rotates with device heading) -->
-        <div class="compass-ring" :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }">
-          <span class="compass-letter compass-n" :class="{ active: isNorth }">N</span>
-          <span class="compass-letter compass-e" :class="{ active: isEast }">E</span>
-          <span class="compass-letter compass-s" :class="{ active: isSouth }">S</span>
-          <span class="compass-letter compass-w" :class="{ active: isWest }">W</span>
+          <!-- Cardinal direction labels -->
+          <span class="compass-letter compass-n">N</span>
+          <span class="compass-letter compass-e">E</span>
+          <span class="compass-letter compass-s">S</span>
+          <span class="compass-letter compass-w">W</span>
+        </div>
 
-          <!-- Compass Needle (Only visible when Gyro is OFF) -->
-          <div v-if="!gyroModeActive" class="compass-needle">
-            <div class="pointer-north"></div>
-            <div class="pointer-south"></div>
-          </div>
+        <!-- Compass Needle (Fixed upright, does not rotate) -->
+        <div v-if="!gyroModeActive" class="compass-needle">
+          <svg viewBox="0 0 20 40" class="needle-svg">
+            <!-- Diamond/arrow outline -->
+            <polygon points="10,0 14,18 10,16 6,18" fill="none" stroke="rgba(200,200,200,0.8)" stroke-width="1"/>
+            <polygon points="10,40 14,22 10,24 6,22" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="1"/>
+          </svg>
         </div>
 
         <!-- Shutter Button Overlay (Only visible when Gyro is ON) -->
-        <!-- Absolute position contained within the 50x50 relative container -->
         <transition name="fade">
           <div v-if="gyroModeActive"
                class="shutter-overlay"
-               @click.stop="handleShutterClick"
-               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer;">
-               <!-- Shutter image centered -->
-               <img :src="shutterIcon" style="width: 50%; height: 50%; object-fit: contain; pointer-events: none;" />
+               @click.stop="handleShutterClick">
+               <img :src="shutterIcon" class="shutter-icon" />
           </div>
         </transition>
 
@@ -113,7 +119,9 @@ export default {
       showGyroDialog: false,
       pitchListener: null,
       showWarningSnackbar: false,
-      warningMessage: ''
+      warningMessage: '',
+      smoothedAzimuth: 0,
+      prevAzimuth: null
     }
   },
   computed: {
@@ -179,6 +187,9 @@ export default {
       // Use require if webpack/vite, or direct path. Start with direct path assuming public/assets setup or similar.
       // Since the user image is in assets/images/shutter-icon.png
       return require('@/assets/images/shutter-icon.png')
+    },
+    hasSelectedObject () {
+      return !!this.$store.state.selectedObject
     }
   },
   watch: {
@@ -204,6 +215,22 @@ export default {
         } else {
           this.$stel.core.fov = 45 * Math.PI / 180
         }
+      }
+    },
+    azimuthDegrees: {
+      immediate: true,
+      handler: function (newVal) {
+        if (this.prevAzimuth === null) {
+          this.prevAzimuth = newVal
+          this.smoothedAzimuth = newVal
+          return
+        }
+        let diff = newVal - this.prevAzimuth
+        // Handle wrap-around: take the shorter path
+        if (diff > 180) diff -= 360
+        if (diff < -180) diff += 360
+        this.smoothedAzimuth += diff
+        this.prevAzimuth = newVal
       }
     }
   },
@@ -402,10 +429,15 @@ export default {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 20px 24px;
-  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
   z-index: 50;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.bottom-bar-container.selection-visible {
+  transform: translateY(-110px);
 }
 
 .bottom-bar-left,
@@ -456,67 +488,55 @@ export default {
 /* Compass Ring */
 .compass-ring {
   position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  transition: transform 0.1s ease-out;
+  transition: transform 0.1s linear;
+  will-change: transform;
 }
 
-/* Compass Needle (Centered) */
+/* Compass Needle (SVG diamond - fixed position) */
 .compass-needle {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 16px;
-  height: 16px;
-  will-change: transform;
-  /* Transform is handled by JS for rotation */
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 30px;
+  pointer-events: none;
 }
 
-.pointer-north {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 10px solid rgba(255, 255, 255, 0.8);
+.needle-svg {
+  width: 100%;
+  height: 100%;
 }
 
-.pointer-south {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.4);
-}
-
-/* Compass Letters */
+/* Compass Letters - Bold grey like Stellarium */
 .compass-letter {
   position: absolute;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.2s ease;
-  transform: translate(-50%, -50%); /* Center the text point */
-}
-
-.compass-letter.active {
-  color: #ff6b6b;
+  font-size: 9px;
   font-weight: 700;
+  color: rgba(200, 200, 200, 0.8);
+  transform: translate(-50%, -50%);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.compass-n { top: 25%; left: 50%; }
-.compass-e { top: 50%; left: 75%; }
-.compass-s { top: 75%; left: 50%; }
-.compass-w { top: 50%; left: 25%; }
+.compass-n { top: 4px; left: 50%; }
+.compass-e { top: 50%; right: 1px; left: auto; transform: translateY(-50%); }
+.compass-s { bottom: 1px; top: auto; left: 50%; transform: translateX(-50%); }
+.compass-w { top: 50%; left: 1px; transform: translateY(-50%); }
+
+/* Intercardinal dots - subtle grey */
+.compass-dot {
+  position: absolute;
+  font-size: 4px;
+  color: rgba(180, 180, 180, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.compass-ne { top: 18%; right: 14%; left: auto; transform: translate(50%, -50%); }
+.compass-se { bottom: 14%; right: 14%; top: auto; left: auto; transform: translate(50%, 50%); }
+.compass-sw { bottom: 14%; left: 18%; top: auto; transform: translate(-50%, 50%); }
+.compass-nw { top: 18%; left: 18%; transform: translate(-50%, -50%); }
 
 /* Shutter Overlay */
 .shutter-overlay {
@@ -529,6 +549,16 @@ export default {
   align-items: center;
   justify-content: center;
   pointer-events: auto;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.shutter-icon {
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .shutter-btn {

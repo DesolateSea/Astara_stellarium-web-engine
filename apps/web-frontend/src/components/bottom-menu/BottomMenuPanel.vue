@@ -8,63 +8,100 @@
 
 <template>
   <div class="bottom-menu-panel">
-    <div class="menu-grid">
-      <div class="menu-item"
-           @click="toggleGridsLines">
-        <div class="menu-icon" :class="{ active: gridsLinesActive }">
-          <v-icon large>mdi-grid</v-icon>
+    <transition name="slide-fade" mode="out-in">
+      <!-- Main Menu Grid -->
+      <div v-if="!activeSubmenu" key="main" class="menu-grid">
+        <div class="menu-item"
+             @pointerdown="startLongPress('gridsLines')"
+             @pointerup="endPress('gridsLines', toggleGridsLines)"
+             @pointerleave="cancelLongPress"
+             @contextmenu.prevent>
+          <div class="menu-icon" :class="{ active: gridsLinesActive }">
+            <v-icon large>mdi-grid</v-icon>
+          </div>
+          <div class="menu-label">Grids & Lines</div>
         </div>
-        <div class="menu-label">Grids & Lines</div>
+
+        <div class="menu-item"
+             @pointerdown="startLongPress('constellations')"
+             @pointerup="endPress('constellations', toggleConstellations)"
+             @pointerleave="cancelLongPress"
+             @contextmenu.prevent>
+          <div class="menu-icon" :class="{ active: constellationsActive }">
+            <v-icon large>mdi-creation</v-icon>
+          </div>
+          <div class="menu-label">Constellations</div>
+        </div>
+
+        <!-- Landscape: Simple toggle only -->
+        <div class="menu-item" @click="toggleLandscape">
+          <div class="menu-icon" :class="{ active: landscapeVisible }">
+            <v-icon large>mdi-image</v-icon>
+          </div>
+          <div class="menu-label">Landscape</div>
+        </div>
+
+        <div class="menu-item"
+             @pointerdown="startLongPress('atmosphere')"
+             @pointerup="endPress('atmosphere', toggleAtmosphere)"
+             @pointerleave="cancelLongPress"
+             @contextmenu.prevent>
+          <div class="menu-icon" :class="{ active: atmosphereVisible }">
+            <v-icon large>mdi-weather-partly-cloudy</v-icon>
+          </div>
+          <div class="menu-label">Atmosphere</div>
+        </div>
+
+        <div class="menu-item"
+             @pointerdown="startLongPress('labels')"
+             @pointerup="endPress('labels', toggleLabels)"
+             @pointerleave="cancelLongPress"
+             @contextmenu.prevent>
+          <div class="menu-icon" :class="{ active: labelsActive }">
+            <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-outline' }}</v-icon>
+          </div>
+          <div class="menu-label">Labels</div>
+        </div>
+
+        <!-- Night Mode: Simple toggle only -->
+        <div class="menu-item" @click="toggleNightMode">
+          <div class="menu-icon" :class="{ active: nightModeActive }">
+            <v-icon large>mdi-eye</v-icon>
+          </div>
+          <div class="menu-label">Night mode</div>
+        </div>
       </div>
 
-      <div class="menu-item"
-           @click="toggleConstellations">
-        <div class="menu-icon" :class="{ active: constellationsActive }">
-          <v-icon large>mdi-creation</v-icon>
-        </div>
-        <div class="menu-label">Constellations</div>
-      </div>
-
-      <!-- Landscape: Simple toggle only -->
-      <div class="menu-item" @click="toggleLandscape">
-        <div class="menu-icon" :class="{ active: landscapeVisible }">
-          <v-icon large>mdi-image</v-icon>
-        </div>
-        <div class="menu-label">Landscape</div>
-      </div>
-
-      <div class="menu-item"
-           @click="toggleAtmosphere">
-        <div class="menu-icon" :class="{ active: atmosphereVisible }">
-          <v-icon large>mdi-weather-partly-cloudy</v-icon>
-        </div>
-        <div class="menu-label">Atmosphere</div>
-      </div>
-
-      <div class="menu-item"
-           @click="toggleLabels">
-        <div class="menu-icon" :class="{ active: labelsActive }">
-          <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-outline' }}</v-icon>
-        </div>
-        <div class="menu-label">Labels</div>
-      </div>
-
-      <!-- Night Mode: Simple toggle only -->
-      <div class="menu-item" @click="toggleNightMode">
-        <div class="menu-icon" :class="{ active: nightModeActive }">
-          <v-icon large>mdi-eye</v-icon>
-        </div>
-        <div class="menu-label">Night mode</div>
-      </div>
-    </div>
+      <!-- Submenus -->
+      <grids-lines-submenu v-else-if="activeSubmenu === 'gridsLines'" key="gridsLines" @back="activeSubmenu = null" />
+      <constellations-submenu v-else-if="activeSubmenu === 'constellations'" key="constellations" @back="activeSubmenu = null" />
+      <atmosphere-submenu v-else-if="activeSubmenu === 'atmosphere'" key="atmosphere" @back="activeSubmenu = null" />
+      <labels-submenu v-else-if="activeSubmenu === 'labels'" key="labels" @back="activeSubmenu = null" />
+    </transition>
   </div>
 </template>
 
 <script>
+import GridsLinesSubmenu from './GridsLinesSubmenu.vue'
+import ConstellationsSubmenu from './ConstellationsSubmenu.vue'
+import AtmosphereSubmenu from './AtmosphereSubmenu.vue'
+import LabelsSubmenu from './LabelsSubmenu.vue'
+
 export default {
   name: 'BottomMenuPanel',
+  components: {
+    GridsLinesSubmenu,
+    ConstellationsSubmenu,
+    AtmosphereSubmenu,
+    LabelsSubmenu
+  },
   data () {
-    return {}
+    return {
+      activeSubmenu: null,
+      longPressTimer: null,
+      longPressTriggered: false,
+      longPressDuration: 500
+    }
   },
   computed: {
     gridsLinesActive () {
@@ -93,6 +130,27 @@ export default {
     }
   },
   methods: {
+    // Long press handling
+    startLongPress (submenu) {
+      this.longPressTriggered = false
+      this.longPressTimer = setTimeout(() => {
+        this.longPressTriggered = true
+        this.activeSubmenu = submenu
+      }, this.longPressDuration)
+    },
+    endPress (submenu, toggleFn) {
+      this.cancelLongPress()
+      // Only toggle if long press wasn't triggered
+      if (!this.longPressTriggered) {
+        toggleFn()
+      }
+    },
+    cancelLongPress () {
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer)
+        this.longPressTimer = null
+      }
+    },
     // Toggle Grids & Lines (ecliptic + azimuthal)
     toggleGridsLines () {
       const newVal = !this.gridsLinesActive
@@ -203,5 +261,24 @@ export default {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.8);
   text-align: center;
+}
+
+/* Transitions */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
 }
 </style>
