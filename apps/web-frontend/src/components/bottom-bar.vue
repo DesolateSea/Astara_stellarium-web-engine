@@ -196,6 +196,16 @@ export default {
           this.$store.commit('setGyroModeActive', false)
         })
       }
+    },
+    arModeActive: function (newVal) {
+      // Update FOV when AR mode changes (not on every frame)
+      if (this.gyroModeActive && this.$stel && this.$stel.core) {
+        if (newVal) {
+          this.$stel.core.fov = 32.7 * Math.PI / 180
+        } else {
+          this.$stel.core.fov = 45 * Math.PI / 180
+        }
+      }
     }
   },
   methods: {
@@ -359,49 +369,12 @@ export default {
         // Low-pass filter for smooth rotation
         smoothHeading += (latestHeading - smoothHeading)
 
-        const ring = this.$el.querySelector('.compass-ring')
-        if (ring) {
-          // We are updating the transform via binding in template, but if we wanted manual control
-          // The rotation is handled by -azimuthDegrees in template.
-          // However, for pure compass mode (device orientation), we might need this update if azimuth doesn't cover it.
-          // Actually, the original code used ref="compassNeedle".
-          // In my refactor, the NEEDLE rotates if ring is static? No, usually the ring rotates or needle rotates.
-          // Original code: compass-container rotated by -azimuth. Needle rotated by heading.
-          // Let's stick to the original logic: "compass-container" (now compass-ring) rotates by Azimuth to match View direction?
-          // Wait. If I look North, Azimuth is 0. If I look East, Azimuth is 90.
-          // So if I look East, the compass ring should rotate -90 so "E" is at top? Correct.
-
-          // BUT wait, initCompass was updating needle style directly.
-          // "finalRotation = smoothHeading + azimuthDeg".
-          // Currently I removed ref="compassNeedle" logic from the ring.
-          // I should attach ref="compassNeedle" to the needle div inside compass-ring if I want it to behave like before.
-        }
-
-        // Let's restore the needle ref behavior
+        // Compass needle rotation (if ref exists)
         const needle = this.$refs.compassNeedle
         if (needle) {
           const azimuth = this.$store.state.stel?.observer?.yaw || 0
           const azimuthDeg = (azimuth * 180 / Math.PI) % 360
           const finalRotation = smoothHeading + azimuthDeg
-          // Needle points North relative to the Container which is already rotated by -Azimuth?
-          // If Container is rotated by -Azimuth, then North (0 deg) on container is "Top".
-          // If device heading is 0 (North), smoothHeading is 0.
-          // If I face North (Az=0), Container Rot = 0. Needle Rot = 0 + 0 = 0. Needle points UP. Correct.
-          // If I face East (Az=90), Container Rot = -90. "E" is at top.
-          // Device Heading is roughly 90? No, heading is magnetic heading.
-          // If I face East, heading is 90.
-          // Needle Rot = 90 + 90 = 180? That would point down.
-          // Let's re-read original logical:
-          // "needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'"
-          // Container had :style="{ transform: 'rotate(' + (-azimuthDegrees) + 'deg)' }"
-          // So container cancels out view rotation. Inside container, "North" is always at local "Top" relative to view?
-          // No, "N" letter is at top of container.
-          // If I rotate view to East (-90 deg container), "E" is at top. "N" is at left.
-          // Needle needs to point to real North.
-          // Real North is -90 deg relative to East view.
-          // So Needle should point Left.
-          // Heading=90. Azimuth=90. FinalRot = 180.
-          // This logic seems specific to how they set it up. I will keep it.
           needle.style.transform = 'translate(-50%, -50%) rotate(' + finalRotation + 'deg)'
         }
 

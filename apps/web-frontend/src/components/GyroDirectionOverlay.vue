@@ -128,16 +128,19 @@ export default {
   },
   methods: {
     startUpdating () {
-      // Update direction every 100ms
-      this.updateInterval = setInterval(() => {
+      // Use requestAnimationFrame for smoother updates synced with browser repaint
+      const update = () => {
+        if (!this.showOverlay) return // Stop if overlay is hidden
         this.updateDirection()
-      }, 100)
+        this.updateInterval = requestAnimationFrame(update)
+      }
       // Initial update
       this.updateDirection()
+      this.updateInterval = requestAnimationFrame(update)
     },
     stopUpdating () {
       if (this.updateInterval) {
-        clearInterval(this.updateInterval)
+        cancelAnimationFrame(this.updateInterval)
         this.updateInterval = null
       }
     },

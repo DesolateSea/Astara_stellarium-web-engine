@@ -59,14 +59,22 @@ const CameraService = {
       videoElement.setAttribute('autoplay', 'true')
       videoElement.muted = true
 
-      // Wait for video to be ready
+      // Wait for video to be ready (with timeout)
       await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Camera initialization timeout'))
+        }, 10000) // 10 second timeout
+
         videoElement.onloadedmetadata = () => {
+          clearTimeout(timeout)
           videoElement.play()
             .then(resolve)
             .catch(reject)
         }
-        videoElement.onerror = reject
+        videoElement.onerror = (err) => {
+          clearTimeout(timeout)
+          reject(err)
+        }
       })
 
       this.isActive = true
