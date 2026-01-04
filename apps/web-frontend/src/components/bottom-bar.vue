@@ -191,7 +191,6 @@ export default {
     },
     '$store.state.initComplete': function (val) {
       if (val && this.gyroModeActive && this.$stel && this.$stel.core) {
-        console.log('[BottomBar] Engine ready, resuming GyroscopeService')
         GyroscopeService.start(this.$stel.core, this.$store, () => {
           this.$store.commit('setGyroModeActive', false)
         })
@@ -235,21 +234,12 @@ export default {
       this.$store.commit('setArModeActive', !this.arModeActive)
     },
     async handleShutterClick () {
-      console.log('[BottomBar] handleShutterClick called, arModeActive:', this.arModeActive)
       if (this.arModeActive) {
-        // If AR is active, capture and close
-        console.log('[BottomBar] Capturing image...')
-        try {
-          await CameraService.capture()
-          console.log('[BottomBar] Capture done')
-        } catch (e) {
-          console.error('[BottomBar] Capture error:', e)
-        }
-        console.log('[BottomBar] Setting arModeActive = false')
+        // Capture and exit AR
+        await CameraService.captureFrame()
         this.$store.commit('setArModeActive', false)
       } else {
-        // If AR is not active, turn it on
-        console.log('[BottomBar] Turning AR ON')
+        // Turn AR ON
         this.$store.commit('setArModeActive', true)
       }
     },
@@ -301,9 +291,7 @@ export default {
       // The back camera points in -Z direction of screen, which is DOWN when screen faces sky
       // So zenith angle = acos(zComponent) when zComponent > 0 means screen facing up
 
-      const zenithAngleDeg = Math.acos(Math.abs(zComponent)) * 180 / Math.PI
-
-      console.log('[GyroActivation] Zenith angle:', zenithAngleDeg.toFixed(1) + '°')
+      const zenithAngleDeg = Math.acos(zComponent) * 180 / Math.PI
 
       // If zenith angle < 60°, device is pointed up enough
       if (zenithAngleDeg < 60) {

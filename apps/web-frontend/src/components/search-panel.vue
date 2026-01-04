@@ -257,7 +257,6 @@ export default {
       // Item must match at least one filter
       return this.activeFilters.some(filter => {
         const typeFilter = filter.typeFilter
-        console.log(item.types)
         // Check if item matches the filter criteria
         if (typeFilter.planets && (item.types.includes('Pla') || item.types.includes('Sun') || item.types.includes('Moo'))) {
           return true
@@ -379,8 +378,8 @@ export default {
         }
         that.autoCompleteChoices = results
         that.loading = false
-      }, err => {
-        console.log(err)
+      }, _err => {
+        // Search failed silently (error intentionally not logged)
         that.loading = false
       })
     }, 200),
