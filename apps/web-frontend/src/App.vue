@@ -373,6 +373,7 @@ export default {
             core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
             core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/ocean', key: 'ocean' })
             core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/hurricane', key: 'hurricane' })
+            core.landscapes.addDataSource({ key: 'zero' })
             core.milkyway.addDataSource({ url: dataBaseUrl + 'skydata/surveys/milkyway' })
             core.minor_planets.addDataSource({ url: dataBaseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'moon' })

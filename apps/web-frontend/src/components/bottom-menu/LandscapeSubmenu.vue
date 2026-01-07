@@ -54,7 +54,8 @@ export default {
       availableLandscapes: [
         { key: 'guereins', name: 'Guéreins (France)', descriptionFile: 'guereins/description.en.html' },
         { key: 'ocean', name: 'Ocean', descriptionFile: 'ocean/description.en.html' },
-        { key: 'hurricane', name: 'Hurricane Ridge', descriptionFile: 'hurricane/description.en.html' }
+        { key: 'hurricane', name: 'Hurricane Ridge', descriptionFile: 'hurricane/description.en.html' },
+        { key: 'zero', name: 'Zero Horizon', description: 'A simple polygonal landscape that just covers the area below the horizon' }
       ],
       descriptions: {}
     }
@@ -75,6 +76,10 @@ export default {
       return this.availableLandscapes[this.currentIndex] || this.availableLandscapes[0]
     },
     currentDescription () {
+      // Use inline description if available (for zero landscape)
+      if (this.currentLandscapeData.description) {
+        return this.currentLandscapeData.description
+      }
       const desc = this.descriptions[this.currentLandscapeData.key]
       if (!desc) return 'Loading...'
       // Extract just the paragraph text, strip h2 tags
@@ -87,6 +92,8 @@ export default {
   methods: {
     async loadDescriptions () {
       for (const landscape of this.availableLandscapes) {
+        // Skip landscapes with inline descriptions
+        if (landscape.description || !landscape.descriptionFile) continue
         try {
           const url = '/skydata/landscapes/' + landscape.descriptionFile
           const response = await fetch(url)
