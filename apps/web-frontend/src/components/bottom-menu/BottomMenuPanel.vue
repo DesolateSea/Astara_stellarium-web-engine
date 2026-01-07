@@ -33,8 +33,11 @@
           <div class="menu-label">Constellations</div>
         </div>
 
-        <!-- Landscape: Simple toggle only -->
-        <div class="menu-item" @click="toggleLandscape">
+        <div class="menu-item"
+             @pointerdown="startLongPress('landscape')"
+             @pointerup="endPress('landscape', toggleLandscape)"
+             @pointerleave="cancelLongPress"
+             @contextmenu.prevent>
           <div class="menu-icon" :class="{ active: landscapeVisible }">
             <v-icon large>{{ landscapeVisible ? 'mdi-image' : 'mdi-image-off-outline' }}</v-icon>
           </div>
@@ -75,6 +78,7 @@
       <!-- Submenus -->
       <grids-lines-submenu v-else-if="activeSubmenu === 'gridsLines'" key="gridsLines" @back="activeSubmenu = null" />
       <constellations-submenu v-else-if="activeSubmenu === 'constellations'" key="constellations" @back="activeSubmenu = null" />
+      <landscape-submenu v-else-if="activeSubmenu === 'landscape'" key="landscape" @back="activeSubmenu = null" />
       <atmosphere-submenu v-else-if="activeSubmenu === 'atmosphere'" key="atmosphere" @back="activeSubmenu = null" />
       <labels-submenu v-else-if="activeSubmenu === 'labels'" key="labels" @back="activeSubmenu = null" />
     </transition>
@@ -84,6 +88,7 @@
 <script>
 import GridsLinesSubmenu from './GridsLinesSubmenu.vue'
 import ConstellationsSubmenu from './ConstellationsSubmenu.vue'
+import LandscapeSubmenu from './LandscapeSubmenu.vue'
 import AtmosphereSubmenu from './AtmosphereSubmenu.vue'
 import LabelsSubmenu from './LabelsSubmenu.vue'
 
@@ -92,6 +97,7 @@ export default {
   components: {
     GridsLinesSubmenu,
     ConstellationsSubmenu,
+    LandscapeSubmenu,
     AtmosphereSubmenu,
     LabelsSubmenu
   },
