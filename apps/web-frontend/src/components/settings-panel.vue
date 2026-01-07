@@ -96,27 +96,7 @@
 
           <v-divider class="my-2"></v-divider>
 
-          <!-- Display Settings Section -->
-          <v-subheader class="settings-subheader">Lines</v-subheader>
-
-          <v-list-item @click="meridianOn = !meridianOn">
-            <v-list-item-content>
-              <v-list-item-title>Meridian Line</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-checkbox v-model="meridianOn" hide-details @click.stop></v-checkbox>
-            </v-list-item-action>
-          </v-list-item>
-
-          <v-list-item @click="eclipticOn = !eclipticOn">
-            <v-list-item-content>
-              <v-list-item-title>Ecliptic Line</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-checkbox v-model="eclipticOn" hide-details @click.stop></v-checkbox>
-            </v-list-item-action>
-          </v-list-item>
-
+          <!-- Other Settings Section -->
           <v-divider class="my-2"></v-divider>
 
           <v-list-item @click="resetSettings">
@@ -243,7 +223,7 @@
           <v-btn icon @click="currentView = 'main'" class="back-btn">
             <v-icon>mdi-arrow-left</v-icon>
           </v-btn>
-          <span class="settings-title">Camera Settings</span>
+          <span class="settings-title">AR Camera Settings</span>
         </div>
 
         <v-list dense class="settings-list">
