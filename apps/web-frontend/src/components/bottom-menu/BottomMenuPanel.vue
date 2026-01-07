@@ -17,7 +17,7 @@
              @pointerleave="cancelLongPress"
              @contextmenu.prevent>
           <div class="menu-icon" :class="{ active: gridsLinesActive }">
-            <v-icon large>mdi-grid</v-icon>
+            <v-icon large>{{ gridsLinesActive ? 'mdi-grid' : 'mdi-grid-off' }}</v-icon>
           </div>
           <div class="menu-label">Grids & Lines</div>
         </div>
@@ -28,7 +28,7 @@
              @pointerleave="cancelLongPress"
              @contextmenu.prevent>
           <div class="menu-icon" :class="{ active: constellationsActive }">
-            <v-icon large>mdi-creation</v-icon>
+            <v-icon large>{{ constellationsActive ? 'mdi-creation' : 'mdi-creation-outline' }}</v-icon>
           </div>
           <div class="menu-label">Constellations</div>
         </div>
@@ -36,7 +36,7 @@
         <!-- Landscape: Simple toggle only -->
         <div class="menu-item" @click="toggleLandscape">
           <div class="menu-icon" :class="{ active: landscapeVisible }">
-            <v-icon large>mdi-image</v-icon>
+            <v-icon large>{{ landscapeVisible ? 'mdi-image' : 'mdi-image-off-outline' }}</v-icon>
           </div>
           <div class="menu-label">Landscape</div>
         </div>
@@ -47,7 +47,7 @@
              @pointerleave="cancelLongPress"
              @contextmenu.prevent>
           <div class="menu-icon" :class="{ active: atmosphereVisible }">
-            <v-icon large>mdi-weather-partly-cloudy</v-icon>
+            <v-icon large>{{ atmosphereVisible ? 'mdi-weather-partly-cloudy' : 'mdi-weather-night' }}</v-icon>
           </div>
           <div class="menu-label">Atmosphere</div>
         </div>
@@ -58,7 +58,7 @@
              @pointerleave="cancelLongPress"
              @contextmenu.prevent>
           <div class="menu-icon" :class="{ active: labelsActive }">
-            <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-outline' }}</v-icon>
+            <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-off-outline' }}</v-icon>
           </div>
           <div class="menu-label">Labels</div>
         </div>
@@ -66,7 +66,7 @@
         <!-- Night Mode: Simple toggle only -->
         <div class="menu-item" @click="toggleNightMode">
           <div class="menu-icon" :class="{ active: nightModeActive }">
-            <v-icon large>mdi-eye</v-icon>
+            <v-icon large>{{ nightModeActive ? 'mdi-eye' : 'mdi-eye-off-outline' }}</v-icon>
           </div>
           <div class="menu-label">Night mode</div>
         </div>
