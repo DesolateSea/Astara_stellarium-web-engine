@@ -1,0 +1,9 @@
+hips_order            = 2
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = champagne
+hips_release_date     = 2020-12-12T10:19Z
+source_md5            = f0e6e9026a29d7cc605f9287a77368d8
+type                  = landscape

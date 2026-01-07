@@ -1,0 +1,9 @@
+hips_order            = 2
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = kloppenheim
+hips_release_date     = 2020-12-12T09:59Z
+source_md5            = 2dd33062eee85b447eba2738d4fb76e0
+type                  = landscape

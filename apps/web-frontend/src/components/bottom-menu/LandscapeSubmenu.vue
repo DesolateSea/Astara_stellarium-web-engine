@@ -10,28 +10,29 @@
   <bottom-menu-submenu title="Landscape" subtitle="Select landscape" :in-settings="inSettings" @back="$emit('back')">
     <div class="landscape-content">
       <!-- Landscape Carousel Selector -->
-      <div class="landscape-carousel">
-        <div class="landscape-header">
+      <div class="landscape-carousel"
+        @touchstart="onTouchStart"
+        @touchend="onTouchEnd"
+      >
+        <div class="landscape-description" v-html="currentDescription"></div>
+        <div class="landscape-nav">
           <v-btn icon class="nav-btn" @click="prevLandscape" :disabled="currentIndex <= 0">
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
-          <div class="landscape-name">{{ currentLandscapeData.name }}</div>
+          <!-- Dots indicator -->
+          <div class="dots-indicator">
+            <span
+              v-for="(landscape, index) in availableLandscapes"
+              :key="landscape.key"
+              class="dot"
+              :class="{ active: index === currentIndex }"
+              @click="selectLandscapeByIndex(index)"
+            ></span>
+          </div>
           <v-btn icon class="nav-btn" @click="nextLandscape" :disabled="currentIndex >= availableLandscapes.length - 1">
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
         </div>
-        <div class="landscape-description" v-html="currentDescription"></div>
-      </div>
-
-      <!-- Dots indicator -->
-      <div class="dots-indicator">
-        <span
-          v-for="(landscape, index) in availableLandscapes"
-          :key="landscape.key"
-          class="dot"
-          :class="{ active: index === currentIndex }"
-          @click="selectLandscapeByIndex(index)"
-        ></span>
       </div>
     </div>
   </bottom-menu-submenu>
@@ -51,13 +52,11 @@ export default {
   },
   data () {
     return {
-      availableLandscapes: [
-        { key: 'guereins', name: 'Guéreins (France)', descriptionFile: 'guereins/description.en.html' },
-        { key: 'ocean', name: 'Ocean', descriptionFile: 'ocean/description.en.html' },
-        { key: 'hurricane', name: 'Hurricane Ridge', descriptionFile: 'hurricane/description.en.html' },
-        { key: 'zero', name: 'Zero Horizon', description: 'A simple polygonal landscape that just covers the area below the horizon' }
-      ],
-      descriptions: {}
+      availableLandscapes: [],
+      descriptions: {},
+      loading: true,
+      touchStartX: 0,
+      touchStartY: 0
     }
   },
   computed: {
@@ -73,38 +72,48 @@ export default {
       return idx >= 0 ? idx : 0
     },
     currentLandscapeData () {
+      if (this.availableLandscapes.length === 0) return null
       return this.availableLandscapes[this.currentIndex] || this.availableLandscapes[0]
     },
     currentDescription () {
-      // Use inline description if available (for zero landscape)
-      if (this.currentLandscapeData.description) {
-        return this.currentLandscapeData.description
-      }
+      if (!this.currentLandscapeData) return ''
       const desc = this.descriptions[this.currentLandscapeData.key]
-      if (!desc) return 'Loading...'
-      // Extract just the paragraph text, strip h2 tags
-      return desc.replace(/<h2>.*?<\/h2>/gi, '').trim()
+      return desc || ''
     }
   },
   mounted () {
-    this.loadDescriptions()
+    this.loadLandscapes()
   },
   methods: {
-    async loadDescriptions () {
-      for (const landscape of this.availableLandscapes) {
-        // Skip landscapes with inline descriptions
-        if (landscape.description || !landscape.descriptionFile) continue
-        try {
-          const url = '/skydata/landscapes/' + landscape.descriptionFile
-          const response = await fetch(url)
-          if (response.ok) {
-            const text = await response.text()
-            this.$set(this.descriptions, landscape.key, text)
+    async loadLandscapes () {
+      this.loading = true
+      try {
+        const response = await fetch('/skydata/landscapes/index.json')
+        const keys = await response.json()
+
+        // Build landscape list and load descriptions
+        const landscapes = []
+        for (const key of keys) {
+          landscapes.push({ key })
+          // Load description for each landscape
+          try {
+            const descUrl = '/skydata/landscapes/' + key + '/description.en.html'
+            const descResponse = await fetch(descUrl)
+            if (descResponse.ok) {
+              const text = await descResponse.text()
+              this.$set(this.descriptions, key, text)
+            }
+          } catch (e) {
+            // No description available
           }
-        } catch (e) {
-          console.warn('Failed to load description for ' + landscape.key + ':', e)
         }
+        this.availableLandscapes = landscapes
+      } catch (e) {
+        console.warn('Failed to load landscapes index:', e)
+        // Fallback
+        this.availableLandscapes = [{ key: 'guereins' }, { key: 'zero' }]
       }
+      this.loading = false
     },
     selectLandscape (key) {
       if (this.$stel && this.$stel.core && this.$stel.core.landscapes) {
@@ -127,6 +136,27 @@ export default {
     nextLandscape () {
       if (this.currentIndex < this.availableLandscapes.length - 1) {
         this.selectLandscapeByIndex(this.currentIndex + 1)
+      }
+    },
+    onTouchStart (e) {
+      this.touchStartX = e.touches[0].clientX
+      this.touchStartY = e.touches[0].clientY
+    },
+    onTouchEnd (e) {
+      const touchEndX = e.changedTouches[0].clientX
+      const touchEndY = e.changedTouches[0].clientY
+      const deltaX = touchEndX - this.touchStartX
+      const deltaY = touchEndY - this.touchStartY
+
+      // Only trigger if horizontal swipe is dominant and significant
+      if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX < 0) {
+          // Swipe left -> next
+          this.nextLandscape()
+        } else {
+          // Swipe right -> prev
+          this.prevLandscape()
+        }
       }
     }
   }
@@ -157,16 +187,15 @@ export default {
 .landscape-carousel {
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
+  padding: 8px 0 0 0;
   margin: 0 -16px;
 }
 
-.landscape-header {
+.landscape-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 0 4px;
+  margin-bottom: -18px;
 }
 
 .nav-btn {
@@ -186,14 +215,57 @@ export default {
   flex: 1;
 }
 
+.landscape-counter {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  min-width: 60px;
+}
+
+.dots-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(156, 129, 129, 0.3);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dot.active {
+  background: #64b5f6;
+}
+
 .landscape-description {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
-  height: 78px;
+  height: 91px;
   overflow-y: auto;
-  padding: 0 8px;
-  text-align: center;
+  padding: 0 16px;
+  text-align: left;
+}
+
+.landscape-description :deep(h2) {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  margin: 0 0 8px 0;
+}
+
+.landscape-description :deep(p) {
+  margin: 0;
 }
 
 .landscape-description::-webkit-scrollbar {
@@ -208,33 +280,5 @@ export default {
 .landscape-description::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
-}
-
-.landscape-description :deep(p) {
-  margin: 0;
-}
-
-.dots-indicator {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 0 0 0;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.dot:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.dot.active {
-  background: #64b5f6;
 }
 </style>

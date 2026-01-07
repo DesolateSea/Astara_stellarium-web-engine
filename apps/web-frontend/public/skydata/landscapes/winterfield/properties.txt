@@ -1,0 +1,9 @@
+hips_order            = 2
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = winterfield
+hips_release_date     = 2020-12-11T21:18Z
+source_md5            = 5110fe9655a6ac6ebe4da4f3b46cdb28
+type                  = landscape

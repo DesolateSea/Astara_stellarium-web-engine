@@ -1,0 +1,12 @@
+hips_order            = 0
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = Garching
+hips_service_url      = https://data.stellarium.org/landscapes/garching
+hips_release_date     = 2018-10-11T17:37Z
+source_md5            = ae819648e527c147e113ee332e54e5f0
+type                  = landscape
+obs_copyright         = Fabien Chéreau
+obs_description       = A view from the ESO headquarters in Garching bei Munchen, Germany.
