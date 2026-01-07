@@ -28,7 +28,7 @@ dsos = [
 
 # Base HiPS URL (DSS2 Color)
 BASE_URL = "http://alasky.u-strasbg.fr/DSS/DSSColor"
-OUTPUT_BASE = "public/hips"
+OUTPUT_BASE = "apps/web-frontend/public/hips"
 BASE_PROPERTIES = None
 
 def get_base_properties():
@@ -151,8 +151,6 @@ if __name__ == "__main__":
     if not HAS_DEPS:
         print("Missing dependencies. Please run:")
         print("pip install astropy-healpix requests")
-    elif not os.path.exists("public"):
-        print("Please run this script from the apps/web-frontend directory.")
     else:
         # Pre-fetch base properties
         get_base_properties()

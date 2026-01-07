@@ -6,7 +6,7 @@
 # The terms of the AGPL v3 license can be found in the main directory of this
 # repository.
 
-# App ID from capacitor.config.json
+# Get App ID from capacitor.config.json
 APP_ID := $(shell grep -o '"appId"[[:space:]]*:[[:space:]]*"[^"]*"' capacitor.config.json | sed 's/.*"appId"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
 
 .PHONY: setup build dev start
@@ -58,21 +58,27 @@ start:
 i18n:
 	python3 ./tools/update-i18n-en.py
 
+# Initialize Capacitor Android platform (run once)
 android:
 	npx cap add android
 
+# Sync web build to Android project (run after building frontend)
 sync-android:
 	npx cap sync android
 
+# Build debug APK using Gradle
 build-apk:
 	cd android && ./gradlew assembleDebug
 
+# Open Android project in Android Studio
 open-android:
 	npx cap open android
 
+# Install debug APK on connected device via adb
 install-apk:
 	adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
+# Uninstall app from connected device if installed
 uninstall:
 	@if adb shell pm list packages | grep -q $(APP_ID); then \
 		echo "Uninstalling app $(APP_ID)"; \
