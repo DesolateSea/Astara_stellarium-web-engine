@@ -15,7 +15,7 @@
              @pointerdown="startLongPress('gridsLines')"
              @pointerup="endPress('gridsLines', toggleGridsLines)"
              @pointerleave="cancelLongPress"
-             @contextmenu.prevent>
+             @contextmenu.prevent="handleRightClick('gridsLines')">
           <div class="menu-icon" :class="{ active: gridsLinesActive }">
             <v-icon large>{{ gridsLinesActive ? 'mdi-grid' : 'mdi-grid-off' }}</v-icon>
           </div>
@@ -26,7 +26,7 @@
              @pointerdown="startLongPress('constellations')"
              @pointerup="endPress('constellations', toggleConstellations)"
              @pointerleave="cancelLongPress"
-             @contextmenu.prevent>
+             @contextmenu.prevent="handleRightClick('constellations')">
           <div class="menu-icon" :class="{ active: constellationsActive }">
             <v-icon large>{{ constellationsActive ? 'mdi-creation' : 'mdi-creation-outline' }}</v-icon>
           </div>
@@ -45,7 +45,7 @@
              @pointerdown="startLongPress('atmosphere')"
              @pointerup="endPress('atmosphere', toggleAtmosphere)"
              @pointerleave="cancelLongPress"
-             @contextmenu.prevent>
+             @contextmenu.prevent="handleRightClick('atmosphere')">
           <div class="menu-icon" :class="{ active: atmosphereVisible }">
             <v-icon large>{{ atmosphereVisible ? 'mdi-weather-partly-cloudy' : 'mdi-weather-night' }}</v-icon>
           </div>
@@ -56,7 +56,7 @@
              @pointerdown="startLongPress('labels')"
              @pointerup="endPress('labels', toggleLabels)"
              @pointerleave="cancelLongPress"
-             @contextmenu.prevent>
+             @contextmenu.prevent="handleRightClick('labels')">
           <div class="menu-icon" :class="{ active: labelsActive }">
             <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-off-outline' }}</v-icon>
           </div>
@@ -150,6 +150,9 @@ export default {
         clearTimeout(this.longPressTimer)
         this.longPressTimer = null
       }
+    },
+    handleRightClick (submenu) {
+      this.activeSubmenu = submenu
     },
     // Toggle Grids & Lines (ecliptic + azimuthal)
     toggleGridsLines () {
