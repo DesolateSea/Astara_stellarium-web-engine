@@ -11,27 +11,14 @@
 </template>
 
 <script>
+import { getOverlayList } from '@/constants/dsoHips'
+
 export default {
   name: 'DsoSkyOverlays',
   data: function () {
     return {
-      // DSO HiPS configurations
-      dsoHips: [
-        { id: 'm42', name: 'Orion Nebula', path: 'hips/m42/', showAtFov: 40 },
-        { id: 'm31', name: 'Andromeda Galaxy', path: 'hips/m31/', showAtFov: 15 },
-        { id: 'm8', name: 'Lagoon Nebula', path: 'hips/m8/', showAtFov: 40 },
-        { id: 'rosette', name: 'Rosette Nebula', path: 'hips/rosette/', showAtFov: 30 },
-        { id: 'ngc1499', name: 'California Nebula', path: 'hips/ngc1499/', showAtFov: 40 },
-        { id: 'ngc7000', name: 'North America Nebula', path: 'hips/ngc7000/', showAtFov: 40 },
-        { id: 'm16', name: 'Eagle Nebula', path: 'hips/m16/', showAtFov: 20 },
-        { id: 'm17', name: 'Omega Nebula', path: 'hips/m17/', showAtFov: 20 },
-        { id: 'm20', name: 'Trifid Nebula', path: 'hips/m20/', showAtFov: 15 },
-        { id: 'ngc7293', name: 'Helix Nebula', path: 'hips/ngc7293/', showAtFov: 10 },
-        { id: 'ngc6960', name: 'Veil Nebula', path: 'hips/ngc6960/', showAtFov: 40 },
-        { id: 'ngc3372', name: 'Eta Carinae', path: 'hips/ngc3372/', showAtFov: 30 },
-        { id: 'm33', name: 'Triangulum Galaxy', path: 'hips/m33/', showAtFov: 20 },
-        { id: 'm45', name: 'Pleiades', path: 'hips/m45/', showAtFov: 30 }
-      ],
+      // DSO HiPS configurations - imported from constants for full sky coverage (182 objects)
+      dsoHips: getOverlayList(),
       hipsSurveys: [],
       dsoLayer: null,
       initialized: false
