@@ -135,7 +135,7 @@ export default {
 
 <style scoped>
 .landscape-content {
-  padding: 8px 0;
+  padding: 8px 0 0 0;
 }
 
 .toggle-row {
@@ -158,14 +158,15 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 8px 0;
+  margin: 0 -16px;
 }
 
 .landscape-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 12px;
+  padding: 0 4px;
 }
 
 .nav-btn {
@@ -181,17 +182,17 @@ export default {
   font-size: 18px;
   font-weight: 500;
   color: white;
-  min-width: 120px;
   text-align: center;
+  flex: 1;
 }
 
 .landscape-description {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
-  max-height: 100px;
+  height: 78px;
   overflow-y: auto;
-  padding: 0 4px;
+  padding: 0 8px;
   text-align: center;
 }
 
@@ -217,7 +218,7 @@ export default {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 8px 0;
+  padding: 8px 0 0 0;
 }
 
 .dot {
