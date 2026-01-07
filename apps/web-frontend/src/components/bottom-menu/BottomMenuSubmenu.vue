@@ -14,7 +14,7 @@
       </v-btn>
       <div class="submenu-title-container">
         <div class="submenu-title">{{ title }}</div>
-        <div class="submenu-subtitle" v-if="subtitle">{{ subtitle }}</div>
+        <div class="submenu-subtitle" v-if="subtitle && subtitle !== title">{{ subtitle }}</div>
       </div>
     </div>
     <div class="submenu-content">

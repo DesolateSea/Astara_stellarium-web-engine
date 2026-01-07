@@ -87,7 +87,7 @@
               <v-icon color="grey">mdi-camera-metering-center</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-title>Camera Settings</v-list-item-title>
+              <v-list-item-title>AR Camera Settings</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon>mdi-chevron-right</v-icon>
