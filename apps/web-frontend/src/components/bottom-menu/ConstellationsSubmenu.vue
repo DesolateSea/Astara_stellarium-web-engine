@@ -65,8 +65,11 @@ export default {
       set (v) { this.$stel.core.constellations.bounds_visible = v }
     },
     centeredOnly: {
-      get () { return false }, // TODO: Map to actual property when available
-      set (v) { /* TODO: Implement when property is available */ }
+      get () { return this.$store.state.stel?.constellations?.show_only_pointed || false },
+      set (v) {
+        this.$stel.core.constellations.show_only_pointed = v
+        localStorage.setItem('stel_constellations_centered_only', v.toString())
+      }
     }
   }
 }

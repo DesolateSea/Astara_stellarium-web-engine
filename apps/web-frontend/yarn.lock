@@ -94,7 +94,7 @@
   resolved "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.13.12.tgz"
   integrity sha512-3eJJ841uKxeV8dcN/2yGEUy+RfgQspPEgQat85umsE1rotuquQ2AbIub4S6j7c50a2d+4myc+zSlnXeIHrOnhQ==
 
-"@babel/core@^7.0.0", "@babel/core@^7.0.0-0", "@babel/core@^7.11.0", "@babel/core@^7.13.0", "@babel/core@^7.4.0-0":
+"@babel/core@^7.11.0":
   version "7.13.14"
   resolved "https://registry.npmjs.org/@babel/core/-/core-7.13.14.tgz"
   integrity sha512-wZso/vyF4ki0l0znlgM4inxbdrUvCb+cVz8grxDq+6C9k6qbqoIJteQOKicaKjCipU3ISV+XedCqpL2RJJVehA==
@@ -3420,7 +3420,7 @@
     tslib "^2.8.1"
     xml2js "^0.6.2"
 
-"@capacitor/core@^8.0.0", "@capacitor/core@>=8.0.0":
+"@capacitor/core@^8.0.0":
   version "8.0.0"
   resolved "https://registry.npmjs.org/@capacitor/core/-/core-8.0.0.tgz"
   integrity sha512-250HTVd/W/KdMygoqaedisvNbHbpbQTN2Hy/8ZYGm1nAqE0Fx7sGss4l0nDg33STxEdDhtVRoL2fIaaiukKseA==
@@ -4161,6 +4161,7 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 129ee559 (chore(build): configuration changes for Python 3.14 and SELinux)
 =======
 >>>>>>> 7b8db3e6 (chore(build): configuration changes for Python 3.14 and SELinux)
@@ -4172,6 +4173,8 @@
   integrity sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==
 
 >>>>>>> e3918fe4 (feat(data): enhance TLE handling with advanced options)
+=======
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
 "@types/glob@^7.1.1":
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -4279,13 +4282,6 @@
   resolved "https://registry.npmjs.org/@types/json5/-/json5-0.0.29.tgz"
   integrity sha1-7ihweulOEdK4J7y+UnC86n8+ce4=
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
-
-"@types/leaflet@^1.5.7":
-  version "1.9.21"
-  resolved "https://registry.npmjs.org/@types/leaflet/-/leaflet-1.9.21.tgz"
-  integrity sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==
-  dependencies:
-    "@types/geojson" "*"
 
 "@types/mime@^1":
 <<<<<<< HEAD
@@ -5125,7 +5121,7 @@
   resolved "https://registry.npmjs.org/@vue/cli-plugin-vuex/-/cli-plugin-vuex-4.5.15.tgz"
   integrity sha512-fqap+4HN+w+InDxlA3hZTOGE0tzBTgXhKLoDydhywqgmhQ1D9JA6Feh94ze6tG8DsWX58/ujYUqA8jAz17FJtg==
 
-"@vue/cli-service@^3.0.0 || ^4.0.0-0", "@vue/cli-service@~4.5.15":
+"@vue/cli-service@~4.5.15":
   version "4.5.15"
   resolved "https://registry.npmjs.org/@vue/cli-service/-/cli-service-4.5.15.tgz"
   integrity sha512-sFWnLYVCn4zRfu45IcsIE9eXM0YpDV3S11vlM2/DVbIPAGoYo5ySpSof6aHcIvkeGsIsrHFpPHzNvDZ/efs7jA==
@@ -6060,6 +6056,7 @@ acorn-walk@^7.1.1:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 
+<<<<<<< HEAD
 "acorn@^6.0.0 || ^7.0.0 || ^8.0.0", acorn@^7.1.1, acorn@^7.4.0:
   version "7.4.1"
   resolved "https://registry.npmjs.org/acorn/-/acorn-7.4.1.tgz"
@@ -6120,6 +6117,8 @@ ajv@^6.1.0, ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.3, ajv@^6.12.4, ajv@^6.12.5, ajv
 =======
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
+=======
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
 acorn@^6.4.1:
   version "6.4.2"
   resolved "https://registry.npmjs.org/acorn/-/acorn-6.4.2.tgz"
@@ -6130,6 +6129,11 @@ acorn@^6.4.1:
 >>>>>>> 3b836b9e (feat(ui): fullscreen mode toggle)
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
+
+acorn@^7.1.1, acorn@^7.4.0:
+  version "7.4.1"
+  resolved "https://registry.npmjs.org/acorn/-/acorn-7.4.1.tgz"
+  integrity sha512-nQyp0o1/mNdbTO1PO6kHkwSrmgZ0MT/jCCpNiwbUjGoRN4dlBhqJtoQuCnEOKzgTVwg0ZWiCoQy6SxMebQVh8A==
 
 address@^1.1.2:
   version "1.1.2"
@@ -6149,6 +6153,7 @@ ajv-keywords@^3.1.0, ajv-keywords@^3.4.1, ajv-keywords@^3.5.2:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3b836b9e (feat(ui): fullscreen mode toggle)
 "ajv@^6.1.0", "ajv@^6.10.0", "ajv@^6.10.2", "ajv@^6.12.3", "ajv@^6.12.4", "ajv@^6.12.5", "ajv@^6.9.1", "ajv@>=5.0.0":
@@ -6161,6 +6166,9 @@ ajv-keywords@^3.1.0, ajv-keywords@^3.4.1, ajv-keywords@^3.5.2:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 ajv@^6.1.0, ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.3, ajv@^6.12.4, ajv@^6.12.5, ajv@^6.9.1, ajv@>=5.0.0:
+=======
+ajv@^6.1.0, ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.3, ajv@^6.12.4, ajv@^6.12.5:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "6.12.6"
   resolved "https://registry.npmjs.org/ajv/-/ajv-6.12.6.tgz"
   integrity sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==
@@ -11339,6 +11347,7 @@ css-declaration-sorter@^4.0.1:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 css-loader@*, css-loader@^3.5.3:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-3.6.0.tgz#2e4b2c7e6e2d27f8c8f28f61bffcd2e6c91ef645"
@@ -11356,6 +11365,9 @@ css-loader@*, css-loader@^3.5.3:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 css-loader@*, css-loader@^3.5.3:
+=======
+css-loader@^3.5.3:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "3.6.0"
   resolved "https://registry.npmjs.org/css-loader/-/css-loader-3.6.0.tgz"
   integrity sha512-M5lSukoWi1If8dhQAUCvj4H8vUt3vOnwbQBH9DdTm/s4Ym2B/3dPMtYZeJmq7Q3S3Pa+I94DcZ7pc9bP14cWIQ==
@@ -14299,8 +14311,12 @@ eslint-plugin-es@^3.0.0:
     eslint-utils "^2.0.0"
     regexpp "^3.0.0"
 
+<<<<<<< HEAD
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 eslint-plugin-import@^2.20.1, "eslint-plugin-import@>= 2.18.0", eslint-plugin-import@>=1.4.0, eslint-plugin-import@>=2.18.0:
+=======
+eslint-plugin-import@^2.20.1:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "2.22.1"
   resolved "https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.22.1.tgz"
   integrity sha512-8K7JjINHOpH64ozkAhpT3sd+FswIZTfMZTjdx052pnWrgRCVfp8op9tbjpAk3DdUeI/Ba4C8OjdC0r90erHEOw==
@@ -14333,6 +14349,7 @@ eslint-plugin-import@^2.20.1, "eslint-plugin-import@>= 2.18.0", eslint-plugin-im
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 eslint-plugin-promise@^4.2.1, "eslint-plugin-promise@>= 4.2.1", eslint-plugin-promise@>=4.2.1:
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-promise/-/eslint-plugin-promise-4.3.1.tgz#61485df2a359e03149fdafc0a68b0e030ad2ac45"
@@ -14354,6 +14371,9 @@ eslint-plugin-vue@^6.1.2, eslint-plugin-vue@^6.2.2, "eslint-plugin-vue@>= 6.1.2"
   "version" "4.3.1"
 =======
 eslint-plugin-node@^11.0.0, "eslint-plugin-node@>= 9.1.0", eslint-plugin-node@>=9.1.0:
+=======
+eslint-plugin-node@^11.0.0:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "11.1.0"
   resolved "https://registry.npmjs.org/eslint-plugin-node/-/eslint-plugin-node-11.1.0.tgz"
   integrity sha512-oUwtPJ1W0SKD0Tr+wqu92c5xuCeQqB3hSCHasn/ZgjFdA9iDGNkNf2Zi9ztY7X+hNuMib23LNGRm6+uN+KLE3g==
@@ -14365,17 +14385,18 @@ eslint-plugin-node@^11.0.0, "eslint-plugin-node@>= 9.1.0", eslint-plugin-node@>=
     resolve "^1.10.1"
     semver "^6.1.0"
 
-eslint-plugin-promise@^4.2.1, "eslint-plugin-promise@>= 4.2.1", eslint-plugin-promise@>=4.2.1:
+eslint-plugin-promise@^4.2.1:
   version "4.3.1"
   resolved "https://registry.npmjs.org/eslint-plugin-promise/-/eslint-plugin-promise-4.3.1.tgz"
   integrity sha512-bY2sGqyptzFBDLh/GMbAxfdJC+b0f23ME63FOE4+Jao0oZ3E1LEwFtWJX/1pGMJLiTtrSSern2CRM/g+dfc0eQ==
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 
-eslint-plugin-standard@^4.0.0, "eslint-plugin-standard@>= 4.0.0", eslint-plugin-standard@>=4.0.0:
+eslint-plugin-standard@^4.0.0:
   version "4.1.0"
   resolved "https://registry.npmjs.org/eslint-plugin-standard/-/eslint-plugin-standard-4.1.0.tgz"
   integrity sha512-ZL7+QRixjTR6/528YNGyDotyffm5OQst/sGxKDwGb9Uqs4In5Egi4+jbobhqJoyoCM6/7v/1A5fhQ7ScMtDjaQ==
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 "eslint-plugin-vue@^6.1.2", "eslint-plugin-vue@^6.2.2", "eslint-plugin-vue@>= 6.1.2":
   "integrity" "sha512-Nhc+oVAHm0uz/PkJAWscwIT4ijTrK5fqNqz9QB1D35SbbuMG1uB6Yr5AJpvPSWg+WOw7nYNswerYh0kOk64gqQ=="
@@ -14436,6 +14457,9 @@ eslint-plugin-promise@^4.2.1, "eslint-plugin-promise@>= 4.2.1", eslint-plugin-pr
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 eslint-plugin-vue@^6.1.2, eslint-plugin-vue@^6.2.2, "eslint-plugin-vue@>= 6.1.2":
+=======
+eslint-plugin-vue@^6.1.2, eslint-plugin-vue@^6.2.2:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "6.2.2"
   resolved "https://registry.npmjs.org/eslint-plugin-vue/-/eslint-plugin-vue-6.2.2.tgz"
   integrity sha512-Nhc+oVAHm0uz/PkJAWscwIT4ijTrK5fqNqz9QB1D35SbbuMG1uB6Yr5AJpvPSWg+WOw7nYNswerYh0kOk64gqQ==
@@ -14656,8 +14680,12 @@ eslint-visitor-keys@^1.0.0, eslint-visitor-keys@^1.1.0:
   resolved "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-1.3.0.tgz"
   integrity sha512-6J72N8UNa462wa/KFODt/PJ3IU60SDpC3QXC1Hjc1BXXpfL2C9R5+AU7jhe0F6GREqVMh4Juu+NY7xn+6dipUQ==
 
+<<<<<<< HEAD
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 "eslint@^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0", "eslint@^5.0.0 || ^6.0.0", "eslint@^6.0.0 || ^7.0.0", eslint@^6.7.2, "eslint@>= 1.6.0 < 7.0.0", "eslint@>= 4.12.1", "eslint@>=1.6.0 <7.0.0", eslint@>=4.19.1, eslint@>=5.0.0, eslint@>=5.16.0, eslint@>=6.2.2:
+=======
+eslint@^6.7.2:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "6.8.0"
   resolved "https://registry.npmjs.org/eslint/-/eslint-6.8.0.tgz"
   integrity sha512-K+Iayyo2LtyYhDSYwz5D5QdWw0hCacNzyq1Y821Xna2xSJj7cijoLLYmLxTQgcgZ9mC61nryMy9S7GRbYpI5Ig==
@@ -15755,6 +15783,7 @@ file-entry-cache@^5.0.1:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 file-loader@*, file-loader@^4.2.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-4.3.0.tgz#780f040f729b3d18019f20605f723e844b8a58af"
@@ -15772,6 +15801,9 @@ file-loader@*, file-loader@^4.2.0:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 file-loader@*, file-loader@^4.2.0:
+=======
+file-loader@^4.2.0:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "4.3.0"
   resolved "https://registry.npmjs.org/file-loader/-/file-loader-4.3.0.tgz"
   integrity sha512-aKrYPYjF1yG3oX0kWRrqrSMfgftm7oJW5M+m4owoldH5C51C0RkIwB++JbRvEW3IU6/ZG5n8UvEcdgwOt2UOWA==
@@ -18593,6 +18625,7 @@ html-tags@^3.1.0:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3b836b9e (feat(ui): fullscreen mode toggle)
 "html-webpack-plugin@^3.2.0", "html-webpack-plugin@>=2.26.0":
@@ -18605,6 +18638,9 @@ html-tags@^3.1.0:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 html-webpack-plugin@^3.2.0, html-webpack-plugin@>=2.26.0:
+=======
+html-webpack-plugin@^3.2.0:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "3.2.0"
   resolved "https://registry.npmjs.org/html-webpack-plugin/-/html-webpack-plugin-3.2.0.tgz"
   integrity sha1-sBq71yOsqqeze2r0SS69oD2d03s=
@@ -21744,6 +21780,7 @@ leaflet-control-geocoder@^1.13.0:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 leaflet@^1.3.4, leaflet@^1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.7.1.tgz#10d684916edfe1bf41d688a3b97127c0322a2a19"
@@ -21769,6 +21806,9 @@ levn@^0.3.0, levn@~0.3.0:
 >>>>>>> 62d54f38 (fix(input): prevent FOV limits bypass via zoom)
 =======
 leaflet@^1.3.4, leaflet@^1.7.1:
+=======
+leaflet@^1.7.1:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "1.7.1"
   resolved "https://registry.npmjs.org/leaflet/-/leaflet-1.7.1.tgz"
   integrity sha512-/xwPEBidtg69Q3HlqPdU3DnrXQOvQU/CCHA1tcDQVzOwm91YMYaILjNp7L4Eaw5Z4sOYdbBz6koWyibppd8Zqw==
@@ -30254,6 +30294,7 @@ sass-loader@^10.0.2:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 sass@^1.26.10, sass@^1.3.0:
   version "1.32.8"
   resolved "https://registry.yarnpkg.com/sass/-/sass-1.32.8.tgz#f16a9abd8dc530add8834e506878a2808c037bdc"
@@ -30271,6 +30312,9 @@ sass@^1.26.10, sass@^1.3.0:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 sass@^1.26.10, sass@^1.3.0:
+=======
+sass@^1.26.10:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "1.32.8"
   resolved "https://registry.npmjs.org/sass/-/sass-1.32.8.tgz"
   integrity sha512-Sl6mIeGpzjIUZqvKnKETfMf0iDAswD9TNlv13A7aAF3XZlRPMq4VvJWBC2N2DXbp94MQVdNSFG6LfF/iOXrPHQ==
@@ -35933,6 +35977,7 @@ vue-style-loader@^4.1.0, vue-style-loader@^4.1.2:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 vue-template-compiler@^2.6.10:
   version "2.6.12"
   resolved "https://registry.yarnpkg.com/vue-template-compiler/-/vue-template-compiler-2.6.12.tgz#947ed7196744c8a5285ebe1233fe960437fcc57e"
@@ -35963,6 +36008,9 @@ vue-template-compiler@^2.0.0, vue-template-compiler@^2.6.10, vue-template-compil
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 vue-template-compiler@^2.0.0, vue-template-compiler@^2.6.10, vue-template-compiler@2.6.14:
+=======
+vue-template-compiler@2.6.14:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "2.6.14"
   resolved "https://registry.npmjs.org/vue-template-compiler/-/vue-template-compiler-2.6.14.tgz"
   integrity sha512-ODQS1SyMbjKoO1JBJZojSw6FE4qnh9rIpUZn2EUT86FKizx9uH5z6uXiIrm4/Nb/gwxTi/o17ZDEGWAXHvtC7g==
@@ -36037,6 +36085,7 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.npmjs.org/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
+<<<<<<< HEAD
 =======
 vue-template-es2015-compiler@^1.9.0:
   version "1.9.1"
@@ -36060,11 +36109,14 @@ vue-template-es2015-compiler@^1.9.0:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 
+=======
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
 vue@^2.6.11:
   version "2.6.12"
   resolved "https://registry.npmjs.org/vue/-/vue-2.6.12.tgz"
   integrity sha512-uhmLFETqPPNyuLLbsKz6ioJ4q7AZHzD8ZVFNATNyICSZouqP2Sz0rotWQC8UNBF6VGSCs5abnKJoStA6JbCbfg==
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -36080,6 +36132,13 @@ vue@^2.6.11:
 >>>>>>> 19144cab (feat(search): redesign search engine)
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
+=======
+vue@2.6.14:
+  version "2.6.14"
+  resolved "https://registry.npmjs.org/vue/-/vue-2.6.14.tgz"
+  integrity sha512-x2284lgYvjOMj3Za7kqzRcUSxBboHqtgRE2zlos1qWaOye5yUmHn42LB1250NJBLRwEcdrB0JRwyPTEPhfQjiQ==
+
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
 vue2-leaflet@^2.6.0:
   version "2.7.0"
   resolved "https://registry.npmjs.org/vue2-leaflet/-/vue2-leaflet-2.7.0.tgz"
@@ -36135,6 +36194,7 @@ vuetify-loader@^1.2.2:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 "vuetify@^1.3.0 || ^2.0.0", vuetify@^2.0.0, vuetify@^2.6.10:
   version "2.6.10"
   resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.6.10.tgz#b86cd7a97bf8cd3828a72c349795b5b3c539ebc2"
@@ -36161,6 +36221,9 @@ watchpack-chokidar2@^2.0.1:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 "vuetify@^1.3.0 || ^2.0.0", vuetify@^2.0.0, vuetify@^2.6.10:
+=======
+vuetify@^2.6.10:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "2.6.10"
   resolved "https://registry.npmjs.org/vuetify/-/vuetify-2.6.10.tgz"
   integrity sha512-fgUeRDDCwYkwu6WGEEKGe7IdfzOsXJCZGrqkn1pcS2ycuoDL8mR2/dejH5iFNnBY6MnsT365PAGn0J+9otjfQg==
@@ -36592,6 +36655,7 @@ webpack-sources@^1.1.0, webpack-sources@^1.4.0, webpack-sources@^1.4.1:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 "webpack@^1.0.0 || ^2.0.0 || ^3.0.0 || ^4.0.0", "webpack@^2.0.0 || ^3.0.0 || ^4.0.0", "webpack@^3.0.0 || ^4.1.0 || ^5.0.0-0", webpack@^4.0.0, "webpack@^4.0.0 || ^5.0.0", "webpack@^4.36.0 || ^5.0.0", webpack@^4.4.0, webpack@>=1.11.0, webpack@>=2, "webpack@>=2.0.0 <5.0.0", webpack@>=4.0.0:
   version "4.46.0"
   resolved "https://registry.yarnpkg.com/webpack/-/webpack-4.46.0.tgz#bf9b4404ea20a073605e0a011d188d77cb6ad542"
@@ -36609,6 +36673,9 @@ webpack-sources@^1.1.0, webpack-sources@^1.4.0, webpack-sources@^1.4.1:
 =======
 >>>>>>> 008f9d89 (fix(android): status bar visibility and signing config)
 "webpack@^1.0.0 || ^2.0.0 || ^3.0.0 || ^4.0.0", "webpack@^2.0.0 || ^3.0.0 || ^4.0.0", "webpack@^3.0.0 || ^4.1.0 || ^5.0.0-0", webpack@^4.0.0, "webpack@^4.0.0 || ^5.0.0", "webpack@^4.36.0 || ^5.0.0", webpack@^4.4.0, webpack@>=1.11.0, webpack@>=2, "webpack@>=2.0.0 <5.0.0", webpack@>=4.0.0:
+=======
+webpack@^4.0.0:
+>>>>>>> e3a459bd (fix(ui): centered option in constellation menu)
   version "4.46.0"
   resolved "https://registry.npmjs.org/webpack/-/webpack-4.46.0.tgz"
   integrity sha512-6jJuJjg8znb/xRItk7bkT0+Q7AHCYjjFnvKIWQPkNIOyRqoCGvkOs0ipeQzrqz4l5FtN5ZI/ukEHroeX/o1/5Q==

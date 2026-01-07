@@ -321,7 +321,9 @@ export default {
           console.log('Base URL for fonts:', baseUrl, 'Capacitor:', !!window.Capacitor)
           that.$stel.setFont('regular', baseUrl + 'fonts/Roboto-Regular.ttf', 1.38)
           that.$stel.setFont('bold', baseUrl + 'fonts/Roboto-Bold.ttf', 1.38)
-          that.$stel.core.constellations.show_only_pointed = false
+          // Load saved preference for centered-only constellations (defaults to true)
+          const savedCenteredOnly = localStorage.getItem('stel_constellations_centered_only')
+          that.$stel.core.constellations.show_only_pointed = savedCenteredOnly !== null ? savedCenteredOnly === 'true' : true
 
           that.setStateFromQueryArgs()
           that.guiComponent = 'Gui'
