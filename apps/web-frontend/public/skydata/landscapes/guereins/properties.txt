@@ -1,4 +1,4 @@
-hips_order            = 0
+hips_order            = 2
 hips_order_min        = 0
 hips_tile_width       = 512
 hips_tile_format      = webp
