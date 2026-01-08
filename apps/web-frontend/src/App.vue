@@ -370,7 +370,25 @@ export default {
             }
 
             core.dsos.addDataSource({ url: dataBaseUrl + 'skydata/dso' })
-            core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
+
+            // Dynamically load landscapes from index.json
+            fetch(dataBaseUrl + 'skydata/landscapes/index.json')
+              .then(response => response.json())
+              .then(landscapeKeys => {
+                landscapeKeys.forEach(key => {
+                  if (key === 'zero') {
+                    core.landscapes.addDataSource({ key: 'zero' })
+                  } else {
+                    core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/' + key, key: key })
+                  }
+                })
+              })
+              .catch(err => {
+                console.warn('Failed to load landscapes index, using defaults:', err)
+                core.landscapes.addDataSource({ url: dataBaseUrl + 'skydata/landscapes/guereins', key: 'guereins' })
+                core.landscapes.addDataSource({ key: 'zero' })
+              })
+
             core.milkyway.addDataSource({ url: dataBaseUrl + 'skydata/surveys/milkyway' })
             core.minor_planets.addDataSource({ url: dataBaseUrl + 'skydata/mpcorb.dat', key: 'mpc_asteroids' })
             core.planets.addDataSource({ url: dataBaseUrl + 'skydata/surveys/sso/moon', key: 'moon' })

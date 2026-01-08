@@ -1,0 +1,12 @@
+hips_order            = 0
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = ocean
+hips_service_url      = https://data.stellarium.org/landscapes/ocean
+hips_release_date     = 2018-10-11T14:15Z
+source_md5            = 79b24f69296814b10943b9f00f503101
+type                  = landscape
+obs_copyright         = Michael Smith
+obs_description       = Makde with Terragen

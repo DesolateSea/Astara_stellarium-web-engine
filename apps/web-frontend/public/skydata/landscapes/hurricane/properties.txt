@@ -1,0 +1,13 @@
+hips_order            = 1
+hips_order_min        = 0
+hips_tile_width       = 512
+hips_tile_format      = webp
+dataproduct_type      = image
+obs_title             = hurricane
+hips_service_url      = https://data.stellarium.org/landscapes/hurricane
+hips_release_date     = 2018-08-14T15:16Z
+source_md5            = 4e57df6b1f413515df94ee3b2c8983d4
+type                  = landscape
+obs_copyright         = Johan Meuris and Robert Spearman
+hips_frame            = hurricane
+obs_description       = An edited view from Hurricane Ridge in Olympic National Park, Washington.  In reality there is an expansive view of the rest of the Olympic range to the South but lighting conditions were poor.
