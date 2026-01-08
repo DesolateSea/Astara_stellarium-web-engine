@@ -9,16 +9,17 @@
 <template>
   <v-dialog v-model="dialogVisible" max-width="400" transition="dialog-top-transition" content-class="settings-dialog">
     <v-card v-if="dialogVisible" class="settings-panel">
-      <!-- Main Settings View -->
-      <div v-if="currentView === 'main'">
-        <div class="settings-header">
-          <v-btn icon @click="closePanel" class="back-btn">
-            <v-icon>mdi-arrow-left</v-icon>
-          </v-btn>
-          <span class="settings-title">Settings</span>
-        </div>
+      <div class="settings-header">
+        <v-btn icon @click="closePanel" class="back-btn">
+          <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+        <span class="settings-title">Settings</span>
+      </div>
 
-        <v-list dense class="settings-list">
+      <div class="settings-content">
+        <!-- Main Settings View -->
+        <div v-if="currentView === 'main'">
+          <v-list dense class="settings-list">
           <v-list-item @click="toggleSensors">
             <v-list-item-icon>
               <v-icon color="grey">mdi-compass-outline</v-icon>
@@ -94,8 +95,6 @@
             </v-list-item-action>
           </v-list-item>
 
-          <v-divider class="my-2"></v-divider>
-
           <!-- Other Settings Section -->
           <v-divider class="my-2"></v-divider>
 
@@ -112,13 +111,6 @@
 
       <!-- Location View -->
       <div v-else-if="currentView === 'location'">
-        <div class="settings-header">
-          <v-btn icon @click="currentView = 'main'" class="back-btn">
-            <v-icon>mdi-arrow-left</v-icon>
-          </v-btn>
-          <span class="settings-title">Location</span>
-        </div>
-
         <v-list dense class="settings-list">
           <v-list-item>
             <v-list-item-content>
@@ -193,13 +185,6 @@
 
       <!-- Sky Culture View -->
       <div v-else-if="currentView === 'sky-culture'">
-        <div class="settings-header">
-          <v-btn icon @click="currentView = 'main'" class="back-btn">
-            <v-icon>mdi-arrow-left</v-icon>
-          </v-btn>
-          <span class="settings-title">Sky Culture</span>
-        </div>
-
         <v-list dense class="settings-list sky-culture-list">
           <v-list-item
             v-for="culture in skyCultureOptions"
@@ -219,13 +204,6 @@
 
       <!-- AR View -->
       <div v-else-if="currentView === 'ar'">
-        <div class="settings-header">
-          <v-btn icon @click="currentView = 'main'" class="back-btn">
-            <v-icon>mdi-arrow-left</v-icon>
-          </v-btn>
-          <span class="settings-title">AR Camera Settings</span>
-        </div>
-
         <v-list dense class="settings-list">
           <v-subheader class="settings-subheader">Field of View</v-subheader>
 
@@ -288,13 +266,6 @@
 
       <!-- Advanced View -->
       <div v-else-if="currentView === 'advanced'">
-        <div class="settings-header">
-          <v-btn icon @click="currentView = 'main'" class="back-btn">
-            <v-icon>mdi-arrow-left</v-icon>
-          </v-btn>
-          <span class="settings-title">Advanced</span>
-        </div>
-
         <v-list dense class="settings-list">
           <!-- Touch Controls Section -->
           <v-subheader class="settings-subheader">Touch Controls</v-subheader>
@@ -351,6 +322,7 @@
 
         </v-list>
       </div>
+      </div>
 
     </v-card>
   </v-dialog>
@@ -373,10 +345,7 @@ export default {
       touchPanSensitivityValue: 1.0,
       touchPanInvertYValue: false,
       selectedSkyCulture: 'western',
-      skyCultureOptions: [
-        { key: 'western', name: 'Western' },
-        { key: 'belarusian', name: 'Belarusian' }
-      ]
+      skyCultureOptions: []
     }
   },
   computed: {
@@ -564,6 +533,9 @@ export default {
     }
   },
   mounted: function () {
+    // Load available sky cultures from index.json
+    this.loadSkyCultures()
+
     // Load saved sky culture preference
     const savedCulture = localStorage.getItem('stellarium-skyculture')
     if (savedCulture) {
@@ -571,6 +543,26 @@ export default {
     }
   },
   methods: {
+    async loadSkyCultures () {
+      try {
+        const baseUrl = '/'
+        const response = await fetch(baseUrl + 'skydata/skycultures/index.json')
+        const data = await response.json()
+
+        // index.json is an array of culture keys
+        this.skyCultureOptions = data.map(key => ({
+          key: key,
+          name: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        }))
+      } catch (e) {
+        console.error('Failed to load sky cultures:', e)
+        // Fallback to hardcoded list
+        this.skyCultureOptions = [
+          { key: 'western', name: 'Western' },
+          { key: 'belarusian', name: 'Belarusian' }
+        ]
+      }
+    },
     loadTouchSettings: function () {
       // Load from localStorage first
       try {
@@ -723,6 +715,10 @@ export default {
 .settings-panel {
   background: rgba(30, 30, 30, 0.98) !important;
   padding-top: env(safe-area-inset-top, 24px);
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .settings-header {
@@ -730,6 +726,32 @@ export default {
   align-items: center;
   padding: 16px 8px;
   background: rgba(40, 40, 40, 0.95);
+  flex-shrink: 0;
+}
+
+.settings-content {
+  overflow-y: auto;
+  flex: 1;
+  background: rgba(30, 30, 30, 0.98);
+}
+
+/* Custom scrollbar styling */
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .back-btn {

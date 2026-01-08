@@ -1,5 +1,35 @@
-{
-  "western": {
-    "type": "skyculture"
-  }
-}
+[
+  "western",
+  "indian",
+  "belarusian",
+  "anutan",
+  "arabic_al-sufi",
+  "arabic_ancient",
+  "arabic_lunar_stations",
+  "blackfoot",
+  "bugis",
+  "chinese",
+  "chinese_contemporary",
+  "egyptian",
+  "hawaiian_starlines",
+  "inuit",
+  "japanese_moon_stations",
+  "kamilaroi",
+  "korean",
+  "mandar",
+  "maori",
+  "mongolian",
+  "navajo",
+  "norse",
+  "romanian",
+  "ruelle",
+  "sami",
+  "sardinian",
+  "siberian",
+  "tongan",
+  "tukano",
+  "tupi",
+  "western_SnT",
+  "western_hlad",
+  "western_rey"
+]
