@@ -43,10 +43,10 @@
 
         <!-- Compass Needle (Fixed upright, does not rotate) -->
         <div v-if="!gyroModeActive" class="compass-needle">
-          <svg viewBox="0 0 20 40" class="needle-svg">
-            <!-- Diamond/arrow outline -->
-            <polygon points="10,0 14,18 10,16 6,18" fill="none" stroke="rgba(200,200,200,0.8)" stroke-width="1"/>
-            <polygon points="10,40 14,22 10,24 6,22" fill="none" stroke="rgba(200,200,200,0.5)" stroke-width="1"/>
+          <svg viewBox="0 0 16 32" class="needle-svg">
+            <!-- Smaller, more elegant diamond/arrow -->
+            <polygon points="8,0 11,14 8,12 5,14" fill="rgba(255,255,255,0.9)" />
+            <polygon points="8,32 11,18 8,20 5,18" fill="rgba(120,120,120,0.6)" />
           </svg>
         </div>
 
@@ -492,6 +492,8 @@ export default {
   height: 100%;
   transition: transform 0.1s linear;
   will-change: transform;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
 }
 
 /* Compass Needle (SVG diamond - fixed position) */
@@ -500,9 +502,10 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 14px;
-  height: 30px;
+  width: 10px;
+  height: 22px;
   pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .needle-svg {

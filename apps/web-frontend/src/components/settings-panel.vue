@@ -7,107 +7,134 @@
 // repository.
 
 <template>
-  <v-dialog v-model="dialogVisible" max-width="400" transition="dialog-top-transition" content-class="settings-dialog">
+  <v-dialog v-model="dialogVisible" max-width="400" transition="slide-x-transition" content-class="settings-dialog-left">
     <v-card v-if="dialogVisible" class="settings-panel">
       <div class="settings-header">
-        <v-btn icon @click="closePanel" class="back-btn">
+        <v-btn icon @click="handleBack" class="back-btn">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <span class="settings-title">Settings</span>
+        <span class="settings-title">{{ currentViewTitle }}</span>
       </div>
 
       <div class="settings-content">
+        <transition :name="transitionName" mode="out-in">
+          <div :key="currentView" class="view-wrapper">
         <!-- Main Settings View -->
-        <div v-if="currentView === 'main'">
-          <v-list dense class="settings-list">
-          <v-list-item @click="toggleSensors">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-compass-outline</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Sensors</v-list-item-title>
-              <v-list-item-subtitle>{{ sensorsEnabled ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-switch :input-value="sensorsEnabled" @click.stop="toggleSensors"></v-switch>
-            </v-list-item-action>
-          </v-list-item>
+        <div v-if="currentView === 'main'" class="settings-main">
+          <!-- Quick Settings Section -->
+          <div class="settings-section">
+            <div class="section-header">Quick Settings</div>
+            <div class="section-card">
+              <div class="settings-item toggle-row" @click="toggleSensors">
+                <div class="item-icon sensors-icon">
+                  <v-icon size="22">mdi-compass-outline</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">Sensors</div>
+                  <div class="item-subtitle" :class="{ 'status-enabled': sensorsEnabled }">{{ sensorsEnabled ? 'Enabled' : 'Disabled' }}</div>
+                </div>
+                <div class="item-action">
+                  <v-switch :input-value="sensorsEnabled" @click.stop="toggleSensors" color="#4FC3F7" hide-details class="custom-switch"></v-switch>
+                </div>
+              </div>
 
-          <v-list-item @click="toggleArMode">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-camera</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Augmented Reality</v-list-item-title>
-              <v-list-item-subtitle>{{ arEnabled ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-switch :input-value="arEnabled" @click.stop="toggleArMode"></v-switch>
-            </v-list-item-action>
-          </v-list-item>
+              <div class="item-divider"></div>
 
-          <v-list-item @click="currentView = 'location'">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-map-marker</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Location</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-chevron-right</v-icon>
-            </v-list-item-action>
-          </v-list-item>
+              <div class="settings-item toggle-row" @click="toggleArMode">
+                <div class="item-icon ar-icon">
+                  <v-icon size="22">mdi-camera</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">Augmented Reality</div>
+                  <div class="item-subtitle" :class="{ 'status-enabled': arEnabled }">{{ arEnabled ? 'Enabled' : 'Disabled' }}</div>
+                </div>
+                <div class="item-action">
+                  <v-switch :input-value="arEnabled" @click.stop="toggleArMode" color="#4FC3F7" hide-details class="custom-switch"></v-switch>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <v-list-item @click="currentView = 'sky-culture'">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-creation</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Sky Culture</v-list-item-title>
-              <v-list-item-subtitle>{{ currentSkyCultureName }}</v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-chevron-right</v-icon>
-            </v-list-item-action>
-          </v-list-item>
+          <!-- Personalization Section -->
+          <div class="settings-section">
+            <div class="section-header">Personalization</div>
+            <div class="section-card">
+              <div class="settings-item nav-row" @click="navigateTo('location')">
+                <div class="item-icon location-icon">
+                  <v-icon size="22">mdi-map-marker</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">Location</div>
+                </div>
+                <div class="item-action">
+                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+                </div>
+              </div>
 
-          <v-list-item @click="currentView = 'advanced'">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-cog</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Advanced</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-chevron-right</v-icon>
-            </v-list-item-action>
-          </v-list-item>
+              <div class="item-divider"></div>
 
-          <v-list-item @click="currentView = 'ar'">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-camera-metering-center</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>AR Camera Settings</v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-chevron-right</v-icon>
-            </v-list-item-action>
-          </v-list-item>
+              <div class="settings-item nav-row" @click="navigateTo('sky-culture')">
+                <div class="item-icon culture-icon">
+                  <v-icon size="22">mdi-creation</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">Sky Culture</div>
+                  <div class="item-subtitle">{{ currentSkyCultureName }}</div>
+                </div>
+                <div class="item-action">
+                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <!-- Other Settings Section -->
-          <v-divider class="my-2"></v-divider>
+          <!-- More Options Section -->
+          <div class="settings-section">
+            <div class="section-header">More Options</div>
+            <div class="section-card">
+              <div class="settings-item nav-row" @click="navigateTo('advanced')">
+                <div class="item-icon advanced-icon">
+                  <v-icon size="22">mdi-cog</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">Advanced</div>
+                </div>
+                <div class="item-action">
+                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+                </div>
+              </div>
 
-          <v-list-item @click="resetSettings">
-            <v-list-item-icon>
-              <v-icon color="grey">mdi-restore</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Reset settings</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </div>
+              <div class="item-divider"></div>
+
+              <div class="settings-item nav-row" @click="navigateTo('ar')">
+                <div class="item-icon ar-settings-icon">
+                  <v-icon size="22">mdi-camera-metering-center</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title">AR Camera Settings</div>
+                </div>
+                <div class="item-action">
+                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone Section -->
+          <div class="settings-section">
+            <div class="section-card danger-card">
+              <div class="settings-item danger-row" @click="resetSettings">
+                <div class="item-icon reset-icon">
+                  <v-icon size="22">mdi-restore</v-icon>
+                </div>
+                <div class="item-content">
+                  <div class="item-title danger-text">Reset Settings</div>
+                  <div class="item-subtitle">Restore all defaults</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       <!-- Location View -->
       <div v-else-if="currentView === 'location'">
@@ -322,6 +349,8 @@
 
         </v-list>
       </div>
+          </div>
+        </transition>
       </div>
 
     </v-card>
@@ -339,6 +368,8 @@ export default {
   data: function () {
     return {
       currentView: 'main',
+      previousView: null,
+      transitionDirection: 'forward',
       customLat: 0,
       customLng: 0,
       editCoordType: 'latitude',
@@ -349,6 +380,20 @@ export default {
     }
   },
   computed: {
+    transitionName () {
+      return this.transitionDirection === 'forward' ? 'slide-left' : 'slide-right'
+    },
+    currentViewTitle () {
+      const titles = {
+        main: 'Settings',
+        location: 'Location',
+        'sky-culture': 'Sky Culture',
+        advanced: 'Advanced',
+        ar: 'AR Camera',
+        'edit-coordinate': this.editCoordType === 'latitude' ? 'Latitude' : 'Longitude'
+      }
+      return titles[this.currentView] || 'Settings'
+    },
     editCoordValue () {
       return this.editCoordType === 'latitude' ? this.customLat : this.customLng
     },
@@ -543,6 +588,23 @@ export default {
     }
   },
   methods: {
+    handleBack () {
+      if (this.currentView === 'main') {
+        this.closePanel()
+      } else if (this.currentView === 'edit-coordinate') {
+        this.navigateTo('location', 'back')
+      } else {
+        this.navigateTo('main', 'back')
+      }
+    },
+    navigateTo (view, direction = 'forward') {
+      this.transitionDirection = direction
+      this.previousView = this.currentView
+      this.currentView = view
+    },
+    closePanel: function () {
+      this.dialogVisible = false
+    },
     async loadSkyCultures () {
       try {
         const baseUrl = '/'
@@ -591,9 +653,6 @@ export default {
       } catch (e) {
         // Ignore localStorage errors
       }
-    },
-    closePanel: function () {
-      this.dialogVisible = false
     },
     toggleSensors: function () {
       const newVal = !this.$store.state.sensorsEnabled
@@ -760,11 +819,188 @@ export default {
 
 .settings-title {
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: white;
   margin-left: 16px;
+  letter-spacing: 0.3px;
 }
 
+/* Main Settings Container */
+.settings-main {
+  padding: 8px 16px 24px;
+}
+
+/* Section Styling */
+.settings-section {
+  margin-bottom: 16px;
+}
+
+.section-header {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.section-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.danger-card {
+  background: rgba(239, 83, 80, 0.06);
+  border-color: rgba(239, 83, 80, 0.12);
+}
+
+/* Settings Item */
+.settings-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.settings-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.danger-row:hover {
+  background: rgba(244, 67, 54, 0.15);
+}
+
+.danger-row:active {
+  background: rgba(244, 67, 54, 0.2);
+}
+
+/* Item Divider */
+.item-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-left: 64px;
+}
+
+/* Icon Containers - Subtle monochrome style */
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sensors-icon {
+  background: rgba(79, 195, 247, 0.15);
+}
+.sensors-icon .v-icon {
+  color: #4FC3F7 !important;
+}
+
+.ar-icon {
+  background: rgba(171, 71, 188, 0.15);
+}
+.ar-icon .v-icon {
+  color: #BA68C8 !important;
+}
+
+.location-icon {
+  background: rgba(239, 83, 80, 0.15);
+}
+.location-icon .v-icon {
+  color: #EF5350 !important;
+}
+
+.culture-icon {
+  background: rgba(255, 183, 77, 0.15);
+}
+.culture-icon .v-icon {
+  color: #FFB74D !important;
+}
+
+.advanced-icon {
+  background: rgba(144, 164, 174, 0.15);
+}
+.advanced-icon .v-icon {
+  color: #90A4AE !important;
+}
+
+.ar-settings-icon {
+  background: rgba(149, 117, 205, 0.15);
+}
+.ar-settings-icon .v-icon {
+  color: #9575CD !important;
+}
+
+.reset-icon {
+  background: rgba(239, 83, 80, 0.12);
+}
+.reset-icon .v-icon {
+  color: #EF5350 !important;
+}
+
+/* Item Content */
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.4;
+}
+
+.danger-text {
+  color: #EF5350;
+}
+
+.item-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 1px;
+}
+
+.status-enabled {
+  color: #4FC3F7;
+}
+
+/* Item Action */
+.item-action {
+  flex-shrink: 0;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+}
+
+/* Custom Switch Styling */
+.custom-switch {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.custom-switch >>> .v-input--selection-controls__input {
+  margin-right: 0;
+}
+
+/* Keep existing styles for other views */
 .settings-list {
   background: transparent !important;
 }
@@ -840,9 +1076,59 @@ export default {
 </style>
 
 <style>
-/* Global styles for dialog positioning at top */
-.settings-dialog {
+/* Global styles for dialog positioning - LEFT ALIGNED DRAWER */
+.settings-dialog-left {
   align-self: flex-start !important;
-  margin-top: 0 !important;
+  margin: 0 !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: auto !important;
+  max-height: 90vh !important;
+}
+
+.settings-dialog-left .settings-panel {
+  height: auto !important;
+  max-height: 90vh !important;
+  min-height: 300px;
+  border-radius: 0 20px 20px 0 !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* View wrapper for transitions */
+.view-wrapper {
+  min-height: auto;
+}
+
+/* Slide Left Transition (forward navigation) */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-left-enter {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* Slide Right Transition (back navigation) */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-right-enter {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
 }
 </style>

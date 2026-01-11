@@ -16,10 +16,10 @@
     "android:build": "npm run build && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
+    "@capacitor/android": "^5.7.8",
     "@capacitor/camera": "^8.0.0",
-    "@capacitor/cli": "^8.0.0",
-    "@capacitor/core": "^8.0.0",
+    "@capacitor/cli": "^5.7.8",
+    "@capacitor/core": "^5.7.8",
     "@capacitor/device": "^8.0.0",
     "@capacitor/motion": "^8.0.0",
     "@capacitor/screen-orientation": "^8.0.0",

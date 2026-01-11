@@ -9,44 +9,45 @@
 <template>
   <div class="landing-container">
     <div class="segmented-menu">
-      <v-list dark class="segmented-list">
-        <v-list-item :ripple="false" @click="$emit('navigate', 'favorites')">
-          <v-list-item-icon>
-            <v-icon color="white">mdi-heart</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title class="font-weight-bold">Favorites</v-list-item-title>
-            <v-list-item-subtitle v-if="favoritesCount > 0" class="text-caption">
-              {{ favoritesCount }} {{ favoritesCount === 1 ? 'item' : 'items' }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+      <!-- Favorites -->
+      <div class="menu-item" @click="$emit('navigate', 'favorites')">
+        <div class="item-icon favorites-icon">
+          <v-icon size="20">mdi-heart</v-icon>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Favorites</div>
+          <div v-if="favoritesCount > 0" class="item-subtitle">
+            {{ favoritesCount }} {{ favoritesCount === 1 ? 'item' : 'items' }}
+          </div>
+        </div>
+      </div>
 
-        <v-divider class="segment-divider"></v-divider>
+      <div class="item-divider"></div>
 
-        <v-list-item :ripple="false" @click="$emit('navigate', 'recents')">
-          <v-list-item-icon>
-            <v-icon color="white">mdi-history</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title class="font-weight-bold">Recents</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
+      <!-- Recents -->
+      <div class="menu-item" @click="$emit('navigate', 'recents')">
+        <div class="item-icon recents-icon">
+          <v-icon size="20">mdi-history</v-icon>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Recents</div>
+        </div>
+      </div>
 
-        <v-divider class="segment-divider"></v-divider>
+      <div class="item-divider"></div>
 
-        <v-list-item :ripple="false" @click="$emit('navigate', 'browse')">
-          <v-list-item-icon>
-            <v-icon color="white">mdi-format-list-bulleted</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title class="font-weight-bold">Browse</v-list-item-title>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-icon>mdi-chevron-right</v-icon>
-          </v-list-item-action>
-        </v-list-item>
-      </v-list>
+      <!-- Browse -->
+      <div class="menu-item" @click="$emit('navigate', 'browse')">
+        <div class="item-icon browse-icon">
+          <v-icon size="20">mdi-format-list-bulleted</v-icon>
+        </div>
+        <div class="item-content">
+          <div class="item-title">Browse</div>
+        </div>
+        <div class="item-action">
+          <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -65,40 +66,99 @@ export default {
 
 <style scoped>
 .landing-container {
-  padding-top: 16px;
+  padding: 16px;
   background: transparent;
 }
 
 .segmented-menu {
-  background: rgb(58, 58, 58);
-  backdrop-filter: blur(20px);
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
 
-.segmented-list {
-  background: transparent !important;
-  padding: 0;
-}
-
-.segment-divider {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.segmented-list .v-list-item {
-  border-bottom: none;
+/* Menu Item - matches settings panel */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
   transition: background 0.2s ease;
 }
-</style>
 
-<style>
-/* Override Vuetify defaults for transparent background */
-.landing-container .v-list-item {
-  background: transparent !important;
+.menu-item:active {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.landing-container .v-list-item:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Item Divider */
+.item-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-left: 56px;
+}
+
+/* Icon Containers - Subtle monochrome style matching settings */
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.favorites-icon {
+  background: rgba(239, 83, 80, 0.15);
+}
+.favorites-icon .v-icon {
+  color: #EF5350 !important;
+}
+
+.recents-icon {
+  background: rgba(79, 195, 247, 0.15);
+}
+.recents-icon .v-icon {
+  color: #4FC3F7 !important;
+}
+
+.browse-icon {
+  background: rgba(144, 164, 174, 0.15);
+}
+.browse-icon .v-icon {
+  color: #90A4AE !important;
+}
+
+/* Item Content */
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.4;
+}
+
+.item-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 1px;
+}
+
+/* Item Action */
+.item-action {
+  flex-shrink: 0;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
 }
 </style>
