@@ -19,7 +19,7 @@
   </template>
   <selected-object-info class="get-click"></selected-object-info>
   <gyro-direction-overlay></gyro-direction-overlay>
-  <progress-bars style="position: absolute; bottom: 54px; right: 12px;"></progress-bars>
+
   <bottom-bar style="position:absolute; width: 100%; justify-content: center; bottom: 0; display:flex; margin-bottom: 0px" class="get-click"></bottom-bar>
   <search-panel class="get-click"></search-panel>
   <settings-panel class="get-click"></settings-panel>
@@ -31,7 +31,6 @@
 import Toolbar from '@/components/toolbar.vue'
 import BottomBar from '@/components/bottom-bar.vue'
 import SelectedObjectInfo from '@/components/selected-object-info.vue'
-import ProgressBars from '@/components/progress-bars'
 
 import DataCreditsDialog from '@/components/data-credits-dialog.vue'
 import ViewSettingsDialog from '@/components/view-settings-dialog.vue'
@@ -76,7 +75,7 @@ export default {
       return res
     }
   },
-  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ProgressBars, ObservingPanel, SearchPanel, SettingsPanel, GyroDirectionOverlay }
+  components: { Toolbar, BottomBar, DataCreditsDialog, ViewSettingsDialog, PlanetsVisibility, SelectedObjectInfo, LocationDialog, ObservingPanel, SearchPanel, SettingsPanel, GyroDirectionOverlay }
 }
 </script>
 

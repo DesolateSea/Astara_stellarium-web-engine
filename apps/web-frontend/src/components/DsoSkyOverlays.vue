@@ -40,7 +40,6 @@ export default {
       if (this.initialized || !this.$stel || !this.$stel.core) return
 
       try {
-        console.log('DsoSkyOverlays: Initializing HiPS objects...')
         const layerId = 'dsolayer'
         this.dsoLayer = this.$stel.createLayer({ id: layerId, z: -100, visible: true, interactive: false })
         // Base path for HiPS
@@ -52,7 +51,6 @@ export default {
             // Android Capacitor plugin fails with double slashes (//), so we try without it.
             // The engine likely appends a slash if needed or simply concatenates.
             const absoluteUrl = baseUrl + '/' + config.id
-            console.log('DsoSkyOverlays: Adding HiPS source for ' + config.name + ' via DSS module')
 
             // Create a separate DSS object for each survey and attach to layer
             // Note: createObj creates unparented object, use layer.add to attach
@@ -75,7 +73,6 @@ export default {
                 obj: dssObj,
                 showAtFov: config.showAtFov
               })
-              console.log('DsoSkyOverlays: Added ' + config.id + ' as separate DSS object.')
             } else {
               console.error('DsoSkyOverlays: Failed to create DSS object for ' + config.id)
             }
@@ -86,7 +83,6 @@ export default {
           await new Promise(resolve => setTimeout(resolve, 500))
         }
         this.initialized = true
-        console.log('DsoSkyOverlays: All DSS sources added.')
         // Trigger initial visibility update
         this.updateVisibility(this.fov)
       } catch (e) {
@@ -111,14 +107,12 @@ export default {
 
   mounted: function () {
     // Wait for engine to stabilize (3s is sufficient now with DSS module)
-    console.log('DsoSkyOverlays: Component mounted. Waiting 3s before starting HiPS...')
     setTimeout(() => {
       this.initOverlays()
     }, 3000)
   },
 
   beforeDestroy: function () {
-    console.log('DsoSkyOverlays: Cleaning up HiPS objects...')
     for (const survey of this.hipsSurveys) {
       if (this.dsoLayer && survey.obj) {
         try {
