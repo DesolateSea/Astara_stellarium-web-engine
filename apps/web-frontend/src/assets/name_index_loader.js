@@ -234,6 +234,24 @@ class ConstellationLoader {
     const queryNorm = this.normalize(query)
     if (!queryNorm) return []
 
+    // Get current skyculture from Vue store (or default to western)
+    let currentCulture = 'western'
+    try {
+      const Vue = (await import('vue')).default
+      if (Vue.prototype.$stel && Vue.prototype.$stel.core && Vue.prototype.$stel.core.skycultures) {
+        currentCulture = Vue.prototype.$stel.core.skycultures.current_id || 'western'
+      }
+    } catch (e) {
+      // Fallback to western if can't get current culture
+    }
+
+    // Filter to only search Western and current culture constellations
+    // These are the only skycultures guaranteed to be loaded
+    const allowedCultures = ['western']
+    if (currentCulture && currentCulture !== 'western') {
+      allowedCultures.push(currentCulture)
+    }
+
     const exactMatches = []
     const startsWithMatches = []
     const containsMatches = []
@@ -243,8 +261,21 @@ class ConstellationLoader {
         break
       }
 
-      // Check all names: native, english, iau
-      const allNames = [con.native, con.english, con.iau].filter(n => n)
+      // Skip constellations from cultures that aren't loaded
+      if (con.culture && !allowedCultures.includes(con.culture)) {
+        continue
+      }
+
+      // Check all names from the 'names' array (includes english, native, pronounce, iau)
+      // Also check individual fields for backwards compatibility
+      const allNames = [
+        ...(con.names || []),
+        con.native,
+        con.english,
+        con.iau,
+        con.pronounce
+      ].filter(n => n)
+
       let matchType = null
 
       for (const name of allNames) {

@@ -321,6 +321,9 @@ export default {
           console.log('Base URL for fonts:', baseUrl, 'Capacitor:', !!window.Capacitor)
           that.$stel.setFont('regular', baseUrl + 'fonts/Roboto-Regular.ttf', 1.38)
           that.$stel.setFont('bold', baseUrl + 'fonts/Roboto-Bold.ttf', 1.38)
+          that.$stel.setFont('regular', baseUrl + 'fonts/NotoSans-Regular.ttf', 1.38)
+          that.$stel.setFont('bold', baseUrl + 'fonts/NotoSans-Bold.ttf', 1.38)
+
           // Load saved preference for centered-only constellations (defaults to true)
           const savedCenteredOnly = localStorage.getItem('stel_constellations_centered_only')
           that.$stel.core.constellations.show_only_pointed = savedCenteredOnly !== null ? savedCenteredOnly === 'true' : true
@@ -361,6 +364,10 @@ export default {
               if (/^[a-zA-Z0-9_-]+$/.test(culture)) {
                 core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/' + culture, key: culture })
                 core.skycultures.current_id = culture
+                // Always load Western as fallback for cross-culture constellation searches
+                if (culture !== 'western') {
+                  core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })
+                }
               } else {
                 console.warn('Invalid sky culture key provided:', culture)
                 core.skycultures.addDataSource({ url: dataBaseUrl + 'skydata/skycultures/western', key: 'western' })

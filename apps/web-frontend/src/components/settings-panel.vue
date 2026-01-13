@@ -517,6 +517,22 @@ export default {
           this.$stel.core.skycultures.addDataSource({ url: url, key: newValue })
           this.$stel.core.skycultures.current_id = newValue
           localStorage.setItem('stellarium-skyculture', newValue)
+
+          // Switch font based on culture language requirements
+          if (newValue.includes('chinese')) {
+            // Use Noto Sans SC for Chinese cultures
+            this.$stel.setFont('regular', baseUrl + 'fonts/NotoSansSC-Regular.ttf', 1.38)
+            this.$stel.setFont('bold', baseUrl + 'fonts/NotoSansSC-Bold.ttf', 1.38)
+          } else {
+            // Use Noto Sans for others (covers Latin, Indian, etc.)
+            this.$stel.setFont('regular', baseUrl + 'fonts/NotoSans-Regular.ttf', 1.38)
+            this.$stel.setFont('bold', baseUrl + 'fonts/NotoSans-Bold.ttf', 1.38)
+          }
+
+          // Always ensure Western skyculture is loaded for cross-culture searches
+          if (newValue !== 'western') {
+            this.$stel.core.skycultures.addDataSource({ url: baseUrl + 'skydata/skycultures/western', key: 'western' })
+          }
         }
       }
     },

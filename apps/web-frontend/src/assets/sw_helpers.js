@@ -390,18 +390,31 @@ const swh = {
       const id = 'NORAD ' + ss.model_data.norad_number
       obj = $stel.getObj(id)
     } else if (ss.model === 'constellation' && ss.model_data) {
-      // Try direct con_id first (e.g., "CON belarusian 019" or "CON western Ori")
+      // Get the culture from model_data
+      const culture = ss.model_data.culture || 'western'
+
+      // Try direct con_id first (e.g., "CON indian N01" or "CON western Ori")
       if (ss.model_data.con_id) {
         obj = $stel.getObj(ss.model_data.con_id)
       }
-      // Fallback: try IAU abbreviation with western prefix
+
+      // Fallback: try IAU abbreviation with culture prefix
       if (!obj && ss.model_data.iau_abbreviation) {
-        const id = 'CON western ' + ss.model_data.iau_abbreviation
-        obj = $stel.getObj(id)
+        obj = $stel.getObj('CON ' + culture + ' ' + ss.model_data.iau_abbreviation)
+
+        // If that failed and it's not western, also try western as fallback
+        // (Western skyculture should always be loaded)
+        if (!obj && culture !== 'western') {
+          obj = $stel.getObj('CON western ' + ss.model_data.iau_abbreviation)
+        }
       }
-      // Fallback: try getting by name
-      if (!obj && ss.names && ss.names[0]) {
-        obj = $stel.getObj('NAME ' + ss.names[0]) || $stel.getObj(ss.names[0])
+
+      // Fallback: try getting by name with various prefixes
+      if (!obj && ss.names && ss.names.length > 0) {
+        for (const name of ss.names) {
+          obj = $stel.getObj('NAME ' + name) || $stel.getObj(name)
+          if (obj) break
+        }
       }
     }
     // Generic fallback lookup with type validation

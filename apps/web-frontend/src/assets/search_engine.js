@@ -189,9 +189,18 @@ export async function querySkySources (str, limit = 10, filters = {}, dataProvid
         for (const con of batch.results) {
           if (results.length >= globalLimit) break
           const searchNormalized = normalize(str)
-          let matchedName = con.english || con.native || con.iau
 
-          const allNames = [con.english, con.native, con.iau].filter(n => n)
+          // Use the names array from new format, fallback to individual fields
+          const allNames = [
+            ...(con.names || []),
+            con.english,
+            con.native,
+            con.pronounce,
+            con.iau
+          ].filter(n => n)
+
+          // Find the best matching name for display
+          let matchedName = con.english || con.native || con.pronounce || (con.names && con.names[0]) || con.iau
           for (const name of allNames) {
             if (normalize(name).includes(searchNormalized) || searchNormalized.includes(normalize(name))) {
               matchedName = name
@@ -200,10 +209,14 @@ export async function querySkySources (str, limit = 10, filters = {}, dataProvid
           }
 
           addResult({
-            names: [matchedName, con.english, con.native, con.iau].filter(n => n),
+            names: [...new Set(allNames)], // deduplicate
             types: ['Con'],
             model: 'constellation',
-            model_data: { iau_abbreviation: con.iau, con_id: con.id },
+            model_data: {
+              iau_abbreviation: con.iau,
+              con_id: con.id,
+              culture: con.culture
+            },
             match: matchedName
           })
         }
