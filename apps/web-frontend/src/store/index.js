@@ -22,6 +22,14 @@ const createStore = () => {
     }
   }
 
+  // Shared helper for object identification
+  const getId = (o) => {
+    if (o.model_data && o.model_data.norad_number) return 'sat_' + o.model_data.norad_number
+    if (o.names && o.names.length > 0) return o.names[0]
+    if (o.match) return o.match
+    return JSON.stringify(o)
+  }
+
   return new Vuex.Store({
     modules: pluginsModules,
 
@@ -111,7 +119,10 @@ const createStore = () => {
       arModeActive: false,
       arFullFov: true,
       arZoom: 1.0,
-      arOpacity: 0.5
+      arOpacity: 0.5,
+
+      // Current skyculture ID for reactive tracking
+      currentSkyCultureId: 'western'
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -148,49 +159,35 @@ const createStore = () => {
         }
       },
       addToFavourites (state, object) {
-        // Check if already exists
-        const exists = state.favourites.some(fav =>
-          (fav.names && object.names && fav.names[0] === object.names[0]) ||
-          (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number)
-        )
+        const objId = getId(object)
+        const exists = state.favourites.some(fav => getId(fav) === objId)
         if (!exists) {
-          state.favourites.push(object)
+          state.favourites.push(JSON.parse(JSON.stringify(object)))
           localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
         }
       },
       removeFromFavourites (state, object) {
-        state.favourites = state.favourites.filter(fav =>
-          !((fav.names && object.names && fav.names[0] === object.names[0]) ||
-            (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number))
-        )
+        const objId = getId(object)
+        state.favourites = state.favourites.filter(fav => getId(fav) !== objId)
         localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
       },
       toggleFavourite (state, object) {
-        const index = state.favourites.findIndex(fav =>
-          (fav.names && object.names && fav.names[0] === object.names[0]) ||
-          (fav.model_data && object.model_data && fav.model_data.norad_number && fav.model_data.norad_number === object.model_data.norad_number)
-        )
+        const objId = getId(object)
+        const index = state.favourites.findIndex(fav => getId(fav) === objId)
         if (index === -1) {
-          state.favourites.push(object)
+          state.favourites.push(JSON.parse(JSON.stringify(object)))
         } else {
           state.favourites.splice(index, 1)
         }
         localStorage.setItem('stel_favourites', JSON.stringify(state.favourites))
       },
       addToRecents (state, object) {
-        // Remove if already exists (to move to top)
-        const getId = (o) => {
-          if (o.model_data && o.model_data.norad_number) return 'sat_' + o.model_data.norad_number
-          if (o.names && o.names.length > 0) return o.names[0]
-          if (o.match) return o.match
-          return JSON.stringify(o)
-        }
         const objId = getId(object)
-
+        // Remove if already exists (to move to top)
         state.recents = state.recents.filter(item => getId(item) !== objId)
 
         // Add to top
-        state.recents.unshift(object)
+        state.recents.unshift(JSON.parse(JSON.stringify(object)))
         // Limit to 20
         if (state.recents.length > 20) {
           state.recents = state.recents.slice(0, 20)
@@ -224,6 +221,9 @@ const createStore = () => {
       },
       setArOpacity (state, value) {
         state.arOpacity = value
+      },
+      setCurrentSkyCultureId (state, value) {
+        state.currentSkyCultureId = value
       }
     }
   })

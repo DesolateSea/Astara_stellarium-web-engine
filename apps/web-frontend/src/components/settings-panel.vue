@@ -517,6 +517,8 @@ export default {
           this.$stel.core.skycultures.addDataSource({ url: url, key: newValue })
           this.$stel.core.skycultures.current_id = newValue
           localStorage.setItem('stellarium-skyculture', newValue)
+          // Update store for reactive tracking
+          this.$store.commit('setCurrentSkyCultureId', newValue)
 
           // Switch font based on culture language requirements
           if (newValue.includes('chinese')) {
@@ -537,7 +539,10 @@ export default {
       }
     },
     currentSkyCultureName: function () {
-      const culture = this.skyCultureOptions.find(c => c.key === this.selectedSkyCulture)
+      // Read from Vuex store for reactive updates
+      const cultureId = this.$store.state.currentSkyCultureId || 'western'
+      const culture = this.skyCultureOptions.find(c => c.key === cultureId)
+      console.log(cultureId, culture)
       return culture ? culture.name : 'Western'
     },
     dssOn: {
@@ -585,11 +590,26 @@ export default {
     dialogVisible: function (val) {
       if (!val) {
         this.currentView = 'main'
+      } else {
+        // Sync selectedSkyCulture with engine's current value when panel opens
+        if (this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+          const engineCulture = this.$stel.core.skycultures.current_id
+          if (engineCulture && engineCulture !== this.selectedSkyCulture) {
+            this.selectedSkyCulture = engineCulture
+          }
+        }
       }
     },
     currentView: function (val) {
       if (val === 'advanced') {
         this.loadTouchSettings()
+      }
+      // Sync selectedSkyCulture when navigating to sky-culture view
+      if (val === 'sky-culture' && this.$stel && this.$stel.core && this.$stel.core.skycultures) {
+        const engineCulture = this.$stel.core.skycultures.current_id
+        if (engineCulture && engineCulture !== this.selectedSkyCulture) {
+          this.selectedSkyCulture = engineCulture
+        }
       }
     }
   },
@@ -599,8 +619,10 @@ export default {
 
     // Load saved sky culture preference
     const savedCulture = localStorage.getItem('stellarium-skyculture')
+    console.log(savedCulture)
     if (savedCulture) {
       this.selectedSkyCulture = savedCulture
+      this.$store.commit('setCurrentSkyCultureId', savedCulture)
     }
   },
   methods: {

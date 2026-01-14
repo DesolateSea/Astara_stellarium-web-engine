@@ -245,12 +245,9 @@ class ConstellationLoader {
       // Fallback to western if can't get current culture
     }
 
-    // Filter to only search Western and current culture constellations
-    // These are the only skycultures guaranteed to be loaded
-    const allowedCultures = ['western']
-    if (currentCulture && currentCulture !== 'western') {
-      allowedCultures.push(currentCulture)
-    }
+    // IMPORTANT: Only show constellations from the CURRENT active culture
+    // The engine's getObj() only works for constellations in the active skyculture
+    const allowedCulture = currentCulture
 
     const exactMatches = []
     const startsWithMatches = []
@@ -261,8 +258,8 @@ class ConstellationLoader {
         break
       }
 
-      // Skip constellations from cultures that aren't loaded
-      if (con.culture && !allowedCultures.includes(con.culture)) {
+      // Only show constellations from the current active culture
+      if (con.culture && con.culture !== allowedCulture) {
         continue
       }
 

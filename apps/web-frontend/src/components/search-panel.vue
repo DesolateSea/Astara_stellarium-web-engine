@@ -320,7 +320,7 @@ export default {
     performSearch () {
       // Triggered on Enter
     },
-    sourceClicked (source) {
+    async sourceClicked (source) {
       const $stel = this.$stel
       if (!$stel) {
         this.closePanel()
@@ -330,13 +330,39 @@ export default {
       // Add to recents
       this.$store.commit('addToRecents', source)
 
+      // For constellations, check if we need to switch skyculture
+      let cultureSwitched = false
+      if (source.model === 'constellation' && source.model_data && source.model_data.culture) {
+        const targetCulture = source.model_data.culture
+        const currentCulture = $stel.core.skycultures.current_id
+
+        if (targetCulture !== currentCulture) {
+          // Switch to the constellation's culture
+          const baseUrl = '/'
+          $stel.core.skycultures.addDataSource({ url: baseUrl + 'skydata/skycultures/' + targetCulture, key: targetCulture })
+          $stel.core.skycultures.current_id = targetCulture
+          localStorage.setItem('stellarium-skyculture', targetCulture)
+          // Update store for reactive tracking
+          this.$store.commit('setCurrentSkyCultureId', targetCulture)
+          cultureSwitched = true
+        }
+      }
+
       // Use swh helper to resolve the object
-      const obj = swh.skySource2SweObj(source)
+      let obj = swh.skySource2SweObj(source)
+      // If culture was switched and object not found, retry with delays
+      if (!obj && cultureSwitched) {
+        for (let attempt = 0; attempt < 10; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          obj = swh.skySource2SweObj(source)
+          if (obj) break
+        }
+      }
 
       if (obj) {
         $stel.core.selection = obj
 
-        // In gyro mode: don't center, just set as target for direction overlay (this.$store.state.gyroModeActive) set to true for all
+        // In gyro mode: don't center, just set as target for direction overlay
         if (this.$store.state.gyroModeActive) {
           this.$store.commit('setGyroTargetObject', obj)
         } else {
