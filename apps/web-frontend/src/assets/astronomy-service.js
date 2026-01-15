@@ -7,6 +7,7 @@
 // repository.
 
 import * as Astronomy from 'astronomy-engine'
+import historyData from './astronomy-history-data.js'
 
 /**
  * Astronomy Service
@@ -438,12 +439,82 @@ const AstronomyService = {
   },
 
   /**
-         * Get all astronomical events for a date range
-         * @param {Date} startDate - Start date
-         * @param {Date} endDate - End date
-         * @param {Object} options - Options for filtering events
-         * @returns {Array} Array of all events
-         */
+   * Get historical astronomy events (anniversaries)
+   * @param {Date} startDate - Start date
+   * @param {Date} endDate - End date
+   * @returns {Array} Array of historical events
+   */
+  getHistoricalEvents (startDate, endDate) {
+    const events = []
+    const currentYear = new Date().getFullYear()
+
+    // Helper function to check if event falls within date range
+    const isInRange = (month, day) => {
+      const eventDate = new Date(currentYear, month - 1, day)
+      return eventDate >= startDate && eventDate <= endDate
+    }
+
+    // Helper to create event object
+    const createEvent = (item, type, emoji, category = 'Historical Events') => {
+      if (!isInRange(item.month, item.day)) return null
+
+      const eventDate = new Date(currentYear, item.month - 1, item.day, 12, 0, 0)
+      const yearsAgo = currentYear - item.year
+      const yearsAgoText = yearsAgo > 0 ? ' (' + yearsAgo + ' years ago)' : ''
+
+      return {
+        type: type,
+        category: category,
+        name: item.name,
+        emoji: emoji,
+        date: eventDate,
+        description: item.description + yearsAgoText,
+        yearOccurred: item.year,
+        yearsAgo: yearsAgo,
+        canViewInSky: false
+      }
+    }
+
+    // Add discoveries
+    for (const item of historyData.discoveries) {
+      const event = createEvent(item, 'historical_discovery', '🔭')
+      if (event) events.push(event)
+    }
+
+    // Add space missions
+    for (const item of historyData.missions) {
+      const event = createEvent(item, 'historical_mission', '🚀')
+      if (event) events.push(event)
+    }
+
+    // Add astronomer birthdays
+    for (const item of historyData.birthdays) {
+      const event = createEvent(item, 'astronomer_birthday', '👨‍🔬')
+      if (event) events.push(event)
+    }
+
+    // Add historical eclipses
+    for (const item of historyData.historicalEclipses) {
+      const event = createEvent(item, 'historical_eclipse', '🌑')
+      if (event) events.push(event)
+    }
+
+    // Add institutions
+    for (const item of historyData.institutions) {
+      const event = createEvent(item, 'historical_institution', '🏛️')
+      if (event) events.push(event)
+    }
+
+    return events.sort((a, b) => a.date - b.date)
+  },
+
+  /**
+   * Get all astronomical events for a date range
+   * @param {Date} startDate - Start date
+   * @param {Date} endDate - End date
+   * @param {Object} options - Options for filtering events
+   * @returns {Array} Array of all events
+   */
   getAllEvents (startDate, endDate, options = {}) {
     const allEvents = []
 
@@ -470,6 +541,10 @@ const AstronomyService = {
 
     if (!options.categories || options.categories.includes('Eclipses')) {
       allEvents.push(...this.getEclipses(startDate, endDate))
+    }
+
+    if (!options.categories || options.categories.includes('Historical Events')) {
+      allEvents.push(...this.getHistoricalEvents(startDate, endDate))
     }
 
     // Filter by date range

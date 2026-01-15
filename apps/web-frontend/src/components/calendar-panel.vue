@@ -53,21 +53,6 @@
           </div>
         </div>
 
-        <!-- Filters -->
-        <div class="calendar-filters">
-          <v-chip
-            v-for="category in categories"
-            :key="category"
-            :color="categoryColors[category]"
-            :outlined="!$store.state.calendarFilters[category]"
-            small
-            @click="toggleFilter(category)"
-            class="ma-1"
-          >
-            {{ category }}
-          </v-chip>
-        </div>
-
         <!-- Content Area -->
         <div class="calendar-content" v-if="!loading">
           <!-- List View -->
@@ -155,7 +140,8 @@ export default {
         'Moon Events': '#4CAF50',
         'Solar Events': '#FF9800',
         'Planetary Events': '#2196F3',
-        Eclipses: '#9C27B0'
+        Eclipses: '#9C27B0',
+        'Historical Events': '#FFC107'
       }
     }
   },

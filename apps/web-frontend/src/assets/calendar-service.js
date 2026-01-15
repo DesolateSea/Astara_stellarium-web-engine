@@ -130,8 +130,8 @@ const CalendarService = {
 
     return events.filter(event =>
       event.name.toLowerCase().includes(lowerQuery) ||
-            event.description.toLowerCase().includes(lowerQuery) ||
-            event.category.toLowerCase().includes(lowerQuery)
+      event.description.toLowerCase().includes(lowerQuery) ||
+      event.category.toLowerCase().includes(lowerQuery)
     )
   },
 
@@ -163,7 +163,8 @@ const CalendarService = {
       'Moon Events',
       'Solar Events',
       'Planetary Events',
-      'Eclipses'
+      'Eclipses',
+      'Historical Events'
     ]
   },
 

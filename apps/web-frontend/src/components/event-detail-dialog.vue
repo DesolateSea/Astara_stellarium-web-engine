@@ -106,7 +106,8 @@ export default {
         'Moon Events': '#4CAF50',
         'Solar Events': '#FF9800',
         'Planetary Events': '#2196F3',
-        Eclipses: '#9C27B0'
+        Eclipses: '#9C27B0',
+        'Historical Events': '#FFC107'
       }
       return colors[this.event.category] || '#999'
     },

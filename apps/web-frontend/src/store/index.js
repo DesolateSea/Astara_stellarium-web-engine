@@ -135,7 +135,8 @@ const createStore = () => {
         'Moon Events': true,
         'Solar Events': true,
         'Planetary Events': true,
-        Eclipses: true
+        Eclipses: true,
+        'Historical Events': true
       },
       selectedCalendarEvent: null
     },
