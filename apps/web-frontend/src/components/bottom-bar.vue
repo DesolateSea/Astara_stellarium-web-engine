@@ -63,7 +63,7 @@
     </div>
 
     <!-- Right section: Time -->
-    <div class="bottom-bar-right" @click="showTimePicker = !showTimePicker">
+    <div class="bottom-bar-right" @click="toggleTimeMenu">
       <div class="time-display">
         {{ time }}
       </div>
@@ -72,6 +72,23 @@
     <transition name="slide-up">
       <div class="menu-overlay" v-if="showMenuPanel" @click.self="closeMenu">
         <BottomMenuPanel />
+      </div>
+    </transition>
+
+    <!-- Time Menu -->
+    <transition name="fade">
+      <div class="time-menu-overlay" v-if="$store.state.showTimeMenu" @click.self="closeTimeMenu">
+        <div class="time-menu">
+          <div class="time-menu-item" @click="openTimePicker">
+            <v-icon>mdi-clock-outline</v-icon>
+            <span>Time Control</span>
+          </div>
+          <v-divider></v-divider>
+          <div class="time-menu-item" @click="openCalendar">
+            <v-icon>mdi-calendar-star</v-icon>
+            <span>Calendar</span>
+          </div>
+        </div>
       </div>
     </transition>
 
@@ -247,6 +264,20 @@ export default {
     },
     closeMenu () {
       this.showMenuPanel = false
+    },
+    toggleTimeMenu () {
+      this.$store.commit('setShowTimeMenu', !this.$store.state.showTimeMenu)
+    },
+    closeTimeMenu () {
+      this.$store.commit('setShowTimeMenu', false)
+    },
+    openTimePicker () {
+      this.closeTimeMenu()
+      this.showTimePicker = true
+    },
+    openCalendar () {
+      this.closeTimeMenu()
+      this.$store.commit('setShowCalendarPanel', true)
     },
     onCenterClick () {
       if (this.gyroModeActive) {
@@ -676,4 +707,54 @@ export default {
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* Time Menu Styles */
+.time-menu-overlay {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: auto;
+  padding: 16px;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+
+.time-menu {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-width: 200px;
+}
+
+.time-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: white;
+}
+
+.time-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.time-menu-item .v-icon {
+  color: white;
+  font-size: 24px;
+}
+
+.time-menu-item span {
+  font-size: 16px;
+  font-weight: 500;
+}
+
 </style>

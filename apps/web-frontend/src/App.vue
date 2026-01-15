@@ -72,6 +72,9 @@
         </v-btn>
       </template>
     </v-snackbar>
+
+    <!-- Calendar Panel -->
+    <calendar-panel />
   </v-main>
 
 </v-app>
@@ -84,6 +87,7 @@ import _ from 'lodash'
 import Gui from '@/components/gui.vue'
 import GuiLoader from '@/components/gui-loader.vue'
 import DsoSkyOverlays from '@/components/DsoSkyOverlays.vue'
+import CalendarPanel from '@/components/calendar-panel.vue'
 import swh from '@/assets/sw_helpers.js'
 import Moment from 'moment'
 import FullscreenService from '@/assets/fullscreen-service.js'
@@ -106,7 +110,13 @@ export default {
       gpsErrorSnackbar: false
     }
   },
-  components: { Gui, GuiLoader, DsoSkyOverlays, ARCameraPreview: () => import('@/components/AR-camera-preview.vue') },
+  components: {
+    Gui,
+    GuiLoader,
+    DsoSkyOverlays,
+    CalendarPanel,
+    ARCameraPreview: () => import('@/components/AR-camera-preview.vue')
+  },
   methods: {
     getPluginsMenuItems: function () {
       let res = []
