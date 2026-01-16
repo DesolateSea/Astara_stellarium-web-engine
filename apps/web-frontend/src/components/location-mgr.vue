@@ -8,25 +8,9 @@
 
 <template>
   <div class="location-picker">
-    <!-- Offline Map Section -->
-    <div class="map-container" ref="mapContainer" @click="onMapClick" @touchend="onMapTouch">
-      <img
-        ref="mapImage"
-        :src="mapImageSrc"
-        class="world-map"
-        alt="World Map"
-        draggable="false"
-      />
-      <!-- Marker overlay -->
-      <div
-        v-if="pickLocation"
-        class="map-marker"
-        :style="markerStyle"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path fill="#2196F3" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </div>
+    <!-- Offline Map Section with Leaflet -->
+    <div class="map-container" ref="mapContainer">
+      <div ref="leafletMap" class="leaflet-map"></div>
       <!-- GPS Button -->
       <v-btn
         fab
@@ -148,6 +132,17 @@
 </template>
 
 <script>
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+// Fix Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+})
+
 export default {
   data: function () {
     return {
@@ -162,7 +157,9 @@ export default {
       locationName: 'Unknown',
       locationCountry: '',
       timezoneOffset: 0,
-      mapImageSrc: process.env.BASE_URL + 'images/world_map.jpg'
+      map: null,
+      marker: null,
+      cities: []
     }
   },
   props: ['showMyLocation', 'knownLocations', 'startLocation', 'realLocation'],
@@ -176,44 +173,88 @@ export default {
         return sign + offset
       }
       return sign + Math.floor(offset) + ':' + String(minutes).padStart(2, '0')
-    },
-    markerStyle: function () {
-      if (!this.pickLocation || !this.$refs.mapContainer) {
-        return { display: 'none' }
-      }
-      // Convert lat/lng to pixel position on the map
-      // Map is an equirectangular projection (simple lat/lng to x/y)
-      var container = this.$refs.mapContainer
-      var width = container.offsetWidth
-      var height = container.offsetHeight
-
-      // Longitude: -180 to 180 maps to 0 to width
-      var x = ((this.pickLocation.lng + 180) / 360) * width
-      // Latitude: 90 to -90 maps to 0 to height
-      var y = ((90 - this.pickLocation.lat) / 180) * height
-
-      return {
-        left: (x - 16) + 'px',
-        top: (y - 32) + 'px'
-      }
     }
   },
   watch: {
     startLocation: {
       immediate: true,
       handler: function (loc) {
-        if (loc) {
+        if (loc && this.map) {
           this.setPickLocation(loc)
         }
       }
     }
   },
   mounted: function () {
-    if (this.startLocation) {
-      this.setPickLocation(this.startLocation)
+    var that = this
+    // Load cities database
+    this.loadCities()
+
+    // Initialize map after DOM is ready
+    this.$nextTick(function () {
+      that.initMap()
+    })
+  },
+  beforeDestroy: function () {
+    if (this.map) {
+      this.map.remove()
+      this.map = null
     }
   },
   methods: {
+    loadCities: function () {
+      var that = this
+      fetch(process.env.BASE_URL + 'data/cities.json')
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (data) {
+          that.cities = data
+        })
+        .catch(function (err) {
+          console.error('Failed to load cities:', err)
+          that.cities = []
+        })
+    },
+
+    initMap: function () {
+      var that = this
+      var container = this.$refs.leafletMap
+
+      if (!container) {
+        console.error('Map container not found')
+        return
+      }
+
+      // Create map with offline tile layer
+      this.map = L.map(container, {
+        center: [20, 0],
+        zoom: 2,
+        minZoom: 0,
+        maxZoom: 4,
+        zoomControl: true,
+        attributionControl: false
+      })
+
+      // Add offline tile layer (pre-downloaded tiles)
+      L.tileLayer(process.env.BASE_URL + 'tiles/{z}/{x}/{y}.png', {
+        maxZoom: 4,
+        minZoom: 0,
+        tileSize: 256,
+        errorTileUrl: process.env.BASE_URL + 'tiles/0/0/0.png'
+      }).addTo(this.map)
+
+      // Add click handler
+      this.map.on('click', function (e) {
+        that.onMapClick(e.latlng.lat, e.latlng.lng)
+      })
+
+      // Set initial location if provided
+      if (this.startLocation) {
+        this.setPickLocation(this.startLocation)
+      }
+    },
+
     setPickLocation: function (loc) {
       this.pickLocation = {
         lat: loc.lat,
@@ -222,70 +263,110 @@ export default {
         accuracy: loc.accuracy || 0
       }
 
+      // Update marker on map
+      if (this.map) {
+        if (this.marker) {
+          this.marker.setLatLng([loc.lat, loc.lng])
+        } else {
+          this.marker = L.marker([loc.lat, loc.lng], {
+            draggable: true
+          }).addTo(this.map)
+
+          var that = this
+          this.marker.on('dragend', function (e) {
+            var pos = e.target.getLatLng()
+            that.onMapClick(pos.lat, pos.lng)
+          })
+        }
+        this.map.setView([loc.lat, loc.lng], Math.max(this.map.getZoom(), 2))
+      }
+
       if (loc.short_name && loc.short_name !== 'Unknown') {
         this.locationName = loc.short_name
         this.locationCountry = loc.country || ''
       } else {
-        // Set name based on coordinates (offline)
-        this.setOfflineLocationName(loc.lat, loc.lng)
+        // Find nearest city
+        this.findNearestCity(loc.lat, loc.lng)
       }
 
       this.calculateTimezone(loc.lat, loc.lng)
     },
 
-    onMapClick: function (event) {
-      var container = this.$refs.mapContainer
-      var rect = container.getBoundingClientRect()
-      var x = event.clientX - rect.left
-      var y = event.clientY - rect.top
-      var width = container.offsetWidth
-      var height = container.offsetHeight
-
-      // Convert pixel position to lat/lng
-      // Longitude: 0 to width maps to -180 to 180
-      var lng = (x / width) * 360 - 180
-      // Latitude: 0 to height maps to 90 to -90
-      var lat = 90 - (y / height) * 180
-
-      // Clamp values
-      lat = Math.max(-90, Math.min(90, lat))
-      lng = Math.max(-180, Math.min(180, lng))
-
+    onMapClick: function (lat, lng) {
       this.pickLocation = {
         lat: lat,
         lng: lng,
         alt: 0,
         accuracy: 0
       }
-      this.setOfflineLocationName(lat, lng)
+
+      // Update marker
+      if (this.marker) {
+        this.marker.setLatLng([lat, lng])
+      } else if (this.map) {
+        var that = this
+        this.marker = L.marker([lat, lng], {
+          draggable: true
+        }).addTo(this.map)
+
+        this.marker.on('dragend', function (e) {
+          var pos = e.target.getLatLng()
+          that.onMapClick(pos.lat, pos.lng)
+        })
+      }
+
+      this.findNearestCity(lat, lng)
       this.calculateTimezone(lat, lng)
     },
 
-    onMapTouch: function (event) {
-      if (event.changedTouches && event.changedTouches.length > 0) {
-        var touch = event.changedTouches[0]
-        var container = this.$refs.mapContainer
-        var rect = container.getBoundingClientRect()
-        var x = touch.clientX - rect.left
-        var y = touch.clientY - rect.top
-        var width = container.offsetWidth
-        var height = container.offsetHeight
-
-        var lng = (x / width) * 360 - 180
-        var lat = 90 - (y / height) * 180
-
-        lat = Math.max(-90, Math.min(90, lat))
-        lng = Math.max(-180, Math.min(180, lng))
-
-        this.pickLocation = {
-          lat: lat,
-          lng: lng,
-          alt: 0,
-          accuracy: 0
-        }
-        this.setOfflineLocationName(lat, lng)
-        this.calculateTimezone(lat, lng)
+    findNearestCity: function (lat, lng) {
+      if (!this.cities || this.cities.length === 0) {
+        this.locationName = lat.toFixed(2) + '°, ' + lng.toFixed(2) + '°'
+        this.locationCountry = ''
+        return
       }
+
+      var nearest = null
+      var minDist = Infinity
+
+      for (var i = 0; i < this.cities.length; i++) {
+        var city = this.cities[i]
+        var dist = this.haversineDistance(lat, lng, city.lat, city.lng)
+
+        if (dist < minDist) {
+          minDist = dist
+          nearest = city
+        }
+      }
+
+      // Only use city name if within 200km
+      if (nearest && minDist < 200) {
+        this.locationName = nearest.name
+        this.locationCountry = nearest.country
+      } else if (nearest && minDist < 500) {
+        // Show "Near [city]" if within 500km
+        this.locationName = 'Near ' + nearest.name
+        this.locationCountry = nearest.country
+      } else {
+        // Too far from any city, show coordinates
+        this.locationName = lat.toFixed(2) + '°, ' + lng.toFixed(2) + '°'
+        this.locationCountry = ''
+      }
+    },
+
+    haversineDistance: function (lat1, lng1, lat2, lng2) {
+      var R = 6371 // Earth's radius in km
+      var dLat = this.toRad(lat2 - lat1)
+      var dLng = this.toRad(lng2 - lng1)
+      var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2)
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      return R * c
+    },
+
+    toRad: function (deg) {
+      return deg * Math.PI / 180
     },
 
     centerOnRealPosition: function () {
@@ -316,79 +397,6 @@ export default {
           this.isLocating = false
         }
       }
-    },
-
-    setOfflineLocationName: function (lat, lng) {
-      // Simple offline location naming based on coordinates
-      // Uses rough geographic regions
-      var name = this.getRegionName(lat, lng)
-      this.locationName = name.city || (lat.toFixed(2) + '°, ' + lng.toFixed(2) + '°')
-      this.locationCountry = name.country || ''
-    },
-
-    getRegionName: function (lat, lng) {
-      // Simple offline region detection
-      // Major countries/regions based on bounding boxes
-
-      // India
-      if (lat >= 8 && lat <= 37 && lng >= 68 && lng <= 97) {
-        return { city: 'India', country: '' }
-      }
-      // China
-      if (lat >= 18 && lat <= 54 && lng >= 73 && lng <= 135) {
-        return { city: 'China', country: '' }
-      }
-      // USA (continental)
-      if (lat >= 24 && lat <= 49 && lng >= -125 && lng <= -66) {
-        return { city: 'United States', country: '' }
-      }
-      // Brazil
-      if (lat >= -34 && lat <= 5 && lng >= -74 && lng <= -32) {
-        return { city: 'Brazil', country: '' }
-      }
-      // Russia
-      if (lat >= 41 && lat <= 82 && lng >= 19 && lng <= 180) {
-        return { city: 'Russia', country: '' }
-      }
-      // Australia
-      if (lat >= -45 && lat <= -10 && lng >= 110 && lng <= 155) {
-        return { city: 'Australia', country: '' }
-      }
-      // Europe
-      if (lat >= 35 && lat <= 71 && lng >= -10 && lng <= 40) {
-        return { city: 'Europe', country: '' }
-      }
-      // Africa
-      if (lat >= -35 && lat <= 37 && lng >= -18 && lng <= 52) {
-        return { city: 'Africa', country: '' }
-      }
-      // Japan
-      if (lat >= 24 && lat <= 46 && lng >= 123 && lng <= 146) {
-        return { city: 'Japan', country: '' }
-      }
-      // Indonesia
-      if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) {
-        return { city: 'Indonesia', country: '' }
-      }
-      // Middle East
-      if (lat >= 12 && lat <= 42 && lng >= 25 && lng <= 63) {
-        return { city: 'Middle East', country: '' }
-      }
-      // Canada
-      if (lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52) {
-        return { city: 'Canada', country: '' }
-      }
-      // Mexico
-      if (lat >= 14 && lat <= 33 && lng >= -118 && lng <= -86) {
-        return { city: 'Mexico', country: '' }
-      }
-      // Argentina
-      if (lat >= -55 && lat <= -21 && lng >= -73 && lng <= -53) {
-        return { city: 'Argentina', country: '' }
-      }
-
-      // Default: show coordinates
-      return { city: null, country: null }
     },
 
     calculateTimezone: function (lat, lng) {
@@ -443,24 +451,19 @@ export default {
         return
       }
 
+      var lat = this.pickLocation ? this.pickLocation.lat : 0
+      var lng = this.pickLocation ? this.pickLocation.lng : 0
+
       if (this.coordEditMode === 'lat') {
-        var lat = Math.max(-90, Math.min(90, value))
-        if (this.pickLocation) {
-          this.pickLocation.lat = lat
-        } else {
-          this.pickLocation = { lat: lat, lng: 0, alt: 0, accuracy: 0 }
-        }
+        lat = Math.max(-90, Math.min(90, value))
       } else {
-        var lng = Math.max(-180, Math.min(180, value))
-        if (this.pickLocation) {
-          this.pickLocation.lng = lng
-        } else {
-          this.pickLocation = { lat: 0, lng: lng, alt: 0, accuracy: 0 }
-        }
+        lng = Math.max(-180, Math.min(180, value))
       }
 
-      this.setOfflineLocationName(this.pickLocation.lat, this.pickLocation.lng)
-      this.calculateTimezone(this.pickLocation.lat, this.pickLocation.lng)
+      this.onMapClick(lat, lng)
+      if (this.map) {
+        this.map.setView([lat, lng], Math.max(this.map.getZoom(), 2))
+      }
       this.showCoordDialog = false
     },
 
@@ -517,32 +520,22 @@ export default {
 .map-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 2 / 1;
+  height: 300px;
   overflow: hidden;
   background: #000;
-  cursor: crosshair;
 }
 
-.world-map {
+.leaflet-map {
   width: 100%;
   height: 100%;
-  object-fit: fill;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.map-marker {
-  position: absolute;
-  pointer-events: none;
-  z-index: 10;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  z-index: 1;
 }
 
 .gps-btn {
   position: absolute;
   bottom: 16px;
   right: 16px;
-  z-index: 100;
+  z-index: 1000;
   background: white !important;
 }
 
@@ -630,5 +623,20 @@ export default {
 /* Dialog styles */
 .coord-dialog {
   background: #2d2d44 !important;
+}
+
+/* Override Leaflet styles for dark theme */
+::v-deep .leaflet-container {
+  background: #1a1a2e;
+}
+
+::v-deep .leaflet-control-zoom a {
+  background: #2d2d44 !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+::v-deep .leaflet-control-zoom a:hover {
+  background: #3d3d54 !important;
 }
 </style>
