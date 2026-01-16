@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d1f3c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d4a3e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a3a2e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Ocean background -->
+  <rect width="1000" height="500" fill="url(#oceanGrad)"/>
+  
+  <!-- Grid lines -->
+  <g stroke="#1a3050" stroke-width="0.5" opacity="0.5">
+    <!-- Latitude lines -->
+    <line x1="0" y1="83.33" x2="1000" y2="83.33"/>
+    <line x1="0" y1="166.67" x2="1000" y2="166.67"/>
+    <line x1="0" y1="250" x2="1000" y2="250"/>
+    <line x1="0" y1="333.33" x2="1000" y2="333.33"/>
+    <line x1="0" y1="416.67" x2="1000" y2="416.67"/>
+    <!-- Longitude lines -->
+    <line x1="166.67" y1="0" x2="166.67" y2="500"/>
+    <line x1="333.33" y1="0" x2="333.33" y2="500"/>
+    <line x1="500" y1="0" x2="500" y2="500"/>
+    <line x1="666.67" y1="0" x2="666.67" y2="500"/>
+    <line x1="833.33" y1="0" x2="833.33" y2="500"/>
+  </g>
+  
+  <!-- Simplified continents -->
+  <g fill="url(#landGrad)" stroke="#3d5a4e" stroke-width="1">
+    
+    <!-- North America -->
+    <path d="M50,80 L120,60 L180,70 L220,100 L240,140 L220,180 L200,200 L180,220 L150,240 L120,250 L100,280 L80,300 L60,280 L40,250 L30,200 L35,150 L50,80 Z"/>
+    
+    <!-- South America -->
+    <path d="M180,280 L200,270 L230,290 L250,320 L260,360 L250,400 L230,430 L200,450 L170,440 L150,400 L160,350 L170,310 L180,280 Z"/>
+    
+    <!-- Europe -->
+    <path d="M450,80 L520,70 L550,90 L560,110 L550,130 L530,150 L500,160 L470,150 L450,130 L440,100 L450,80 Z"/>
+    
+    <!-- Africa -->
+    <path d="M450,180 L520,170 L560,200 L580,250 L570,310 L540,360 L500,380 L460,370 L440,330 L430,280 L440,230 L450,180 Z"/>
+    
+    <!-- Asia -->
+    <path d="M560,60 L650,50 L750,60 L820,80 L860,110 L880,150 L870,190 L840,220 L800,240 L750,250 L700,240 L650,220 L600,190 L570,150 L560,110 L560,60 Z"/>
+    
+    <!-- India -->
+    <path d="M680,200 L720,190 L740,220 L730,270 L700,300 L670,290 L660,250 L670,220 L680,200 Z"/>
+    
+    <!-- Southeast Asia -->
+    <path d="M780,220 L820,210 L850,230 L860,260 L850,290 L820,300 L790,290 L780,260 L780,220 Z"/>
+    
+    <!-- Australia -->
+    <path d="M800,340 L880,330 L920,350 L930,390 L910,420 L860,430 L810,420 L790,390 L800,340 Z"/>
+    
+    <!-- Indonesia (islands) -->
+    <path d="M760,310 L790,305 L820,315 L815,330 L785,335 L760,325 L760,310 Z"/>
+    
+    <!-- Japan -->
+    <path d="M870,140 L890,130 L900,150 L895,170 L875,175 L865,160 L870,140 Z"/>
+    
+    <!-- UK -->
+    <path d="M460,100 L475,95 L480,110 L470,120 L455,115 L460,100 Z"/>
+    
+    <!-- Greenland -->
+    <path d="M280,40 L350,30 L380,50 L370,90 L330,100 L290,90 L270,60 L280,40 Z"/>
+    
+    <!-- Madagascar -->
+    <path d="M580,360 L595,355 L600,380 L590,400 L575,395 L580,360 Z"/>
+    
+    <!-- New Zealand -->
+    <path d="M940,400 L955,395 L960,420 L950,435 L935,425 L940,400 Z"/>
+    
+    <!-- Antarctica -->
+    <path d="M0,470 L1000,470 L1000,500 L0,500 Z" fill="#e8e8e8" stroke="none"/>
+  </g>
+  
+  <!-- Equator line -->
+  <line x1="0" y1="250" x2="1000" y2="250" stroke="#4a90a4" stroke-width="1" opacity="0.7"/>
+  
+  <!-- Prime meridian -->
+  <line x1="500" y1="0" x2="500" y2="500" stroke="#4a90a4" stroke-width="1" opacity="0.7"/>
+  
+  <!-- Tropic of Cancer -->
+  <line x1="0" y1="185" x2="1000" y2="185" stroke="#3a6070" stroke-width="0.5" stroke-dasharray="5,5" opacity="0.5"/>
+  
+  <!-- Tropic of Capricorn -->
+  <line x1="0" y1="315" x2="1000" y2="315" stroke="#3a6070" stroke-width="0.5" stroke-dasharray="5,5" opacity="0.5"/>
+</svg>

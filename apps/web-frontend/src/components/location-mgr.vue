@@ -8,57 +8,31 @@
 
 <template>
   <div class="location-picker">
-    <!-- Map Section -->
-    <div class="map-container">
-      <l-map
-        class="location-map"
-        ref="myMap"
-        :center="mapCenter"
-        :zoom="mapZoom"
-        :options="{ zoomControl: false }"
-        @click="onMapClick"
+    <!-- Offline Map Section -->
+    <div class="map-container" ref="mapContainer" @click="onMapClick" @touchend="onMapTouch">
+      <img
+        ref="mapImage"
+        :src="mapImageSrc"
+        class="world-map"
+        alt="World Map"
+        draggable="false"
+      />
+      <!-- Marker overlay -->
+      <div
+        v-if="pickLocation"
+        class="map-marker"
+        :style="markerStyle"
       >
-        <l-control-zoom position="topright"></l-control-zoom>
-        <l-tile-layer
-          :url="tileUrl"
-          :attribution="attribution"
-        ></l-tile-layer>
-
-        <!-- Current position marker -->
-        <l-marker
-          v-if="pickLocation"
-          :lat-lng="[pickLocation.lat, pickLocation.lng]"
-          :draggable="true"
-          @dragend="onMarkerDrag"
-        >
-          <l-icon
-            :icon-url="markerIcon"
-            :icon-size="[32, 32]"
-            :icon-anchor="[16, 32]"
-          ></l-icon>
-        </l-marker>
-
-        <!-- GPS accuracy circle -->
-        <l-circle
-          v-if="realLocation && realLocation.accuracy > 0"
-          :lat-lng="[realLocation.lat, realLocation.lng]"
-          :radius="realLocation.accuracy"
-          :options="{
-            stroke: true,
-            color: '#4CAF50',
-            weight: 2,
-            fillColor: '#4CAF50',
-            fillOpacity: 0.1
-          }"
-        ></l-circle>
-      </l-map>
-
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+          <path fill="#2196F3" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+      </div>
       <!-- GPS Button -->
       <v-btn
         fab
         small
         class="gps-btn"
-        @click="centerOnRealPosition"
+        @click.stop="centerOnRealPosition"
         :loading="isLocating"
       >
         <v-icon>mdi-crosshairs-gps</v-icon>
@@ -68,7 +42,7 @@
     <!-- Location Details Panel -->
     <div class="location-details">
       <!-- Location Name -->
-      <div class="detail-row" @click="showSearchDialog = true">
+      <div class="detail-row" @click="showNameEditor = true">
         <div class="detail-label">{{ $t('Name/City') }}</div>
         <div class="detail-value">
           <span class="location-name">{{ locationName }}</span>
@@ -116,41 +90,31 @@
       </v-btn>
     </div>
 
-    <!-- Search Dialog -->
-    <v-dialog v-model="showSearchDialog" max-width="500">
-      <v-card class="search-dialog">
-        <v-card-title>{{ $t('Search Location') }}</v-card-title>
+    <!-- Name Editor Dialog -->
+    <v-dialog v-model="showNameEditor" max-width="400">
+      <v-card class="coord-dialog">
+        <v-card-title>{{ $t('Edit Location Name') }}</v-card-title>
         <v-card-text>
           <v-text-field
-            v-model="searchQuery"
-            :label="$t('Enter city or place name')"
-            prepend-inner-icon="mdi-magnify"
+            v-model="editNameValue"
+            :label="$t('Location name')"
             outlined
             dense
             autofocus
-            @keyup.enter="searchLocation"
-            :loading="isSearching"
+            @keyup.enter="applyNameEdit"
           ></v-text-field>
-
-          <v-list v-if="searchResults.length > 0" class="search-results">
-            <v-list-item
-              v-for="(result, index) in searchResults"
-              :key="index"
-              @click="selectSearchResult(result)"
-            >
-            <v-list-item-icon>
-              <v-icon>mdi-map-marker</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-                <v-list-item-title>{{ result.display_name }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+          <v-text-field
+            v-model="editCountryValue"
+            :label="$t('Country/Region (optional)')"
+            outlined
+            dense
+            @keyup.enter="applyNameEdit"
+          ></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="showSearchDialog = false">{{ $t('Cancel') }}</v-btn>
-          <v-btn color="primary" @click="searchLocation">{{ $t('Search') }}</v-btn>
+          <v-btn text @click="showNameEditor = false">{{ $t('Cancel') }}</v-btn>
+          <v-btn color="primary" @click="applyNameEdit">{{ $t('Apply') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -184,28 +148,21 @@
 </template>
 
 <script>
-import { LMap, LTileLayer, LMarker, LCircle, LControlZoom, LIcon } from 'vue2-leaflet'
-
 export default {
   data: function () {
     return {
       pickLocation: null,
-      mapCenter: [25.0, 81.0],
-      mapZoom: 4,
       isLocating: false,
-      isSearching: false,
-      showSearchDialog: false,
       showCoordDialog: false,
-      searchQuery: '',
-      searchResults: [],
+      showNameEditor: false,
       coordEditMode: 'lat',
       coordEditValue: '',
+      editNameValue: '',
+      editCountryValue: '',
       locationName: 'Unknown',
       locationCountry: '',
       timezoneOffset: 0,
-      tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; <a href="https://osm.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-      markerIcon: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="#2196F3" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>')
+      mapImageSrc: process.env.BASE_URL + 'images/world_map.jpg'
     }
   },
   props: ['showMyLocation', 'knownLocations', 'startLocation', 'realLocation'],
@@ -219,6 +176,26 @@ export default {
         return sign + offset
       }
       return sign + Math.floor(offset) + ':' + String(minutes).padStart(2, '0')
+    },
+    markerStyle: function () {
+      if (!this.pickLocation || !this.$refs.mapContainer) {
+        return { display: 'none' }
+      }
+      // Convert lat/lng to pixel position on the map
+      // Map is an equirectangular projection (simple lat/lng to x/y)
+      var container = this.$refs.mapContainer
+      var width = container.offsetWidth
+      var height = container.offsetHeight
+
+      // Longitude: -180 to 180 maps to 0 to width
+      var x = ((this.pickLocation.lng + 180) / 360) * width
+      // Latitude: 90 to -90 maps to 0 to height
+      var y = ((90 - this.pickLocation.lat) / 180) * height
+
+      return {
+        left: (x - 16) + 'px',
+        top: (y - 32) + 'px'
+      }
     }
   },
   watch: {
@@ -232,18 +209,9 @@ export default {
     }
   },
   mounted: function () {
-    var that = this
     if (this.startLocation) {
       this.setPickLocation(this.startLocation)
     }
-    this.$nextTick(function () {
-      if (that.$refs.myMap) {
-        var map = that.$refs.myMap.mapObject
-        if (map) {
-          map.invalidateSize()
-        }
-      }
-    })
   },
   methods: {
     setPickLocation: function (loc) {
@@ -253,49 +221,77 @@ export default {
         alt: loc.alt || 0,
         accuracy: loc.accuracy || 0
       }
-      this.mapCenter = [loc.lat, loc.lng]
 
       if (loc.short_name && loc.short_name !== 'Unknown') {
         this.locationName = loc.short_name
         this.locationCountry = loc.country || ''
       } else {
-        this.reverseGeocode(loc.lat, loc.lng)
+        // Set name based on coordinates (offline)
+        this.setOfflineLocationName(loc.lat, loc.lng)
       }
 
       this.calculateTimezone(loc.lat, loc.lng)
     },
 
     onMapClick: function (event) {
-      var lat = event.latlng.lat
-      var lng = event.latlng.lng
+      var container = this.$refs.mapContainer
+      var rect = container.getBoundingClientRect()
+      var x = event.clientX - rect.left
+      var y = event.clientY - rect.top
+      var width = container.offsetWidth
+      var height = container.offsetHeight
+
+      // Convert pixel position to lat/lng
+      // Longitude: 0 to width maps to -180 to 180
+      var lng = (x / width) * 360 - 180
+      // Latitude: 0 to height maps to 90 to -90
+      var lat = 90 - (y / height) * 180
+
+      // Clamp values
+      lat = Math.max(-90, Math.min(90, lat))
+      lng = Math.max(-180, Math.min(180, lng))
+
       this.pickLocation = {
         lat: lat,
         lng: lng,
         alt: 0,
         accuracy: 0
       }
-      this.reverseGeocode(lat, lng)
+      this.setOfflineLocationName(lat, lng)
       this.calculateTimezone(lat, lng)
     },
 
-    onMarkerDrag: function (event) {
-      var lat = event.target._latlng.lat
-      var lng = event.target._latlng.lng
-      this.pickLocation = {
-        lat: lat,
-        lng: lng,
-        alt: 0,
-        accuracy: 0
+    onMapTouch: function (event) {
+      if (event.changedTouches && event.changedTouches.length > 0) {
+        var touch = event.changedTouches[0]
+        var container = this.$refs.mapContainer
+        var rect = container.getBoundingClientRect()
+        var x = touch.clientX - rect.left
+        var y = touch.clientY - rect.top
+        var width = container.offsetWidth
+        var height = container.offsetHeight
+
+        var lng = (x / width) * 360 - 180
+        var lat = 90 - (y / height) * 180
+
+        lat = Math.max(-90, Math.min(90, lat))
+        lng = Math.max(-180, Math.min(180, lng))
+
+        this.pickLocation = {
+          lat: lat,
+          lng: lng,
+          alt: 0,
+          accuracy: 0
+        }
+        this.setOfflineLocationName(lat, lng)
+        this.calculateTimezone(lat, lng)
       }
-      this.reverseGeocode(lat, lng)
-      this.calculateTimezone(lat, lng)
     },
 
     centerOnRealPosition: function () {
       var that = this
       if (this.realLocation) {
         this.setPickLocation(this.realLocation)
-        this.mapZoom = 10
       } else {
         this.isLocating = true
         if (navigator.geolocation) {
@@ -308,7 +304,6 @@ export default {
                 alt: position.coords.altitude || 0
               }
               that.setPickLocation(loc)
-              that.mapZoom = 10
               that.isLocating = false
             },
             function (error) {
@@ -323,53 +318,77 @@ export default {
       }
     },
 
-    reverseGeocode: function (lat, lng) {
-      var that = this
-      fetch(
-        'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=10&addressdetails=1',
-        {
-          headers: {
-            'Accept-Language': navigator.language || 'en'
-          }
-        }
-      )
-        .then(function (response) {
-          return response.json()
-        })
-        .then(function (data) {
-          if (data && data.address) {
-            var addr = data.address
-            var cityName = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district
-            var stateName = addr.state
-            var countryName = addr.country
+    setOfflineLocationName: function (lat, lng) {
+      // Simple offline location naming based on coordinates
+      // Uses rough geographic regions
+      var name = this.getRegionName(lat, lng)
+      this.locationName = name.city || (lat.toFixed(2) + '°, ' + lng.toFixed(2) + '°')
+      this.locationCountry = name.country || ''
+    },
 
-            if (cityName) {
-              that.locationName = cityName
-              if (stateName && stateName !== cityName) {
-                that.locationCountry = stateName + ', ' + (countryName || '')
-              } else {
-                that.locationCountry = countryName || ''
-              }
-            } else if (stateName) {
-              that.locationName = stateName
-              that.locationCountry = countryName || ''
-            } else if (countryName) {
-              that.locationName = countryName
-              that.locationCountry = ''
-            } else {
-              that.locationName = lat.toFixed(4) + ', ' + lng.toFixed(4)
-              that.locationCountry = ''
-            }
-          } else {
-            that.locationName = lat.toFixed(4) + ', ' + lng.toFixed(4)
-            that.locationCountry = ''
-          }
-        })
-        .catch(function (error) {
-          console.error('Reverse geocoding failed:', error)
-          that.locationName = lat.toFixed(4) + ', ' + lng.toFixed(4)
-          that.locationCountry = ''
-        })
+    getRegionName: function (lat, lng) {
+      // Simple offline region detection
+      // Major countries/regions based on bounding boxes
+
+      // India
+      if (lat >= 8 && lat <= 37 && lng >= 68 && lng <= 97) {
+        return { city: 'India', country: '' }
+      }
+      // China
+      if (lat >= 18 && lat <= 54 && lng >= 73 && lng <= 135) {
+        return { city: 'China', country: '' }
+      }
+      // USA (continental)
+      if (lat >= 24 && lat <= 49 && lng >= -125 && lng <= -66) {
+        return { city: 'United States', country: '' }
+      }
+      // Brazil
+      if (lat >= -34 && lat <= 5 && lng >= -74 && lng <= -32) {
+        return { city: 'Brazil', country: '' }
+      }
+      // Russia
+      if (lat >= 41 && lat <= 82 && lng >= 19 && lng <= 180) {
+        return { city: 'Russia', country: '' }
+      }
+      // Australia
+      if (lat >= -45 && lat <= -10 && lng >= 110 && lng <= 155) {
+        return { city: 'Australia', country: '' }
+      }
+      // Europe
+      if (lat >= 35 && lat <= 71 && lng >= -10 && lng <= 40) {
+        return { city: 'Europe', country: '' }
+      }
+      // Africa
+      if (lat >= -35 && lat <= 37 && lng >= -18 && lng <= 52) {
+        return { city: 'Africa', country: '' }
+      }
+      // Japan
+      if (lat >= 24 && lat <= 46 && lng >= 123 && lng <= 146) {
+        return { city: 'Japan', country: '' }
+      }
+      // Indonesia
+      if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) {
+        return { city: 'Indonesia', country: '' }
+      }
+      // Middle East
+      if (lat >= 12 && lat <= 42 && lng >= 25 && lng <= 63) {
+        return { city: 'Middle East', country: '' }
+      }
+      // Canada
+      if (lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52) {
+        return { city: 'Canada', country: '' }
+      }
+      // Mexico
+      if (lat >= 14 && lat <= 33 && lng >= -118 && lng <= -86) {
+        return { city: 'Mexico', country: '' }
+      }
+      // Argentina
+      if (lat >= -55 && lat <= -21 && lng >= -73 && lng <= -53) {
+        return { city: 'Argentina', country: '' }
+      }
+
+      // Default: show coordinates
+      return { city: null, country: null }
     },
 
     calculateTimezone: function (lat, lng) {
@@ -403,56 +422,6 @@ export default {
       }
 
       this.timezoneOffset = offset
-    },
-
-    searchLocation: function () {
-      var that = this
-      if (!this.searchQuery.trim()) return
-
-      this.isSearching = true
-      fetch(
-        'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(this.searchQuery) + '&limit=10',
-        {
-          headers: {
-            'Accept-Language': navigator.language || 'en'
-          }
-        }
-      )
-        .then(function (response) {
-          return response.json()
-        })
-        .then(function (data) {
-          that.searchResults = data
-          that.isSearching = false
-        })
-        .catch(function (error) {
-          console.error('Search failed:', error)
-          that.searchResults = []
-          that.isSearching = false
-        })
-    },
-
-    selectSearchResult: function (result) {
-      var lat = parseFloat(result.lat)
-      var lng = parseFloat(result.lon)
-
-      this.pickLocation = {
-        lat: lat,
-        lng: lng,
-        alt: 0,
-        accuracy: 0
-      }
-      this.mapCenter = [lat, lng]
-      this.mapZoom = 10
-
-      var parts = result.display_name.split(',')
-      this.locationName = parts[0].trim()
-      this.locationCountry = parts.slice(1).join(',').trim()
-
-      this.calculateTimezone(lat, lng)
-      this.showSearchDialog = false
-      this.searchQuery = ''
-      this.searchResults = []
     },
 
     showCoordinateEditor: function (mode) {
@@ -490,10 +459,15 @@ export default {
         }
       }
 
-      this.mapCenter = [this.pickLocation.lat, this.pickLocation.lng]
-      this.reverseGeocode(this.pickLocation.lat, this.pickLocation.lng)
+      this.setOfflineLocationName(this.pickLocation.lat, this.pickLocation.lng)
       this.calculateTimezone(this.pickLocation.lat, this.pickLocation.lng)
       this.showCoordDialog = false
+    },
+
+    applyNameEdit: function () {
+      this.locationName = this.editNameValue || 'Custom Location'
+      this.locationCountry = this.editCountryValue || ''
+      this.showNameEditor = false
     },
 
     formatLatitude: function (lat) {
@@ -528,8 +502,7 @@ export default {
       }
       this.$emit('locationSelected', loc)
     }
-  },
-  components: { LMap, LTileLayer, LMarker, LCircle, LControlZoom, LIcon }
+  }
 }
 </script>
 
@@ -543,21 +516,33 @@ export default {
 
 .map-container {
   position: relative;
-  height: 300px;
   width: 100%;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  background: #000;
+  cursor: crosshair;
 }
 
-.location-map {
+.world-map {
   width: 100%;
   height: 100%;
-  z-index: 1;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.map-marker {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .gps-btn {
   position: absolute;
   bottom: 16px;
   right: 16px;
-  z-index: 1000;
+  z-index: 100;
   background: white !important;
 }
 
@@ -643,37 +628,7 @@ export default {
 }
 
 /* Dialog styles */
-.search-dialog,
 .coord-dialog {
   background: #2d2d44 !important;
-}
-
-.search-results {
-  max-height: 300px;
-  overflow-y: auto;
-  background: transparent !important;
-}
-
-.search-results .v-list-item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.search-results .v-list-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Leaflet overrides */
-.location-map >>> .leaflet-control-zoom {
-  border: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-}
-
-.location-map >>> .leaflet-control-zoom a {
-  background: white !important;
-  color: #333 !important;
-}
-
-.location-map >>> .leaflet-control-zoom a:hover {
-  background: #f0f0f0 !important;
 }
 </style>
