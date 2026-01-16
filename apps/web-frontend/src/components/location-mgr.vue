@@ -347,13 +347,37 @@ export default {
       var nearest = null
       var minDist = Infinity
 
+      // Optimized search: first filter by bounding box (fast), then haversine (accurate)
+      // 5 degrees ≈ 500km at equator, enough for initial filter
+      var latRange = 5
+      var lngRange = 5 / Math.cos(lat * Math.PI / 180) // Adjust for latitude
+
       for (var i = 0; i < this.cities.length; i++) {
         var city = this.cities[i]
+
+        // Quick bounding box check (very fast)
+        if (Math.abs(city.lat - lat) > latRange || Math.abs(city.lng - lng) > lngRange) {
+          continue
+        }
+
+        // Accurate distance calculation only for nearby cities
         var dist = this.haversineDistance(lat, lng, city.lat, city.lng)
 
         if (dist < minDist) {
           minDist = dist
           nearest = city
+        }
+      }
+
+      // If no city found in bounding box, fall back to full search
+      if (!nearest) {
+        for (var j = 0; j < this.cities.length; j++) {
+          var c = this.cities[j]
+          var d = this.haversineDistance(lat, lng, c.lat, c.lng)
+          if (d < minDist) {
+            minDist = d
+            nearest = c
+          }
         }
       }
 

@@ -11,8 +11,8 @@ import time
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TILES_DIR = os.path.join(BASE_DIR, 'public', 'tiles')
 
-# Using OpenStreetMap standard tiles for natural colors
-TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+# Using ESRI World Imagery - satellite view without political boundaries
+TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 
 # User agent to be polite to tile servers
 HEADERS = {
