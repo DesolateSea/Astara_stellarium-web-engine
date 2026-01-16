@@ -371,7 +371,7 @@ export default {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 300;
+  z-index: 200;
   padding: 16px;
 }
 

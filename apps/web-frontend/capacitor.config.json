@@ -2,7 +2,6 @@
     "appId": "com.stellariumlabs.stellaweb",
     "appName": "VayuView",
     "webDir": "dist",
-    "bundledWebRuntime": false,
     "server": {
         "androidScheme": "https"
     },

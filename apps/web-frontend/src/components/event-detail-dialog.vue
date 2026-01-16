@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <v-dialog v-model="show" max-width="500" @click:outside="close" :z-index="500">
+  <v-dialog v-model="show" max-width="500" @click:outside="close" :z-index="1200">
     <v-card dark>
       <v-card-title class="event-detail-header">
         <span class="event-emoji-large">{{ event.emoji }}</span>
@@ -18,9 +18,7 @@
           </span>
         </div>
         <v-spacer></v-spacer>
-        <v-btn icon @click="close">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+
       </v-card-title>
 
       <v-card-text class="event-detail-content">

@@ -238,7 +238,7 @@ export default {
       const simTime = new Date()
       simTime.setMJD(this.$store.state.stel?.observer?.utc || 0)
       const diffMs = Math.abs(now.getTime() - simTime.getTime())
-      return diffMs < 3000 // Within 3 seconds is considered "real time"
+      return diffMs < 65000 // Within 65 seconds is considered "real time"
     }
   },
   watch: {
