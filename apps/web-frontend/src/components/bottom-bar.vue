@@ -334,12 +334,12 @@ export default {
       // If difference is more than 2 days, jump to 2 days diff
       const diffMs = simDate.getTime() - targetDate.getTime()
       const twoDaysMs = 2 * 24 * 60 * 60 * 1000
-      
+
       if (Math.abs(diffMs) > twoDaysMs) {
         const sign = Math.sign(diffMs)
         const newStartMs = targetDate.getTime() + (sign * twoDaysMs)
         const intermediate = new Date(newStartMs)
-        
+
         startMjd = intermediate.getMJD()
         this.$stel.core.observer.utc = startMjd
       }

@@ -228,13 +228,13 @@ export default {
 
       // World bounds to prevent horizontal scrolling beyond map edges
       var worldBounds = L.latLngBounds(
-        L.latLng(-85, -180), // Southwest corner
-        L.latLng(85, 180) // Northeast corner
+        L.latLng(-60, -180), // Southwest corner
+        L.latLng(75, 180) // Northeast corner
       )
 
       // Create map with offline tile layer
       this.map = L.map(container, {
-        center: [20, 0],
+        center: [30, 20],
         zoom: 2,
         minZoom: 2,
         maxZoom: 4,
@@ -242,7 +242,8 @@ export default {
         attributionControl: false,
         maxBounds: worldBounds,
         maxBoundsViscosity: 1.0,
-        worldCopyJump: false
+        worldCopyJump: false,
+        bounceAtZoomLimits: false
       })
 
       // Add offline tile layer (pre-downloaded tiles)
@@ -251,8 +252,12 @@ export default {
         minZoom: 2,
         tileSize: 256,
         noWrap: true,
-        errorTileUrl: process.env.BASE_URL + 'tiles/0/0/0.png'
+        bounds: [[-85, -180], [85, 180]],
+        errorTileUrl: process.env.BASE_URL + 'tiles/2/2/1.png'
       }).addTo(this.map)
+
+      // Fit the map to show the world without edges
+      this.map.fitBounds(worldBounds, { padding: [0, 0] })
 
       // Add click handler
       this.map.on('click', function (e) {
