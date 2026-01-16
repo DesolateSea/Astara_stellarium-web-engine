@@ -63,9 +63,19 @@
     </div>
 
     <!-- Right section: Time -->
-    <div class="bottom-bar-right" @click="toggleTimeMenu">
-      <div class="time-display">
-        {{ time }}
+    <div class="bottom-bar-right">
+      <div class="time-wrapper">
+        <!-- Real-time indicator button -->
+        <transition name="fade">
+          <div v-if="!isRealTime" class="realtime-icon-btn" @click="promptReturnToRealTime">
+            <v-icon size="20">mdi-history</v-icon>
+          </div>
+        </transition>
+
+        <!-- Time display -->
+        <div class="time-display" @click="toggleTimeMenu">
+          {{ time }}
+        </div>
       </div>
     </div>
 
@@ -92,8 +102,21 @@
       </div>
     </transition>
 
+    <!-- Real Time Confirmation Dialog -->
+    <v-dialog v-model="showRealTimeConfirm" max-width="320" :z-index="500">
+      <v-card color="#2d325a" class="white--text rounded-xl">
+        <v-card-title class="text-body-1 font-weight-bold" style="word-break: break-word;">Not in real time</v-card-title>
+        <v-card-text class="white--text text-body-2 pt-1">Would you like to go back to real time?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="#40d1ff" @click="showRealTimeConfirm = false">CANCEL</v-btn>
+          <v-btn text color="#40d1ff" @click="confirmRealTimeYes">YES</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Time picker dialog -->
-    <v-dialog v-model="showTimePicker" max-width="400">
+    <v-dialog v-model="showTimePicker" max-width="400" @click:outside="closeTimePicker" :z-index="500">
       <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
     </v-dialog>
 
@@ -138,7 +161,8 @@ export default {
       showWarningSnackbar: false,
       warningMessage: '',
       smoothedAzimuth: 0,
-      prevAzimuth: null
+      prevAzimuth: null,
+      showRealTimeConfirm: false
     }
   },
   computed: {
@@ -207,6 +231,14 @@ export default {
     },
     hasSelectedObject () {
       return !!this.$store.state.selectedObject
+    },
+    isRealTime () {
+      // Check if current simulation time is within 3 seconds of real time
+      const now = new Date()
+      const simTime = new Date()
+      simTime.setMJD(this.$store.state.stel?.observer?.utc || 0)
+      const diffMs = Math.abs(now.getTime() - simTime.getTime())
+      return diffMs < 3000 // Within 3 seconds is considered "real time"
     }
   },
   watch: {
@@ -275,9 +307,68 @@ export default {
       this.closeTimeMenu()
       this.showTimePicker = true
     },
+    closeTimePicker () {
+      this.showTimePicker = false
+    },
     openCalendar () {
       this.closeTimeMenu()
       this.$store.commit('setShowCalendarPanel', true)
+    },
+    promptReturnToRealTime () {
+      this.showRealTimeConfirm = true
+    },
+    confirmRealTimeYes () {
+      this.showRealTimeConfirm = false
+      this.executeReturnToRealTime()
+    },
+    executeReturnToRealTime () {
+      if (this.rafId) cancelAnimationFrame(this.rafId)
+
+      const targetDate = new Date()
+      // Current sim time
+      const simDate = new Date()
+      simDate.setMJD(this.$stel.core.observer.utc)
+
+      let startMjd = this.$stel.core.observer.utc
+
+      // Check if difference is "too much" (different month or year)
+      // "get back to the same month/year then move to the date or time the correct one"
+      if (simDate.getFullYear() !== targetDate.getFullYear() || simDate.getMonth() !== targetDate.getMonth()) {
+        const intermediate = new Date(simDate.getTime())
+        intermediate.setFullYear(targetDate.getFullYear())
+        intermediate.setMonth(targetDate.getMonth())
+
+        // This effectively "teleports" the year/month but keeps the time/day
+        startMjd = intermediate.getMJD()
+        this.$stel.core.observer.utc = startMjd
+      }
+
+      const targetMjd = targetDate.getMJD()
+      const startTime = performance.now()
+      const duration = 2500 // 2.5 seconds animation
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1.0)
+
+        // Linear interpolation
+        this.$stel.core.observer.utc = startMjd + (targetMjd - startMjd) * progress
+
+        if (progress < 1.0) {
+          this.rafId = requestAnimationFrame(animate)
+        } else {
+          // Finalize
+          if (this.$stel.core.time_speed === 0) {
+            this.$stel.core.time_speed = 1
+          }
+          // Ensure we are exactly at live time at the end
+          const finalNow = new Date()
+          this.$stel.core.observer.utc = finalNow.getMJD()
+          this.rafId = null
+        }
+      }
+
+      this.rafId = requestAnimationFrame(animate)
     },
     onCenterClick () {
       if (this.gyroModeActive) {
@@ -434,7 +525,6 @@ export default {
     this.initCompass()
     // Resume gyro if state thinks it's active (e.g. after HMR or navigation)
     if (this.gyroModeActive && this.$stel && this.$stel.core) {
-      console.log('[BottomBar] Resuming GyroscopeService on mount')
       GyroscopeService.start(this.$stel.core, this.$store, () => {
         this.$store.commit('setGyroModeActive', false)
       })
@@ -610,6 +700,48 @@ export default {
   height: 30%;
   border-radius: 50%;
   object-fit: contain;
+}
+
+/* Time wrapper - container for indicator and time */
+.time-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Real-time indicator badge */
+/* Real-time indicator icon button */
+.realtime-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(30, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+  margin-bottom: 24px; /* Space between icon and time */
+}
+
+.realtime-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.realtime-icon-btn .v-icon {
+  color: #ddd !important;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .time-display {

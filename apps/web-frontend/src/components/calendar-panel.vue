@@ -308,7 +308,6 @@ export default {
     },
     viewEventInSky (event) {
       // Point Stellarium at the event's object
-      console.log('viewEventInSky called for:', event.name, 'objectName:', event.objectName)
 
       if (!event.canViewInSky) {
         console.warn('Event cannot be viewed in sky')
@@ -328,7 +327,6 @@ export default {
       try {
         // Try multiple lookup strategies like other components do
         const obj = this.$stel.getObj('NAME ' + event.objectName) || this.$stel.getObj(event.objectName)
-        console.log('Found object:', obj)
 
         if (obj) {
           // Convert Date to MJD (Modified Julian Date)
@@ -337,16 +335,12 @@ export default {
           const jd = (dateMs / 86400000) + 2440587.5
           const mjd = jd - 2400000.5
 
-          console.log('Setting time to:', event.date, 'MJD:', mjd)
-
           // Set the time to the event time
           this.$stel.core.observer.utc = mjd
 
           // Point at the object
           this.$stel.core.selection = obj
           this.$stel.pointAndLock(obj)
-
-          console.log('Successfully pointed to object and set time')
 
           // Close calendar
           this.close()

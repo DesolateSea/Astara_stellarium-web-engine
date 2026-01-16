@@ -177,6 +177,7 @@ export default {
       },
       scrollTimeout: null,
       isScrolling: false,
+      rafId: null,
       monthNames: [
         { value: 1, label: 'Jan' },
         { value: 2, label: 'Feb' },
@@ -325,10 +326,61 @@ export default {
   },
   methods: {
     resetTime: function () {
-      const m = Moment()
-      m.local()
-      this.$emit('input', m.format())
-      this.$nextTick(() => this.scrollToCurrentValues())
+      if (this.rafId) cancelAnimationFrame(this.rafId)
+
+      const targetMoment = Moment().local()
+      const currentMoment = Moment(this.value).local()
+
+      let startMoment = currentMoment
+
+      // Check if difference is "too much" (different month or year)
+      // "get back to the same month/year then move to the date or time the correct one"
+      if (currentMoment.year() !== targetMoment.year() || currentMoment.month() !== targetMoment.month()) {
+        const intermediate = currentMoment.clone()
+        intermediate.year(targetMoment.year())
+        intermediate.month(targetMoment.month())
+
+        // This effectively "teleports" the year/month but keeps the time/day
+        startMoment = intermediate
+        this.$emit('input', startMoment.format())
+        this.$nextTick(() => this.scrollToCurrentValues())
+      }
+
+      // Convert to MJD for interpolation
+      const startMjd = startMoment.toDate().getMJD()
+      const targetMjd = targetMoment.toDate().getMJD()
+
+      const startTime = performance.now()
+      const duration = 2500 // 2.5 seconds animation
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1.0)
+
+        // Linear interpolation
+        const currentMjd = startMjd + (targetMjd - startMjd) * progress
+
+        const d = new Date()
+        d.setMJD(currentMjd)
+        const m = Moment(d).local()
+
+        this.$emit('input', m.format())
+        // Update wheels? Might be too heavy to do every frame, but "drags back" implies visual feedback.
+        // Let's try it. If laggy, we can throttle.
+        this.scrollToCurrentValues()
+
+        if (progress < 1.0) {
+          this.rafId = requestAnimationFrame(animate)
+        } else {
+          // Finalize - Ensure exact sync
+          const finalM = Moment().local()
+          this.$emit('input', finalM.format())
+          this.$nextTick(() => this.scrollToCurrentValues())
+          this.rafId = null
+        }
+      }
+
+      this.rafId = requestAnimationFrame(animate)
     },
     togglePauseTime: function () {
       this.$stel.core.time_speed = (this.$stel.core.time_speed === 0) ? 1 : 0

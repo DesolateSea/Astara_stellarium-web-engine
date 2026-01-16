@@ -7,7 +7,7 @@
 // repository.
 
 <template>
-  <v-dialog v-model="show" max-width="500" @click:outside="close">
+  <v-dialog v-model="show" max-width="500" @click:outside="close" :z-index="500">
     <v-card dark>
       <v-card-title class="event-detail-header">
         <span class="event-emoji-large">{{ event.emoji }}</span>
@@ -203,17 +203,5 @@ export default {
 </style>
 
 <style>
-/* Global dialog z-index override - must be unscoped to affect Vuetify's v-dialog */
-/* Calendar overlay is z-index: 300, so dialog needs to be higher */
-.v-dialog {
-  z-index: 500 !important;
-}
 
-.v-dialog__content {
-  z-index: 500 !important;
-}
-
-.v-overlay--active {
-  z-index: 499 !important;
-}
 </style>
