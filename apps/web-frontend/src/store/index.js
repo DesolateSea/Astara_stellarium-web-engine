@@ -93,7 +93,8 @@ const createStore = () => {
         lat: 0,
         lng: 0,
         alt: 0,
-        accuracy: 5000
+        accuracy: 5000,
+        timezoneOffset: 0 // UTC offset in hours
       },
 
       currentLocation: {
@@ -103,7 +104,8 @@ const createStore = () => {
         lat: 0,
         lng: 0,
         alt: 0,
-        accuracy: 5000
+        accuracy: 5000,
+        timezoneOffset: 0 // UTC offset in hours
       },
 
       useAutoLocation: true,

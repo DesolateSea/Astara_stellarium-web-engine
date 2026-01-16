@@ -59,12 +59,13 @@
           <div class="settings-section">
             <div class="section-header">Personalization</div>
             <div class="section-card">
-              <div class="settings-item nav-row" @click="navigateTo('location')">
+              <div class="settings-item nav-row" @click="openLocationDialog">
                 <div class="item-icon location-icon">
                   <v-icon size="22">mdi-map-marker</v-icon>
                 </div>
                 <div class="item-content">
                   <div class="item-title">Location</div>
+                  <div class="item-subtitle">{{ cityName }}</div>
                 </div>
                 <div class="item-action">
                   <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
@@ -769,6 +770,11 @@ export default {
       const deg = Math.floor(absLng)
       const min = Math.floor((absLng - deg) * 60)
       return deg + '° ' + min + "' " + (lng >= 0 ? 'E' : 'W')
+    },
+    openLocationDialog: function () {
+      // Close settings panel and open location dialog
+      this.dialogVisible = false
+      this.$store.commit('toggleBool', 'showLocationDialog')
     },
     resetSettings: function () {
       this.sensorsEnabled = false

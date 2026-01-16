@@ -15,7 +15,7 @@ de421.bsp
 deltat.data
 deltat.preds
 hip_main.dat.gz
-
+.DS_Store
 .ipynb_checkpoints
 data_extraction_space_datasetIAF/
 IAF/

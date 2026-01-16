@@ -1116,6 +1116,9 @@ const swh = {
   },
 
   geoCodePosition: function (pos, ctx) {
+    // Calculate timezone offset from longitude (approximate)
+    const timezoneOffset = this.calculateTimezoneOffset(pos.lat, pos.lng)
+
     // Return location with GPS coordinates - no network request needed for offline use
     const ll = ctx.$t('Lat {0}° Lon {1}°', [pos.lat.toFixed(3), pos.lng.toFixed(3)])
     var loc = {
@@ -1125,9 +1128,49 @@ const swh = {
       lat: pos.lat,
       alt: pos.alt ? pos.alt : 0,
       accuracy: pos.accuracy,
-      street_address: ''
+      street_address: '',
+      timezoneOffset: timezoneOffset
     }
     return Promise.resolve(loc)
+  },
+
+  // Calculate approximate timezone offset from coordinates
+  calculateTimezoneOffset: function (lat, lng) {
+    // Approximate timezone from longitude
+    // Each timezone is roughly 15 degrees of longitude
+    let offset = Math.round(lng / 15)
+
+    // Clamp to valid range
+    offset = Math.max(-12, Math.min(14, offset))
+
+    // Special cases for regions with non-standard offsets
+    // India: UTC+5:30
+    if (lat >= 8 && lat <= 37 && lng >= 68 && lng <= 97) {
+      offset = 5.5
+    } else if (lat >= 26 && lat <= 30.5 && lng >= 80 && lng <= 88.5) {
+      // Nepal: UTC+5:45
+      offset = 5.75
+    } else if (lat >= 25 && lat <= 40 && lng >= 44 && lng <= 63) {
+      // Iran: UTC+3:30
+      offset = 3.5
+    } else if (lat >= 29 && lat <= 38.5 && lng >= 60 && lng <= 75) {
+      // Afghanistan: UTC+4:30
+      offset = 4.5
+    } else if (lat >= 9.5 && lat <= 28.5 && lng >= 92 && lng <= 101.5) {
+      // Myanmar: UTC+6:30
+      offset = 6.5
+    } else if (lat >= -45 && lat <= -10 && lng >= 129 && lng <= 141) {
+      // Australia (Central): UTC+9:30
+      offset = 9.5
+    } else if (lat >= 46 && lat <= 52 && lng >= -60 && lng <= -52) {
+      // Newfoundland: UTC-3:30
+      offset = -3.5
+    } else if (lat >= -44.5 && lat <= -43.5 && lng >= -177 && lng <= -176) {
+      // Chatham Islands: UTC+12:45
+      offset = 12.75
+    }
+
+    return offset
   },
 
   getDistanceFromLatLonInM: function (lat1, lon1, lat2, lon2) {
