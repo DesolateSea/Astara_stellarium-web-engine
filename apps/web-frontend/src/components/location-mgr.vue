@@ -74,59 +74,142 @@
       </v-btn>
           </div>
 
-    <!-- Name Editor Dialog -->
-    <v-dialog v-model="showNameEditor" max-width="400">
+    <!-- City Search Dialog -->
+    <v-dialog v-model="showNameEditor" max-width="500">
       <v-card class="coord-dialog">
-        <v-card-title>{{ $t('Edit Location Name') }}</v-card-title>
+        <v-card-title class="text-h5 flex-nowrap">
+          <v-icon left color="primary">mdi-city</v-icon>
+          {{ $t('Search City') }}
+        </v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="editNameValue"
-            :label="$t('Location name')"
+          <v-autocomplete
+            v-model="selectedCity"
+            :items="cities"
+            item-text="name"
+            item-value="name"
+            :label="$t('Enter city name...')"
             outlined
             dense
             autofocus
-            @keyup.enter="applyNameEdit"
-          ></v-text-field>
-          <v-text-field
-            v-model="editCountryValue"
-            :label="$t('Country/Region (optional)')"
-            outlined
-            dense
-            @keyup.enter="applyNameEdit"
-          ></v-text-field>
+            clearable
+            return-object
+            @change="onCitySelected"
+            class="mt-2"
+          >
+            <template v-slot:item="{ item }">
+              <v-list-item-content>
+                <v-list-item-title>{{ item.name }}</v-list-item-title>
+                <v-list-item-subtitle>{{ item.country }} ({{ item.lat.toFixed(2) }}, {{ item.lng.toFixed(2) }})</v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </v-autocomplete>
+
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text @click="showNameEditor = false">{{ $t('Cancel') }}</v-btn>
-          <v-btn color="primary" @click="applyNameEdit">{{ $t('Apply') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Coordinate Editor Dialog -->
-    <v-dialog v-model="showCoordDialog" max-width="400">
+    <v-dialog v-model="showCoordDialog" max-width="450">
       <v-card class="coord-dialog">
-        <v-card-title>{{ coordEditMode === 'lat' ? $t('Edit Latitude') : $t('Edit Longitude') }}</v-card-title>
+        <v-card-title class="text-h5">
+          <v-icon left color="primary">mdi-map-marker-edit</v-icon>
+          {{ coordEditMode === 'lat' ? $t('Edit Latitude') : $t('Edit Longitude') }}
+        </v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="coordEditValue"
-            :label="coordEditMode === 'lat' ? $t('Latitude (-90 to 90)') : $t('Longitude (-180 to 180)')"
-            type="number"
-            :min="coordEditMode === 'lat' ? -90 : -180"
-            :max="coordEditMode === 'lat' ? 90 : 180"
-            step="0.0001"
-            outlined
-            dense
-            autofocus
-            @keyup.enter="applyCoordEdit"
-          ></v-text-field>
+          <div class="dms-editor mt-4">
+            <div class="d-flex align-center justify-space-between mb-4">
+              <div class="dms-field-group">
+                <v-text-field
+                  v-model.number="coordDms.deg"
+                  type="number"
+                  suffix="°"
+                  :min="0"
+                  :max="coordEditMode === 'lat' ? 90 : 180"
+                  outlined
+                  dense
+                  hide-details
+                  class="dms-input"
+                  @input="syncDmsToDecimal"
+                ></v-text-field>
+                <div class="text-caption text-center mt-1 text--secondary">{{ $t('Degrees') }}</div>
+              </div>
+              <div class="dms-field-group mx-2">
+                <v-text-field
+                  v-model.number="coordDms.min"
+                  type="number"
+                  suffix="'"
+                  :min="0"
+                  :max="59"
+                  outlined
+                  dense
+                  hide-details
+                  class="dms-input"
+                  @input="syncDmsToDecimal"
+                ></v-text-field>
+                <div class="text-caption text-center mt-1 text--secondary">{{ $t('Minutes') }}</div>
+              </div>
+              <div class="dms-field-group">
+                <v-text-field
+                  v-model.number="coordDms.sec"
+                  type="number"
+                  suffix='"'
+                  :min="0"
+                  :max="59"
+                  outlined
+                  dense
+                  hide-details
+                  class="dms-input"
+                  @input="syncDmsToDecimal"
+                ></v-text-field>
+                <div class="text-caption text-center mt-1 text--secondary">{{ $t('Seconds') }}</div>
+              </div>
+            </div>
+
+            <div class="hemisphere-container">
+              <div class="hemisphere-label text-caption text--secondary mb-2">{{ $t('Direction') }}</div>
+              <v-btn-toggle
+                v-model="coordDms.hemisphere"
+                mandatory
+                class="hemisphere-toggle"
+                @change="syncDmsToDecimal"
+              >
+                <v-btn
+                  :value="coordEditMode === 'lat' ? 'N' : 'E'"
+                  :class="{ 'active-hemisphere': coordDms.hemisphere === (coordEditMode === 'lat' ? 'N' : 'E') }"
+                  class="hemisphere-btn"
+                >
+                  <span class="hemisphere-letter">{{ coordEditMode === 'lat' ? 'N' : 'E' }}</span>
+                  <span class="hemisphere-name">{{ coordEditMode === 'lat' ? $t('North') : $t('East') }}</span>
+                </v-btn>
+                <v-btn
+                  :value="coordEditMode === 'lat' ? 'S' : 'W'"
+                  :class="{ 'active-hemisphere': coordDms.hemisphere === (coordEditMode === 'lat' ? 'S' : 'W') }"
+                  class="hemisphere-btn"
+                >
+                  <span class="hemisphere-letter">{{ coordEditMode === 'lat' ? 'S' : 'W' }}</span>
+                  <span class="hemisphere-name">{{ coordEditMode === 'lat' ? $t('South') : $t('West') }}</span>
+                </v-btn>
+              </v-btn-toggle>
+            </div>
+          </div>
+
+          <v-card outlined class="mt-6 pa-3 secondary-bg">
+            <div class="text-caption text--secondary mb-1">{{ $t('Decimal Preview') }}</div>
+            <div class="text-h6 white--text">
+              {{ coordEditValue }}°
+            </div>
+          </v-card>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text @click="showCoordDialog = false">{{ $t('Cancel') }}</v-btn>
-          <v-btn color="primary" @click="applyCoordEdit">{{ $t('Apply') }}</v-btn>
+          <v-btn color="primary" depressed @click="applyCoordEdit">{{ $t('Apply') }}</v-btn>
         </v-card-actions>
-        </v-card>
+      </v-card>
     </v-dialog>
   </div>
 </template>
@@ -152,14 +235,19 @@ export default {
       showNameEditor: false,
       coordEditMode: 'lat',
       coordEditValue: '',
-      editNameValue: '',
-      editCountryValue: '',
       locationName: 'Unknown',
       locationCountry: '',
       timezoneOffset: 0,
       map: null,
       marker: null,
-      cities: []
+      cities: [],
+      selectedCity: null,
+      coordDms: {
+        deg: 0,
+        min: 0,
+        sec: 0,
+        hemisphere: 'N'
+      }
     }
   },
   props: ['showMyLocation', 'knownLocations', 'startLocation', 'realLocation'],
@@ -476,14 +564,46 @@ export default {
 
     showCoordinateEditor: function (mode) {
       this.coordEditMode = mode
+      var val = 0
       if (this.pickLocation) {
-        this.coordEditValue = mode === 'lat'
-          ? this.pickLocation.lat.toFixed(6)
-          : this.pickLocation.lng.toFixed(6)
-      } else {
-        this.coordEditValue = '0'
+        val = mode === 'lat' ? this.pickLocation.lat : this.pickLocation.lng
       }
+      this.coordEditValue = val.toFixed(6)
+
+      // Initialize DMS fields
+      var abs = Math.abs(val)
+      this.coordDms.deg = Math.floor(abs)
+      var minFloat = (abs - this.coordDms.deg) * 60
+      this.coordDms.min = Math.floor(minFloat)
+      this.coordDms.sec = Math.round((minFloat - this.coordDms.min) * 60)
+
+      if (mode === 'lat') {
+        this.coordDms.hemisphere = val >= 0 ? 'N' : 'S'
+      } else {
+        this.coordDms.hemisphere = val >= 0 ? 'E' : 'W'
+      }
+
       this.showCoordDialog = true
+    },
+
+    syncDmsToDecimal: function () {
+      // Clamp inputs
+      var maxDeg = this.coordEditMode === 'lat' ? 90 : 180
+      this.coordDms.deg = Math.max(0, Math.min(maxDeg, parseInt(this.coordDms.deg) || 0))
+      this.coordDms.min = Math.max(0, Math.min(59, parseInt(this.coordDms.min) || 0))
+      this.coordDms.sec = Math.max(0, Math.min(59, parseInt(this.coordDms.sec) || 0))
+
+      // If degrees are at maximum, min and sec must be 0
+      if (this.coordDms.deg === maxDeg) {
+        this.coordDms.min = 0
+        this.coordDms.sec = 0
+      }
+
+      var decimal = this.coordDms.deg + (this.coordDms.min / 60) + (this.coordDms.sec / 3600)
+      if (this.coordDms.hemisphere === 'S' || this.coordDms.hemisphere === 'W') {
+        decimal = -decimal
+      }
+      this.coordEditValue = decimal.toFixed(6)
     },
 
     applyCoordEdit: function () {
@@ -509,10 +629,16 @@ export default {
       this.showCoordDialog = false
     },
 
-    applyNameEdit: function () {
-      this.locationName = this.editNameValue || 'Custom Location'
-      this.locationCountry = this.editCountryValue || ''
+    onCitySelected: function (city) {
+      if (!city) return
+      this.locationName = city.name
+      this.locationCountry = city.country
+      this.onMapClick(city.lat, city.lng)
+      if (this.map) {
+        this.map.setView([city.lat, city.lng], 8)
+      }
       this.showNameEditor = false
+      this.selectedCity = null
     },
 
     formatLatitude: function (lat) {
@@ -665,6 +791,64 @@ export default {
 /* Dialog styles */
 .coord-dialog {
   background: #2d2d44 !important;
+}
+
+.secondary-bg {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dms-input ::v-deep input {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.hemisphere-toggle {
+  width: 100%;
+  display: flex !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 12px !important;
+  padding: 4px !important;
+  gap: 4px;
+}
+
+.hemisphere-btn {
+  flex: 1 !important;
+  height: 56px !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s ease !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.hemisphere-btn.active-hemisphere {
+  background: linear-gradient(135deg, #2196F3, #1565C0) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4) !important;
+}
+
+.hemisphere-letter {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hemisphere-name {
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.hemisphere-container {
+  margin-top: 8px;
 }
 
 /* Override Leaflet styles for dark theme */

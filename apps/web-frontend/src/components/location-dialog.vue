@@ -81,6 +81,14 @@ export default {
       this.$store.commit('setUseAutoLocation', false)
     }
   },
+  watch: {
+    '$store.state.showLocationDialog': function (newVal) {
+      if (newVal) {
+        // Clear selected object when location dialog opens
+        this.$store.commit('setSelectedObject', undefined)
+      }
+    }
+  },
   components: { LocationMgr }
 }
 </script>
