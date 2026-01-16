@@ -63,9 +63,19 @@
     </div>
 
     <!-- Right section: Time -->
-    <div class="bottom-bar-right" @click="showTimePicker = !showTimePicker">
-      <div class="time-display">
-        {{ time }}
+    <div class="bottom-bar-right">
+      <div class="time-wrapper">
+        <!-- Real-time indicator button -->
+        <transition name="fade">
+          <div v-if="!isRealTime" class="realtime-icon-btn" @click="promptReturnToRealTime">
+            <v-icon size="20">mdi-history</v-icon>
+          </div>
+        </transition>
+
+        <!-- Time display -->
+        <div class="time-display" @click="toggleTimeMenu">
+          {{ time }}
+        </div>
       </div>
     </div>
 
@@ -75,10 +85,40 @@
       </div>
     </transition>
 
-    <!-- Time picker dialog -->
-    <v-dialog v-model="showTimePicker" max-width="400">
-      <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
+    <!-- Time Menu -->
+    <transition name="fade">
+      <div class="time-menu-overlay" v-if="$store.state.showTimeMenu" @click.self="closeTimeMenu">
+        <div class="time-menu">
+          <div class="time-menu-item" @click="openTimePicker">
+            <v-icon>mdi-clock-outline</v-icon>
+            <span>Time Control</span>
+          </div>
+          <v-divider></v-divider>
+          <div class="time-menu-item" @click="openCalendar">
+            <v-icon>mdi-calendar-star</v-icon>
+            <span>Calendar</span>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Real Time Confirmation Dialog -->
+    <v-dialog v-model="showRealTimeConfirm" max-width="320" :z-index="500">
+      <v-card color="#2d325a" class="white--text rounded-xl">
+        <v-card-title class="text-body-1 font-weight-bold" style="word-break: break-word;">Not in real time</v-card-title>
+        <v-card-text class="white--text text-body-2 pt-1">Would you like to go back to real time?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="#40d1ff" @click="showRealTimeConfirm = false">CANCEL</v-btn>
+          <v-btn text color="#40d1ff" @click="confirmRealTimeYes">YES</v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
+
+    <!-- Time picker bottom sheet -->
+    <v-bottom-sheet v-model="showTimePicker" :z-index="500" hide-overlay>
+      <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
+    </v-bottom-sheet>
 
     <!-- Gyro Activation Dialog - Pill Banner -->
     <transition name="fade">
@@ -121,7 +161,8 @@ export default {
       showWarningSnackbar: false,
       warningMessage: '',
       smoothedAzimuth: 0,
-      prevAzimuth: null
+      prevAzimuth: null,
+      showRealTimeConfirm: false
     }
   },
   computed: {
@@ -190,6 +231,14 @@ export default {
     },
     hasSelectedObject () {
       return !!this.$store.state.selectedObject
+    },
+    isRealTime () {
+      // Check if current simulation time is within 3 seconds of real time
+      const now = new Date()
+      const simTime = new Date()
+      simTime.setMJD(this.$store.state.stel?.observer?.utc || 0)
+      const diffMs = Math.abs(now.getTime() - simTime.getTime())
+      return diffMs < 65000 // Within 65 seconds is considered "real time"
     }
   },
   watch: {
@@ -247,6 +296,80 @@ export default {
     },
     closeMenu () {
       this.showMenuPanel = false
+    },
+    toggleTimeMenu () {
+      this.$store.commit('setShowTimeMenu', !this.$store.state.showTimeMenu)
+    },
+    closeTimeMenu () {
+      this.$store.commit('setShowTimeMenu', false)
+    },
+    openTimePicker () {
+      this.closeTimeMenu()
+      this.showTimePicker = true
+    },
+    closeTimePicker () {
+      this.showTimePicker = false
+    },
+    openCalendar () {
+      this.closeTimeMenu()
+      this.$store.commit('setShowCalendarPanel', true)
+    },
+    promptReturnToRealTime () {
+      this.showRealTimeConfirm = true
+    },
+    confirmRealTimeYes () {
+      this.showRealTimeConfirm = false
+      this.executeReturnToRealTime()
+    },
+    executeReturnToRealTime () {
+      if (this.rafId) cancelAnimationFrame(this.rafId)
+
+      const targetDate = new Date()
+      // Current sim time
+      const simDate = new Date()
+      simDate.setMJD(this.$stel.core.observer.utc)
+
+      let startMjd = this.$stel.core.observer.utc
+
+      // If difference is more than 2 days, jump to 2 days diff
+      const diffMs = simDate.getTime() - targetDate.getTime()
+      const twoDaysMs = 2 * 24 * 60 * 60 * 1000
+
+      if (Math.abs(diffMs) > twoDaysMs) {
+        const sign = Math.sign(diffMs)
+        const newStartMs = targetDate.getTime() + (sign * twoDaysMs)
+        const intermediate = new Date(newStartMs)
+
+        startMjd = intermediate.getMJD()
+        this.$stel.core.observer.utc = startMjd
+      }
+
+      const targetMjd = targetDate.getMJD()
+      const startTime = performance.now()
+      const duration = 2500 // 2.5 seconds animation
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1.0)
+
+        // Linear interpolation
+        this.$stel.core.observer.utc = startMjd + (targetMjd - startMjd) * progress
+
+        if (progress < 1.0) {
+          this.rafId = requestAnimationFrame(animate)
+        } else {
+          // Finalize
+          if (this.$stel.core.time_speed === 0) {
+            this.$stel.core.time_speed = 1
+          }
+          // Ensure we are exactly at live time at the end
+          const finalNow = new Date()
+          this.$stel.core.observer.utc = finalNow.getMJD()
+          this.rafId = null
+        }
+      }
+
+      this.rafId = requestAnimationFrame(animate)
     },
     onCenterClick () {
       if (this.gyroModeActive) {
@@ -403,7 +526,6 @@ export default {
     this.initCompass()
     // Resume gyro if state thinks it's active (e.g. after HMR or navigation)
     if (this.gyroModeActive && this.$stel && this.$stel.core) {
-      console.log('[BottomBar] Resuming GyroscopeService on mount')
       GyroscopeService.start(this.$stel.core, this.$store, () => {
         this.$store.commit('setGyroModeActive', false)
       })
@@ -581,6 +703,48 @@ export default {
   object-fit: contain;
 }
 
+/* Time wrapper - container for indicator and time */
+.time-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Real-time indicator badge */
+/* Real-time indicator icon button */
+.realtime-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(30, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+  margin-bottom: 24px; /* Space between icon and time */
+}
+
+.realtime-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.realtime-icon-btn .v-icon {
+  color: #ddd !important;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .time-display {
   font-size: 28px;
   color: rgba(255, 255, 255, 0.9);
@@ -676,4 +840,54 @@ export default {
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* Time Menu Styles */
+.time-menu-overlay {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: auto;
+  padding: 16px;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+
+.time-menu {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  min-width: 200px;
+}
+
+.time-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: white;
+}
+
+.time-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.time-menu-item .v-icon {
+  color: white;
+  font-size: 24px;
+}
+
+.time-menu-item span {
+  font-size: 16px;
+  font-weight: 500;
+}
+
 </style>

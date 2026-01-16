@@ -93,7 +93,8 @@ const createStore = () => {
         lat: 0,
         lng: 0,
         alt: 0,
-        accuracy: 5000
+        accuracy: 5000,
+        timezoneOffset: 0 // UTC offset in hours
       },
 
       currentLocation: {
@@ -103,7 +104,8 @@ const createStore = () => {
         lat: 0,
         lng: 0,
         alt: 0,
-        accuracy: 5000
+        accuracy: 5000,
+        timezoneOffset: 0 // UTC offset in hours
       },
 
       useAutoLocation: true,
@@ -122,7 +124,23 @@ const createStore = () => {
       arOpacity: 0.5,
 
       // Current skyculture ID for reactive tracking
-      currentSkyCultureId: 'western'
+      currentSkyCultureId: 'western',
+
+      // Calendar panel state
+      showCalendarPanel: false,
+      showTimeMenu: false, // Menu for time control vs calendar
+      calendarCurrentMonth: new Date().getMonth(),
+      calendarCurrentYear: new Date().getFullYear(),
+      calendarEvents: [],
+      calendarView: 'list', // 'list' or 'grid'
+      calendarFilters: {
+        'Moon Events': true,
+        'Solar Events': true,
+        'Planetary Events': true,
+        Eclipses: true,
+        'Historical Events': true
+      },
+      selectedCalendarEvent: null
     },
     mutations: {
       replaceStelWebEngine (state, newTree) {
@@ -224,6 +242,29 @@ const createStore = () => {
       },
       setCurrentSkyCultureId (state, value) {
         state.currentSkyCultureId = value
+      },
+      // Calendar mutations
+      setShowCalendarPanel (state, value) {
+        state.showCalendarPanel = value
+      },
+      setShowTimeMenu (state, value) {
+        state.showTimeMenu = value
+      },
+      setCalendarMonth (state, { month, year }) {
+        state.calendarCurrentMonth = month
+        state.calendarCurrentYear = year
+      },
+      setCalendarEvents (state, events) {
+        state.calendarEvents = events
+      },
+      setCalendarView (state, view) {
+        state.calendarView = view
+      },
+      toggleCalendarFilter (state, category) {
+        state.calendarFilters[category] = !state.calendarFilters[category]
+      },
+      setSelectedCalendarEvent (state, event) {
+        state.selectedCalendarEvent = event
       }
     }
   })

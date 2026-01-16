@@ -1,3 +1,4 @@
+```
 // Stellarium Web - Copyright (c) 2022 - Stellarium Labs SRL
 //
 // This program is licensed under the terms of the GNU AGPL v3, or
@@ -7,144 +8,187 @@
 // repository.
 
 <template>
-  <v-card class="datetime-picker-card" width="380">
+  <v-card
+    class="datetime-picker-card"
+    width="100%"
+    dark
+    v-touch="{
+      up: () => isExpanded = true,
+      down: () => isExpanded = false
+    }"
+  >
+    <!-- Drag Handle -->
+    <div class="drag-handle-container" @click="isExpanded = !isExpanded">
+      <div class="drag-handle"></div>
+    </div>
+
     <v-container class="picker-container">
-      <!-- Header with controls -->
-      <div class="picker-header">
-        <v-row justify="center" no-gutters align="center">
-          <v-tooltip top>
-            <template v-slot:activator="{ on }">
-              <v-btn icon small class="action-btn" @click="resetTime" v-on="on">
-                <v-icon small>mdi-history</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ $t('Back to real time') }}</span>
-          </v-tooltip>
-          <v-tooltip top>
-            <template v-slot:activator="{ on }">
-              <v-btn icon small class="action-btn" :class="{ 'is-paused': isTimePaused }" @click="togglePauseTime" v-on="on">
-                <v-icon small>{{ togglePauseTimeIcon }}</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ $t('Pause/unpause time') }}</span>
-          </v-tooltip>
-        </v-row>
-      </div>
 
-      <!-- Date Wheel Picker -->
-      <div class="wheel-section">
-        <div class="wheel-container">
-          <!-- Month Wheel -->
-          <div class="wheel-column">
-            <div class="wheel-label">Month</div>
-            <div class="wheel-scroll" ref="monthWheel" @scroll="onMonthScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="m in monthNames"
-                :key="m.value"
-                class="wheel-item"
-                :class="{ 'selected': m.value === currentMonth }"
-                @click="setMonth(m.value)"
-              >{{ m.label }}</div>
-              <div class="wheel-spacer"></div>
-            </div>
+      <transition name="fade-transition" mode="out-in">
+        <!-- Collapsed View -->
+        <div v-if="!isExpanded" key="collapsed" class="collapsed-view">
+          <!-- Text Display -->
+          <div class="simple-datetime-display">
+            {{ collapsedDateTimeString }}
           </div>
 
-          <!-- Day Wheel -->
-          <div class="wheel-column">
-            <div class="wheel-label">Day</div>
-            <div class="wheel-scroll" ref="dayWheel" @scroll="onDayScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="d in daysInMonth"
-                :key="d"
-                class="wheel-item"
-                :class="{ 'selected': d === currentDay }"
-                @click="setDay(d)"
-              >{{ d }}</div>
-              <div class="wheel-spacer"></div>
+          <!-- Simple Controls (Prev, History, Next) -->
+          <div class="quick-actions-section compact">
+            <div class="action-item" @click.stop="addDay(-1)">
+              <v-btn icon large>
+                <v-icon>mdi-skip-previous</v-icon>
+              </v-btn>
             </div>
-          </div>
 
-          <!-- Year Wheel -->
-          <div class="wheel-column year-column">
-            <div class="wheel-label">Year</div>
-            <div class="wheel-scroll" ref="yearWheel" @scroll="onYearScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="y in yearRange"
-                :key="y"
-                class="wheel-item"
-                :class="{ 'selected': y === currentYear }"
-                @click="setYear(y)"
-              >{{ y }}</div>
-              <div class="wheel-spacer"></div>
+            <div class="action-item" @click.stop="resetTime">
+              <v-btn icon large class="now-btn">
+                <v-icon>mdi-history</v-icon>
+              </v-btn>
+            </div>
+
+            <div class="action-item" @click.stop="addDay(1)">
+              <v-btn icon large>
+                <v-icon>mdi-skip-next</v-icon>
+              </v-btn>
             </div>
           </div>
         </div>
-        <div class="wheel-highlight"></div>
-      </div>
 
-      <!-- Time Wheel Picker -->
-      <div class="wheel-section time-section">
-        <div class="wheel-container">
-          <!-- Hour Wheel -->
-          <div class="wheel-column">
-            <div class="wheel-label">Hour</div>
-            <div class="wheel-scroll" ref="hourWheel" @scroll="onHourScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="h in 24"
-                :key="h - 1"
-                class="wheel-item"
-                :class="{ 'selected': (h - 1) === currentHour }"
-                @click="setHour(h - 1)"
-              >{{ String(h - 1).padStart(2, '0') }}</div>
-              <div class="wheel-spacer"></div>
+        <!-- Expanded View -->
+        <div v-else key="expanded" class="expanded-view">
+          <!-- Date/Time Display with Arrows -->
+          <div class="datetime-display-section">
+            <!-- Date Group -->
+            <div class="datetime-group">
+              <!-- Year -->
+              <div class="digit-column year-column">
+                <v-btn icon max-height="24" @click="addYear(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value">{{ currentYear }}</div>
+                <v-btn icon max-height="24" @click="addYear(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
+              <span class="separator">/</span>
+              <!-- Month -->
+              <div class="digit-column month-column">
+                <v-btn icon max-height="24" @click="addMonth(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value">{{ currentMonthPadded }}</div>
+                <v-btn icon max-height="24" @click="addMonth(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
+              <span class="separator">/</span>
+              <!-- Day -->
+              <div class="digit-column day-column">
+                <v-btn icon max-height="24" @click="addDay(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value">{{ currentDayPadded }}</div>
+                <v-btn icon max-height="24" @click="addDay(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
+            </div>
+
+            <!-- Spacer -->
+            <div style="width: 20px;"></div>
+
+            <!-- Time Group -->
+            <div class="datetime-group">
+              <!-- Hour -->
+              <div class="digit-column">
+                <v-btn icon max-height="24" @click="addHour(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value">{{ currentHourPadded }}</div>
+                <v-btn icon max-height="24" @click="addHour(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
+              <span class="separator">:</span>
+              <!-- Minute -->
+              <div class="digit-column">
+                <v-btn icon max-height="24" @click="addMinute(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value">{{ currentMinutePadded }}</div>
+                <v-btn icon max-height="24" @click="addMinute(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
+              <span class="separator-seconds">:</span>
+              <!-- Second -->
+              <div class="digit-column">
+                <v-btn icon max-height="24" @click="addSecond(1)">
+                  <v-icon small>mdi-menu-up</v-icon>
+                </v-btn>
+                <div class="digit-value highlight-seconds">{{ currentSecondPadded }}</div>
+                <v-btn icon max-height="24" @click="addSecond(-1)">
+                  <v-icon small>mdi-menu-down</v-icon>
+                </v-btn>
+              </div>
             </div>
           </div>
 
-          <span class="time-colon">:</span>
+          <!-- Speed Control Section -->
+          <div class="speed-control-section">
+            <div class="speed-label">{{ speedLabelText }}</div>
+            <div class="speed-controls-row">
+              <v-btn icon small @click="togglePauseTime">
+                 <v-icon>{{ isTimePaused ? 'mdi-play' : 'mdi-pause' }}</v-icon>
+              </v-btn>
 
-          <!-- Minute Wheel -->
-          <div class="wheel-column">
-            <div class="wheel-label">Min</div>
-            <div class="wheel-scroll" ref="minuteWheel" @scroll="onMinuteScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="m in 60"
-                :key="m - 1"
-                class="wheel-item"
-                :class="{ 'selected': (m - 1) === currentMinute }"
-                @click="setMinute(m - 1)"
-              >{{ String(m - 1).padStart(2, '0') }}</div>
-              <div class="wheel-spacer"></div>
+              <v-slider
+                v-model="speedSliderVal"
+                :min="-100"
+                :max="100"
+                track-color="rgba(255,255,255,0.2)"
+                thumb-color="#8c9eff"
+                hide-details
+                class="speed-slider mx-3"
+                @change="onSpeedChange"
+              ></v-slider>
+
+              <v-btn icon small @click="resetSpeed">
+                <v-icon size="20">mdi-refresh</v-icon>
+              </v-btn>
             </div>
           </div>
 
-          <span class="time-colon">:</span>
+          <v-divider class="my-3" style="border-color: rgba(255,255,255,0.1);"></v-divider>
 
-          <!-- Second Wheel -->
-          <div class="wheel-column">
-            <div class="wheel-label">Sec</div>
-            <div class="wheel-scroll" ref="secondWheel" @scroll="onSecondScroll">
-              <div class="wheel-spacer"></div>
-              <div
-                v-for="s in 60"
-                :key="s - 1"
-                class="wheel-item"
-                :class="{ 'selected': (s - 1) === currentSecond }"
-                @click="setSecond(s - 1)"
-              >{{ String(s - 1).padStart(2, '0') }}</div>
-              <div class="wheel-spacer"></div>
+          <!-- Quick Actions (Expanded) -->
+          <div class="quick-actions-section">
+            <div class="action-item" @click="addDay(-1)">
+              <v-btn icon>
+                <v-icon>mdi-skip-previous</v-icon>
+              </v-btn>
+              <span class="action-label">Previous night</span>
+            </div>
+
+            <div class="action-item" @click="resetTime">
+              <v-btn icon large class="now-btn">
+                <v-icon>mdi-history</v-icon>
+              </v-btn>
+              <span class="action-label">Set time to now</span>
+            </div>
+
+            <div class="action-item" @click="addDay(1)">
+              <v-btn icon>
+                <v-icon>mdi-skip-next</v-icon>
+              </v-btn>
+              <span class="action-label">Next night</span>
             </div>
           </div>
         </div>
-        <div class="wheel-highlight"></div>
-      </div>
+      </transition>
 
-      <!-- Sky Brightness Slider -->
-      <div class="slider-section">
+      <!-- Sky Brightness / Dusk Slider (Shared) -->
+      <div class="dusk-slider-section mt-4">
         <div class="slider-wrapper">
           <input
             type="range"
@@ -154,11 +198,11 @@
             class="native-slider"
           />
         </div>
-        <div class="sky-status" :class="skyStatusClass">
-          <v-icon x-small class="status-icon">{{ skyStatusIcon }}</v-icon>
-          <span>{{ sliderHint }}</span>
+        <div class="dusk-label text-center mt-1">
+          {{ sliderHint || 'Time' }}
         </div>
       </div>
+
     </v-container>
   </v-card>
 </template>
@@ -175,22 +219,9 @@ export default {
         sliderStartTime: undefined,
         location: undefined
       },
-      scrollTimeout: null,
-      isScrolling: false,
-      monthNames: [
-        { value: 1, label: 'Jan' },
-        { value: 2, label: 'Feb' },
-        { value: 3, label: 'Mar' },
-        { value: 4, label: 'Apr' },
-        { value: 5, label: 'May' },
-        { value: 6, label: 'Jun' },
-        { value: 7, label: 'Jul' },
-        { value: 8, label: 'Aug' },
-        { value: 9, label: 'Sep' },
-        { value: 10, label: 'Oct' },
-        { value: 11, label: 'Nov' },
-        { value: 12, label: 'Dec' }
-      ]
+      rafId: null,
+      speedSliderVal: 0, // Logarithmic or mapped value for slider
+      isExpanded: false
     }
   },
   props: ['value', 'location'],
@@ -206,80 +237,34 @@ export default {
         this.$emit('input', newValue.format())
       }
     },
-    currentYear: function () {
-      return this.localTime.year()
+    collapsedDateTimeString: function () {
+      return this.localTime.format('ddd MMM DD YYYY, HH:mm:ss')
     },
-    currentMonth: function () {
-      return this.localTime.month() + 1
+    currentYear () { return this.localTime.year() },
+    currentMonth () { return this.localTime.month() + 1 },
+    currentMonthPadded () { return String(this.currentMonth).padStart(2, '0') },
+    currentDay () { return this.localTime.date() },
+    currentDayPadded () { return String(this.currentDay).padStart(2, '0') },
+    currentHour () { return this.localTime.hour() },
+    currentHourPadded () { return String(this.currentHour).padStart(2, '0') },
+    currentMinute () { return this.localTime.minute() },
+    currentMinutePadded () { return String(this.currentMinute).padStart(2, '0') },
+    currentSecond () { return this.localTime.second() },
+    currentSecondPadded () { return String(this.currentSecond).padStart(2, '0') },
+
+    isTimePaused: function () {
+      return this.$store.state.stel.time_speed === 0
     },
-    currentDay: function () {
-      return this.localTime.date()
-    },
-    currentHour: function () {
-      return this.localTime.hour()
-    },
-    currentMinute: function () {
-      return this.localTime.minute()
-    },
-    currentSecond: function () {
-      return this.localTime.second()
-    },
-    yearRange: function () {
-      const current = this.currentYear
-      const years = []
-      for (let y = current - 100; y <= current + 100; y++) {
-        years.push(y)
+    speedLabelText: function () {
+      const speed = this.$store.state.stel.time_speed
+      if (Math.abs(speed - 1) < 0.001) {
+        return 'Real time'
       }
-      return years
-    },
-    daysInMonth: function () {
-      const days = this.localTime.daysInMonth()
-      return Array.from({ length: days }, (_, i) => i + 1)
-    },
-    time: {
-      get: function () {
-        return this.localTime.format('HH:mm:ss')
+      if (speed === 0) {
+        return 'Paused'
       }
-    },
-    year: function () {
-      return this.localTime.format('YYYY')
-    },
-    month: function () {
-      return this.localTime.format('MM')
-    },
-    day: function () {
-      return this.localTime.format('DD')
-    },
-    hours: function () {
-      return this.localTime.format('HH')
-    },
-    minutes: function () {
-      return this.localTime.format('mm')
-    },
-    seconds: function () {
-      return this.localTime.format('ss')
-    },
-    date: {
-      get: function () {
-        return this.localTime.format('YYYY-MM-DD')
-      }
-    },
-    skyStatusClass: function () {
-      const hint = this.sliderHint
-      if (hint === this.$t('Daylight')) return 'daylight'
-      if (hint === this.$t('Dark night')) return 'dark-night'
-      if (hint === this.$t('Moonlight')) return 'moonlight'
-      if (hint === this.$t('Dawn')) return 'dawn'
-      if (hint === this.$t('Twilight')) return 'twilight'
-      return ''
-    },
-    skyStatusIcon: function () {
-      const hint = this.sliderHint
-      if (hint === this.$t('Daylight')) return 'mdi-white-balance-sunny'
-      if (hint === this.$t('Dark night')) return 'mdi-weather-night'
-      if (hint === this.$t('Moonlight')) return 'mdi-moon-waning-crescent'
-      if (hint === this.$t('Dawn') || hint === this.$t('Twilight')) return 'mdi-weather-sunset'
-      return 'mdi-weather-night'
+      const formatted = Number.isInteger(speed) ? speed : speed.toFixed(1)
+      return formatted + 'x'
     },
     timeMinute: {
       get: function () {
@@ -315,120 +300,94 @@ export default {
         return stop.moonAlt < 5 ? this.$t('Dark night') : this.$t('Moonlight')
       }
       return tm > 720 ? this.$t('Dawn') : this.$t('Twilight')
-    },
-    isTimePaused: function () {
-      return this.$store.state.stel.time_speed === 0
-    },
-    togglePauseTimeIcon: function () {
-      return this.isTimePaused ? 'mdi-play' : 'mdi-pause'
     }
   },
   methods: {
-    resetTime: function () {
-      const m = Moment()
-      m.local()
-      this.$emit('input', m.format())
-      this.$nextTick(() => this.scrollToCurrentValues())
+    addYear (val) { this.updateTime(t => t.add(val, 'years')) },
+    addMonth (val) { this.updateTime(t => t.add(val, 'months')) },
+    addDay (val) { this.updateTime(t => t.add(val, 'days')) },
+    addHour (val) { this.updateTime(t => t.add(val, 'hours')) },
+    addMinute (val) { this.updateTime(t => t.add(val, 'minutes')) },
+    addSecond (val) { this.updateTime(t => t.add(val, 'seconds')) },
+
+    updateTime (fn) {
+      const t = this.localTime.clone()
+      fn(t)
+      this.$emit('input', t.format())
     },
+
+    resetTime: function () {
+      if (this.rafId) cancelAnimationFrame(this.rafId)
+
+      const targetMoment = Moment().local()
+      const currentMoment = Moment(this.value).local()
+
+      let startMoment = currentMoment
+
+      if (currentMoment.year() !== targetMoment.year() || currentMoment.month() !== targetMoment.month()) {
+        const intermediate = currentMoment.clone()
+        intermediate.year(targetMoment.year())
+        intermediate.month(targetMoment.month())
+        startMoment = intermediate
+        this.$emit('input', startMoment.format())
+      }
+
+      const startMjd = startMoment.toDate().getMJD()
+      const targetMjd = targetMoment.toDate().getMJD()
+
+      const startTime = performance.now()
+      const duration = 2500
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1.0)
+
+        const currentMjd = startMjd + (targetMjd - startMjd) * progress
+
+        const d = new Date()
+        d.setMJD(currentMjd)
+        const m = Moment(d).local()
+
+        this.$emit('input', m.format())
+
+        if (progress < 1.0) {
+          this.rafId = requestAnimationFrame(animate)
+        } else {
+          const finalM = Moment().local()
+          this.$emit('input', finalM.format())
+          this.rafId = null
+          // Also reset speed
+          this.resetSpeed()
+        }
+      }
+
+      this.rafId = requestAnimationFrame(animate)
+    },
+
     togglePauseTime: function () {
       this.$stel.core.time_speed = (this.$stel.core.time_speed === 0) ? 1 : 0
     },
-    setYear: function (year) {
-      const t = this.localTime.clone()
-      t.year(year)
-      this.$emit('input', t.format())
+
+    resetSpeed () {
+      this.$stel.core.time_speed = 1
+      this.speedSliderVal = 0
     },
-    setMonth: function (month) {
-      const t = this.localTime.clone()
-      t.month(month - 1)
-      this.$emit('input', t.format())
-    },
-    setDay: function (day) {
-      const t = this.localTime.clone()
-      t.date(day)
-      this.$emit('input', t.format())
-    },
-    setHour: function (hour) {
-      const t = this.localTime.clone()
-      t.hour(hour)
-      this.$emit('input', t.format())
-    },
-    setMinute: function (minute) {
-      const t = this.localTime.clone()
-      t.minute(minute)
-      this.$emit('input', t.format())
-    },
-    setSecond: function (second) {
-      const t = this.localTime.clone()
-      t.second(second)
-      this.$emit('input', t.format())
-    },
-    scrollToValue: function (el, index, itemHeight) {
-      if (el) {
-        el.scrollTop = index * itemHeight
+
+    onSpeedChange (val) {
+      // Map -100..100 to some time speed
+      // Example: 0 -> 1x, 100 -> 1000x?
+      // Logarithmic scale might be better
+      let speed = 1
+      if (val === 0) {
+        speed = 1
+      } else if (val > 0) {
+        speed = Math.pow(10, val / 25) // Max 10^4 = 10000x
+      } else {
+        speed = -Math.pow(10, Math.abs(val) / 25)
       }
+      this.$stel.core.time_speed = speed
     },
-    scrollToCurrentValues: function () {
-      const itemHeight = 36
-      this.$nextTick(() => {
-        // Month
-        if (this.$refs.monthWheel) {
-          this.scrollToValue(this.$refs.monthWheel, this.currentMonth - 1, itemHeight)
-        }
-        // Day
-        if (this.$refs.dayWheel) {
-          this.scrollToValue(this.$refs.dayWheel, this.currentDay - 1, itemHeight)
-        }
-        // Year
-        if (this.$refs.yearWheel) {
-          this.scrollToValue(this.$refs.yearWheel, 100, itemHeight) // 100 = middle of range
-        }
-        // Hour
-        if (this.$refs.hourWheel) {
-          this.scrollToValue(this.$refs.hourWheel, this.currentHour, itemHeight)
-        }
-        // Minute
-        if (this.$refs.minuteWheel) {
-          this.scrollToValue(this.$refs.minuteWheel, this.currentMinute, itemHeight)
-        }
-        // Second
-        if (this.$refs.secondWheel) {
-          this.scrollToValue(this.$refs.secondWheel, this.currentSecond, itemHeight)
-        }
-      })
-    },
-    onMonthScroll: function (e) {
-      this.handleScroll(e, 12, (index) => this.setMonth(index + 1))
-    },
-    onDayScroll: function (e) {
-      const days = this.daysInMonth.length
-      this.handleScroll(e, days, (index) => this.setDay(index + 1))
-    },
-    onYearScroll: function (e) {
-      this.handleScroll(e, this.yearRange.length, (index) => this.setYear(this.yearRange[index]))
-    },
-    onHourScroll: function (e) {
-      this.handleScroll(e, 24, (index) => this.setHour(index))
-    },
-    onMinuteScroll: function (e) {
-      this.handleScroll(e, 60, (index) => this.setMinute(index))
-    },
-    onSecondScroll: function (e) {
-      this.handleScroll(e, 60, (index) => this.setSecond(index))
-    },
-    handleScroll: function (e, maxItems, callback) {
-      if (this.scrollTimeout) {
-        clearTimeout(this.scrollTimeout)
-      }
-      this.scrollTimeout = setTimeout(() => {
-        const itemHeight = 36
-        const scrollTop = e.target.scrollTop
-        const index = Math.round(scrollTop / itemHeight)
-        const clampedIndex = Math.max(0, Math.min(index, maxItems - 1))
-        callback(clampedIndex)
-        e.target.scrollTop = clampedIndex * itemHeight
-      }, 100)
-    },
+
     // 0 means 12:00, 720 means midnight, 1440 (=24*60) means 12:00 the day after
     timeMinuteRangeToUTC: function (tm) {
       return this.sliderStartTime.toDate().getMJD() + tm * 1 / (24 * 60)
@@ -469,9 +428,8 @@ export default {
   },
   mounted: function () {
     this.refreshStops()
-    this.$nextTick(() => {
-      this.scrollToCurrentValues()
-    })
+    // Initialize slider val from current speed?
+    // Doing reverse calculation is tricky, so just default to 0 for now.
   },
   watch: {
     sliderStartTime: function () {
@@ -486,178 +444,183 @@ export default {
 
 <style scoped>
 .datetime-picker-card {
-  background: linear-gradient(145deg, rgba(25, 30, 45, 0.98) 0%, rgba(15, 18, 30, 0.99) 100%) !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(64, 209, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 40px rgba(64, 209, 255, 0.08) !important;
+  background: rgba(17, 20, 32, 0.3) !important; /* Made more transparent */
+  backdrop-filter: blur(15px); /* Glassmorphism blur */
+  border-radius: 24px 24px 0 0 !important;
   overflow: hidden;
+  box-shadow: 0 -4px 30px rgba(0,0,0,0.5) !important;
+  transition: all 0.3s ease;
 }
 
 .picker-container {
-  padding: 12px !important;
+  padding: 16px 20px 24px 20px !important;
 }
 
-/* Header */
-.picker-header {
-  background: rgba(64, 209, 255, 0.08);
-  border-radius: 10px;
-  padding: 6px 12px;
-  margin-bottom: 10px;
-}
-
-.action-btn {
-  background: rgba(64, 209, 255, 0.15) !important;
-  border: 1px solid rgba(64, 209, 255, 0.3) !important;
-  margin: 0 6px !important;
-  width: 32px !important;
-  height: 32px !important;
-}
-
-.action-btn .v-icon {
-  color: #40d1ff !important;
-}
-
-.action-btn.is-paused {
-  background: rgba(255, 180, 50, 0.2) !important;
-  border-color: rgba(255, 180, 50, 0.5) !important;
-}
-
-.action-btn.is-paused .v-icon {
-  color: #ffb432 !important;
-}
-
-/* Wheel Picker Styles */
-.wheel-section {
-  position: relative;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 12px;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(64, 209, 255, 0.1);
-}
-
-.time-section {
-  margin-bottom: 10px;
-}
-
-.wheel-container {
+/* Drag Handle */
+.drag-handle-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 5px;
+  cursor: pointer;
+}
+.drag-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
 }
 
-.wheel-column {
+/* Collapsed View Styles */
+.collapsed-view {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 70px;
+  width: 100%;
 }
 
-.wheel-column.year-column {
-  width: 80px;
+.simple-datetime-display {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-.wheel-label {
-  font-size: 10px;
-  color: rgba(64, 209, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 4px;
-  font-weight: 500;
+.quick-actions-section.compact {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 8px; /* Less space in compact */
 }
 
-.wheel-scroll {
-  height: 108px;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Transitions */
+.fade-transition-enter-active, .fade-transition-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-transition-enter, .fade-transition-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.wheel-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.wheel-spacer {
-  height: 36px;
-}
-
-.wheel-item {
-  height: 36px;
+/* DateTime Display */
+.datetime-display-section {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  scroll-snap-align: center;
-  transition: all 0.15s ease;
-  font-family: 'Roboto Mono', monospace;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  margin-bottom: 24px;
 }
 
-.wheel-item:active {
-  background: rgba(64, 209, 255, 0.1);
+.datetime-group {
+  display: flex;
+  align-items: center;
 }
 
-.wheel-item.selected {
-  color: #ffffff;
+.digit-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+}
+
+.year-column { width: 60px; }
+.month-column { width: 40px; }
+.day-column { width: 40px; }
+
+.digit-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.separator {
   font-size: 20px;
-  font-weight: 500;
-  text-shadow: 0 0 10px rgba(64, 209, 255, 0.5);
+  color: rgba(255,255,255,0.4);
+  margin: 0 2px;
+  margin-bottom: 2px; /* align with text */
 }
 
-.wheel-highlight {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 36px;
-  background: rgba(64, 209, 255, 0.1);
-  border-top: 1px solid rgba(64, 209, 255, 0.3);
-  border-bottom: 1px solid rgba(64, 209, 255, 0.3);
-  border-radius: 8px;
-  pointer-events: none;
-  margin-top: 7px;
+.separator-seconds {
+  font-size: 20px;
+  color: rgba(255,255,255,0.4);
+  margin: 0 2px;
+  margin-bottom: 2px;
 }
 
-.time-colon {
-  font-size: 24px;
-  font-weight: 500;
-  color: #40d1ff;
-  margin-top: 20px;
-  animation: blink 1s ease-in-out infinite;
+/* Speed Control */
+.speed-control-section {
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.speed-label {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Slider Section */
-.slider-section {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  padding: 12px 12px 8px 12px;
-  border: 1px solid rgba(64, 209, 255, 0.1);
+.speed-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.slider-wrapper {
+.speed-slider {
+  flex: 1;
+}
+
+/* Quick Actions */
+.quick-actions-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 10px;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.action-item:hover {
+  opacity: 1;
+}
+
+.action-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.now-btn .v-icon {
+  font-size: 28px !important;
+}
+
+/* Dusk Slider Customization */
+.dusk-slider-section {
   padding: 0 4px;
 }
 
-/* Native HTML5 Range Slider - Smooth & Responsive */
 .native-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, rgba(30, 50, 100, 0.8) 0%, rgba(64, 209, 255, 0.4) 50%, rgba(30, 50, 100, 0.8) 100%);
+  height: 6px; /* slightly thinner */
+  border-radius: 3px;
+  background: linear-gradient(90deg, #1b3b5f 0%, #2f618c 50%, #1b3b5f 100%);
   outline: none;
   margin: 8px 0;
   cursor: pointer;
@@ -666,98 +629,18 @@ export default {
 .native-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 30%, #40d1ff 100%);
-  border: 3px solid #ffffff;
-  box-shadow: 0 0 15px rgba(64, 209, 255, 0.8), 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: #8c9eff; /* Light purple/blue */
+  box-shadow: 0 0 10px rgba(140, 158, 255, 0.5);
   cursor: grab;
+  border: 2px solid #fff;
 }
 
-.native-slider::-webkit-slider-thumb:active {
-  cursor: grabbing;
-  box-shadow: 0 0 20px rgba(64, 209, 255, 1), 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-.native-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 30%, #40d1ff 100%);
-  border: 3px solid #ffffff;
-  box-shadow: 0 0 15px rgba(64, 209, 255, 0.8), 0 2px 8px rgba(0, 0, 0, 0.4);
-  cursor: grab;
-}
-
-.native-slider::-moz-range-thumb:active {
-  cursor: grabbing;
-}
-
-.native-slider::-moz-range-track {
-  background: transparent;
-}
-
-/* Sky Status */
-.sky-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  margin-top: 8px;
-  border-radius: 8px;
+.dusk-label {
+  color: rgba(255,255,255,0.6);
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  background: rgba(64, 209, 255, 0.1);
-  border: 1px solid rgba(64, 209, 255, 0.2);
-  color: #88ccff;
-}
-
-.status-icon {
-  margin-right: 6px;
-  color: #88ccff !important;
-}
-
-.sky-status.daylight {
-  background: linear-gradient(135deg, rgba(255, 200, 50, 0.2) 0%, rgba(255, 150, 50, 0.15) 100%);
-  border-color: rgba(255, 180, 50, 0.4);
-  color: #ffc832;
-}
-
-.sky-status.daylight .status-icon {
-  color: #ffc832 !important;
-}
-
-.sky-status.dark-night {
-  background: rgba(30, 50, 100, 0.3);
-  border-color: rgba(100, 150, 255, 0.3);
-  color: #8fb4ff;
-}
-
-.sky-status.dark-night .status-icon {
-  color: #8fb4ff !important;
-}
-
-.sky-status.moonlight {
-  background: rgba(180, 200, 240, 0.15);
-  border-color: rgba(200, 220, 255, 0.3);
-  color: #d4e4ff;
-}
-
-.sky-status.moonlight .status-icon {
-  color: #d4e4ff !important;
-}
-
-.sky-status.dawn,
-.sky-status.twilight {
-  background: linear-gradient(135deg, rgba(255, 150, 100, 0.2) 0%, rgba(150, 100, 200, 0.15) 100%);
-  border-color: rgba(255, 150, 150, 0.3);
-  color: #ffaa88;
-}
-
-.sky-status.dawn .status-icon,
-.sky-status.twilight .status-icon {
-  color: #ffaa88 !important;
 }
 </style>
+```

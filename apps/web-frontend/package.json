@@ -25,6 +25,7 @@
     "@capacitor/screen-orientation": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@mdi/font": "^7.2.96",
+    "astronomy-engine": "^2.1.19",
     "axios": "^1.13.2",
     "core-js": "^3.4.4",
     "leaflet": "^1.7.1",
