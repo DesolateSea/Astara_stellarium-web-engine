@@ -19,8 +19,8 @@
         @click.stop="centerOnRealPosition"
         :loading="isLocating"
       >
-        <v-icon>mdi-crosshairs-gps</v-icon>
-      </v-btn>
+                <v-icon>mdi-crosshairs-gps</v-icon>
+              </v-btn>
     </div>
 
     <!-- Location Details Panel -->
@@ -72,7 +72,7 @@
         <v-icon left>mdi-check</v-icon>
         {{ $t('Use this location') }}
       </v-btn>
-    </div>
+          </div>
 
     <!-- Name Editor Dialog -->
     <v-dialog v-model="showNameEditor" max-width="400">
@@ -226,21 +226,31 @@ export default {
         return
       }
 
+      // World bounds to prevent horizontal scrolling beyond map edges
+      var worldBounds = L.latLngBounds(
+        L.latLng(-85, -180), // Southwest corner
+        L.latLng(85, 180) // Northeast corner
+      )
+
       // Create map with offline tile layer
       this.map = L.map(container, {
         center: [20, 0],
         zoom: 2,
-        minZoom: 0,
+        minZoom: 2,
         maxZoom: 4,
         zoomControl: true,
-        attributionControl: false
+        attributionControl: false,
+        maxBounds: worldBounds,
+        maxBoundsViscosity: 1.0,
+        worldCopyJump: false
       })
 
       // Add offline tile layer (pre-downloaded tiles)
       L.tileLayer(process.env.BASE_URL + 'tiles/{z}/{x}/{y}.png', {
         maxZoom: 4,
-        minZoom: 0,
+        minZoom: 2,
         tileSize: 256,
+        noWrap: true,
         errorTileUrl: process.env.BASE_URL + 'tiles/0/0/0.png'
       }).addTo(this.map)
 
@@ -293,6 +303,9 @@ export default {
     },
 
     onMapClick: function (lat, lng) {
+      // Emit event to turn off autolocation when user manually selects
+      this.$emit('manualLocationSelected')
+
       this.pickLocation = {
         lat: lat,
         lng: lng,

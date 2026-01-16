@@ -39,6 +39,7 @@
     <div class="location-content">
       <location-mgr
         v-on:locationSelected="setLocation"
+        v-on:manualLocationSelected="disableAutoLocation"
         :knownLocations="[]"
         :startLocation="$store.state.currentLocation"
         :realLocation="$store.state.autoDetectedLocation"
@@ -75,6 +76,9 @@ export default {
     },
     closeDialog: function () {
       this.$store.commit('toggleBool', 'showLocationDialog')
+    },
+    disableAutoLocation: function () {
+      this.$store.commit('setUseAutoLocation', false)
     }
   },
   components: { LocationMgr }
