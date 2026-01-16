@@ -331,14 +331,15 @@ export default {
 
       let startMjd = this.$stel.core.observer.utc
 
-      // Check if difference is "too much" (different month or year)
-      // "get back to the same month/year then move to the date or time the correct one"
-      if (simDate.getFullYear() !== targetDate.getFullYear() || simDate.getMonth() !== targetDate.getMonth()) {
-        const intermediate = new Date(simDate.getTime())
-        intermediate.setFullYear(targetDate.getFullYear())
-        intermediate.setMonth(targetDate.getMonth())
-
-        // This effectively "teleports" the year/month but keeps the time/day
+      // If difference is more than 2 days, jump to 2 days diff
+      const diffMs = simDate.getTime() - targetDate.getTime()
+      const twoDaysMs = 2 * 24 * 60 * 60 * 1000
+      
+      if (Math.abs(diffMs) > twoDaysMs) {
+        const sign = Math.sign(diffMs)
+        const newStartMs = targetDate.getTime() + (sign * twoDaysMs)
+        const intermediate = new Date(newStartMs)
+        
         startMjd = intermediate.getMJD()
         this.$stel.core.observer.utc = startMjd
       }
