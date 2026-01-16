@@ -115,10 +115,10 @@
       </v-card>
     </v-dialog>
 
-    <!-- Time picker dialog -->
-    <v-dialog v-model="showTimePicker" max-width="400" @click:outside="closeTimePicker" :z-index="500">
+    <!-- Time picker bottom sheet -->
+    <v-bottom-sheet v-model="showTimePicker" :z-index="500" hide-overlay>
       <date-time-picker v-model="pickerDate" :location="$store.state.currentLocation"></date-time-picker>
-    </v-dialog>
+    </v-bottom-sheet>
 
     <!-- Gyro Activation Dialog - Pill Banner -->
     <transition name="fade">

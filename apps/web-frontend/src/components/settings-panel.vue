@@ -85,13 +85,9 @@
                   <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- More Options Section -->
-          <div class="settings-section">
-            <div class="section-header">More Options</div>
-            <div class="section-card">
+              <div class="item-divider"></div>
+
               <div class="settings-item nav-row" @click="navigateTo('advanced')">
                 <div class="item-icon advanced-icon">
                   <v-icon size="22">mdi-cog</v-icon>
@@ -103,25 +99,12 @@
                   <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
                 </div>
               </div>
-
-              <div class="item-divider"></div>
-
-              <div class="settings-item nav-row" @click="navigateTo('ar')">
-                <div class="item-icon ar-settings-icon">
-                  <v-icon size="22">mdi-camera-metering-center</v-icon>
-                </div>
-                <div class="item-content">
-                  <div class="item-title">AR Camera Settings</div>
-                </div>
-                <div class="item-action">
-                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
-                </div>
-              </div>
             </div>
           </div>
 
-          <!-- Danger Zone Section -->
+          <!-- More Options Section -->
           <div class="settings-section">
+            <div class="section-header">More Options</div>
             <div class="section-card danger-card">
               <div class="settings-item danger-row" @click="resetSettings">
                 <div class="item-icon reset-icon">
@@ -134,10 +117,10 @@
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-      <!-- Location View -->
-      <div v-else-if="currentView === 'location'">
+        <!-- Location View -->
+        <div v-else-if="currentView === 'location'">
         <v-list dense class="settings-list">
           <v-list-item>
             <v-list-item-content>
@@ -294,6 +277,18 @@
       <!-- Advanced View -->
       <div v-else-if="currentView === 'advanced'">
         <v-list dense class="settings-list">
+          <!-- AR Camera Settings Navigation -->
+          <v-list-item @click="navigateTo('ar')">
+            <v-list-item-content>
+              <v-list-item-title>AR Camera Settings</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+
+          <v-divider class="my-2"></v-divider>
+
           <!-- Touch Controls Section -->
           <v-subheader class="settings-subheader">Touch Controls</v-subheader>
 
@@ -397,8 +392,17 @@ export default {
     editCoordValue () {
       return this.editCoordType === 'latitude' ? this.customLat : this.customLng
     },
-    sensorsEnabled () {
-      return this.$store.state.sensorsEnabled
+    sensorsEnabled: {
+      get: function () {
+        return this.$store.state.sensorsEnabled
+      },
+      set: function (val) {
+        this.$store.commit('setSensorsEnabled', val)
+        if (!val && this.$store.state.gyroModeActive) {
+          GyroscopeService.stop()
+          this.$store.commit('setGyroModeActive', false)
+        }
+      }
     },
     showAtmosphere: {
       get () {
@@ -631,6 +635,8 @@ export default {
         this.closePanel()
       } else if (this.currentView === 'edit-coordinate') {
         this.navigateTo('location', 'back')
+      } else if (this.currentView === 'ar') {
+        this.navigateTo('advanced', 'back')
       } else {
         this.navigateTo('main', 'back')
       }
@@ -865,12 +871,12 @@ export default {
 
 /* Main Settings Container */
 .settings-main {
-  padding: 8px 16px 24px;
+  padding: 8px 12px 16px; /* Reduced side and bottom padding */
 }
 
 /* Section Styling */
 .settings-section {
-  margin-bottom: 16px;
+  margin-bottom: 8px; /* Reduced from 16px */
 }
 
 .section-header {
@@ -879,7 +885,7 @@ export default {
   color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 8px;
+  margin-bottom: 4px; /* Reduced from 8px */
   padding-left: 2px;
 }
 
@@ -899,7 +905,7 @@ export default {
 .settings-item {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
+  padding: 10px 12px; /* Reduced from 14px 16px */
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -1044,7 +1050,8 @@ export default {
 }
 
 .settings-list .v-list-item {
-  min-height: 56px;
+  min-height: 44px; /* Reduced from 56px */
+  padding: 0 12px;
 }
 
 .settings-subheader {
