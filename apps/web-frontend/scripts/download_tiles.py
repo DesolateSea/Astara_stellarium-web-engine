@@ -11,9 +11,8 @@ import time
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TILES_DIR = os.path.join(BASE_DIR, 'public', 'tiles')
 
-# Using CartoDB's dark matter tiles for a nice dark theme
-# Alternative: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-TILE_URL = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+# Using OpenStreetMap standard tiles for natural colors
+TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 # User agent to be polite to tile servers
 HEADERS = {
