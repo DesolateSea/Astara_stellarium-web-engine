@@ -1,6 +1,6 @@
 ## Architecture Overview
 
-VayuView is a mobile planetarium app built on the Stellarium Web Engine.
+Astara is a mobile planetarium app built on the Stellarium Web Engine.
 We wrap the engine with a Vue frontend and package it as an Android app using Capacitor.
 
 ```

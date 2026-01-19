@@ -1,6 +1,6 @@
 # Upstream Relationship
 
-VayuView is a fork of [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine).
+Astara is a fork of [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine).
 
 The upstream project is a browser-based planetarium. We took it and turned it
 into a native Android app with sensor integration.
@@ -46,7 +46,7 @@ For details about how the C / WebAssembly engine is structured internally, see
 
 ## What We Changed
 
-Most of the work in VayuView happens outside the core engine, but some practical
+Most of the work in Astara happens outside the core engine, but some practical
 changes exist across all layers in order to make the engine usable as a real
 mobile application.
 
