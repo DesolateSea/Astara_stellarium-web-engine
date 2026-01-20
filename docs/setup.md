@@ -99,6 +99,47 @@ The APK will be located at:
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+### Sign the Release APK
+
+Generate a keystore in the `android` directory (one-time setup):
+
+```bash
+cd android
+keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
+```
+
+Build the release APK:
+
+```bash
+./gradlew assembleRelease
+```
+
+Sign the APK using `apksigner`:
+
+> **Note:** `apksigner` is located in `$ANDROID_HOME/build-tools/<version>/`. Use the full path if it's not in your PATH.
+
+**macOS/Linux:**
+```bash
+$ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks my-release-key.jks --out app-release-signed.apk app/build/outputs/apk/release/app-release.apk
+```
+
+**Windows (PowerShell/CMD):**
+```powershell
+%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\apksigner sign --ks my-release-key.jks --out app-release-signed.apk app\build\outputs\apk\release\app-release.apk
+```
+
+Verify the signature:
+
+**macOS/Linux:**
+```bash
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify app-release-signed.apk
+```
+
+**Windows:**
+```powershell
+%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\apksigner verify app-release-signed.apk
+```
+
 ---
 
 ## 3. Manual Build (Alternative)
