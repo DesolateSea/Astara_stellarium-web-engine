@@ -1,6 +1,6 @@
 {
-    "appId": "com.stellariumlabs.stellaweb",
-    "appName": "VayuView",
+    "appId": "org.desolatesea.astara",
+    "appName": "Astara",
     "webDir": "dist",
     "server": {
         "androidScheme": "https"

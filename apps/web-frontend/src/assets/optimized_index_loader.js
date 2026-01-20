@@ -1,4 +1,3 @@
-
 import axios from 'axios'
 
 const INDEX_URL = 'skydata/search_index.json'

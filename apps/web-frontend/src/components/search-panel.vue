@@ -1,11 +1,3 @@
-// Stellarium Web - Copyright (c) 2022 - Stellarium Labs SRL
-//
-// This program is licensed under the terms of the GNU AGPL v3, or
-// alternatively under a commercial licence.
-//
-// The terms of the AGPL v3 license can be found in the main directory of this
-// repository.
-
 <template>
   <v-dialog v-model="dialogVisible" transition="dialog-top-transition" :content-class="searchDialogClass" fullscreen hide-overlay>
     <v-card v-if="dialogVisible" class="search-panel" @click.self="goBack">

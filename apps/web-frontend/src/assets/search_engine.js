@@ -1,7 +1,3 @@
-// Stellarium Web - Search Engine Module
-// Separated for optimization and testing
-// Copyright (c) 2022 - Stellarium Labs SRL
-
 import Vue from 'vue'
 import optimizedLoader from './optimized_index_loader'
 // We only import constellationLoader to avoid loading the massive name index

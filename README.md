@@ -1,82 +1,99 @@
 # Astara
 
-An advanced mobile planetarium application built on [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine).
+**The Ultimate Open-Source Mobile Planetarium & Stargazing Companion**
 
-Point your phone at the sky and see what's out there.
+An advanced mobile planetarium application built on [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine) for Android. Astara provides a high-performance, offline-first sky map that fits in your pocket.
 
----
+### Notable Features
 
-## Notable Features
-
-- **Gyroscope mode** — Point your phone, see the sky in real-time
-- **AR camera overlay** — Stars overlaid on your camera feed
-- **Direction tracking** — Visual indicator guides you to objects
-- **Offline operation** — All sky data bundled locally
-- **60,000+ searchable objects** — Stars, planets, DSOs, satellites
+- **Gyroscope Mode** — Point your phone to scan the sky in real-time using device sensors.
+- **AR Camera Overlay** — Seamlessly overlay star maps onto your camera feed for easy identification.
+- **Direction Tracking** — Intuitive visual guides help you locate specific celestial objects.
+- **Comprehensive Database** — Search over 60,000 stars, planets, DSOs, and satellites.
+- **Offline First** — No internet connection required; all sky data is bundled locally.
+- **Privacy Focused** — Completely open-source with no tracking or ads.
+For all features, see [docs/features.md](docs/features.md).
 
 ---
 
 ## Documentation
 
-- [Documentation Index](docs/INDEX.md) — Complete documentation overview
-- [User Manual](docs/USER_MANUAL.md) — How to use Astara
-- [High-Level Design](docs/HLD.md) — System architecture
-- [Low-Level Design](docs/LLD.md) — Detailed technical specifications
-- [Architecture](docs/architecture.md) — How the app is structured
-- [Frontend Guide](docs/frontend.md) — Vue components and services
-- [Setup Guide](docs/setup.md) — Build instructions (web + Android)
-- [Upstream Relationship](docs/upstream.md) — What changed from Stellarium Web Engine
+Explore the technical details and user guides:
+
+- [Documentation Index](docs/index.md) — Complete documentation overview
+- [User Manual](docs/user_manual.md) — comprehensive guide to using Astara
+- [High-Level Design](docs/hld.md) — System architecture and design choices
+- [Low-Level Design](docs/lld.md) — Detailed technical specifications and implementation
+- [Architecture](docs/architecture.md) — Codebase structure and component interaction
+- [Frontend Guide](docs/frontend.md) — Vue.js components, services, and state management
+- [Setup Guide](docs/setup.md) — Detailed build instructions (Docker, Web, Android)
+- [Upstream Relationship](docs/upstream.md) — Differences from Stellarium Web Engine
 
 ---
 
-## Quick Start
+## Quick Start (Docker)
 
-### Prerequisites
+The recommended way to build Astara is using Docker, which handles all dependencies (Emscripten, Node.js, etc.) automatically.
 
-- Node.js 22
-- Emscripten 1.40.1
-- scons
-- Docker (for engine build)
-- Android Studio (for APK)
+1.  **Clone the repository** (if you haven't already):
+    ```bash
+    git clone https://github.com/DesolateSea/Astara_stellarium-web-engine.git astara
+    cd astara
+    ```
 
-### Build
+2.  **Install emscripten SDK**:
+    ```bash
+    git clone https://github.com/emscripten-core/emsdk.git
+    ```
 
-```bash
-# 1. Build the engine
-source /path/to/emsdk/emsdk_env.sh
-make
-cp build/stellarium-web-engine.* apps/web-frontend/src/assets/js/
+3.  **Setup and Build**
+    ```bash
+    cd apps/web-frontend
 
-# 2. Build the frontend
-cd apps/web-frontend
-npm install --legacy-peer-deps
-export NODE_OPTIONS=--openssl-legacy-provider
-npm run dev
+    # Compile the engine and install frontend dependencies
+    sudo -E make setup
+    
+    # Builds the production web frontend
+    sudo -E make build
+    ```
 
-# 3. Build android apk
-npm run build
-make sync-android
-make build-apk
-```
+4.  **Create Android APK**
+    Set required environment variables:
 
-See [docs/setup.md](docs/setup.md) for full instructions.
+    ```bash
+    export CAPACITOR_ANDROID_STUDIO_PATH=/path/to/android-studio/bin/studio.sh
+    ```
+    ```bash
+    export JAVA_HOME=/path/to/java-21-openjdk
+    export PATH=$JAVA_HOME/bin:$PATH
+    ```
+
+    Sync with Capacitor:
+
+    ```bash
+    make sync-android
+    ```
+
+    Build the debug APK:
+
+    ```bash
+    make build-apk
+    ```
+
+For a detailed guide, please refer to the [Setup Guide](docs/setup.md).
 
 ---
 
 ## Contributing
 
-See the upstream [Stellarium Web CLA](doc/cla/sign-cla.md).
+We welcome contributions! Please see the upstream [Stellarium Web CLA](doc/cla/sign-cla.md) before submitting pull requests.
 
-For questions or issues, open a GitHub issue.
+For questions, feature requests, or bug reports, please open a GitHub issue.
 
 ---
 
 ## License
 
-AGPL-3.0 (inherited from Stellarium Web Engine)
+Astara is licensed under the **AGPL-3.0**, inherited from Stellarium Web Engine.
 
-See [LICENSE-AGPL-3.0.txt](LICENSE-AGPL-3.0.txt).
-
----
-
-*Developed by the Astara Team*
+See [LICENSE-AGPL-3.0.txt](LICENSE-AGPL-3.0.txt) for the full license text.

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">VayuView</string>
-    <string name="title_activity_main">VayuView</string>
-    <string name="package_name">com.stellariumlabs.stellaweb</string>
-    <string name="custom_url_scheme">com.stellariumlabs.stellaweb</string>
+    <string name="app_name">Astara</string>
+    <string name="title_activity_main">Astara</string>
+    <string name="package_name">org.desolatesea.astara</string>
+    <string name="custom_url_scheme">org.desolatesea.astara</string>
 </resources>

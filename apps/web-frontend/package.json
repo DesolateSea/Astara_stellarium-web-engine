@@ -1,9 +1,9 @@
 {
-  "name": "stellarium-web",
+  "name": "astara",
   "version": "0.1.0",
   "private": true,
-  "description": "Stellarium Web is an online planetarium that lets you discover the night sky. It's easy to use and beautiful.",
-  "author": "Stellarium Labs <contact@stellarium-labs.com>",
+  "description": "Astara is an online planetarium that lets you discover the night sky, it is a fork of Stellarium Web. It's easy to use and beautiful.",
+  "author": "Desolate Sea Team",
   "scripts": {
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
