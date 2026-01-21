@@ -352,7 +352,6 @@ Tap the calendar icon (📅) to view astronomical events.
 | **Moon Phases** | 🌙 | New, First Quarter, Full, Last Quarter |
 | **Eclipses** | 🌑 | Solar and Lunar eclipses |
 | **Conjunctions** | ⚫ | Planet meetups |
-| **Meteor Showers** | ☄️ | Peak dates |
 | **Planet Events** | 🪐 | Opposition, Greatest Elongation |
 
 <img src="assets/pixel4-mockup/solar-eclipse-portrait.png" width="300">
@@ -385,7 +384,7 @@ View high-resolution images of DSOs:
 3. HiPS image overlay appears automatically
 4. Pinch to zoom into detailed structure
 
-<img src="assets/pixel4-mockup/dso-portrait.png" width="300">
+<img src="assets/pixel4-mockup/dso3-portrait.png" width="300">
 
 <img src="assets/pixel4-mockup/dso2-portrait.png" width="300">
 
@@ -412,3 +411,4 @@ View high-resolution images of DSOs:
 4. Adjust gyroscope and AR settings
 
 <img src="assets/pixel4-mockup/settings-portrait.png" width="300">
+<img src="assets/pixel4-mockup/advanced-settings-portrait.png" width="300">
