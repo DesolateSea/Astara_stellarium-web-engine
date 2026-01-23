@@ -1,8 +1,8 @@
 # Astara
 
-**The Ultimate Open-Source Mobile Planetarium & Stargazing Companion**
+**Open-Source Mobile Planetarium App for Android**
 
-An advanced mobile planetarium application built on [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine) for Android. Astara provides a high-performance, offline-first sky map that fits in your pocket.
+An open source mobile planetarium application built on [Stellarium Web Engine](https://github.com/Stellarium/stellarium-web-engine) for Android. Astara provides a high-performance, offline-first sky map that fits in your pocket.
 
 ### Notable Features
 
@@ -58,6 +58,7 @@ The recommended way to build Astara is using Docker, which handles all dependenc
     ```
 
 4.  **Create Android APK**
+   
     Set required environment variables:
 
     ```bash
