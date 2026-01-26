@@ -7,10 +7,15 @@
 // repository.
 
 <template>
-<v-dialog scrollable max-width='600' v-model="$store.state.showDataCreditsDialog">
-  <v-card v-if="$store.state.showDataCreditsDialog">
-    <v-card-title><div class="text-h5">Data Credits</div></v-card-title>
-    <v-card-text style="height: 600px;">
+<v-dialog fullscreen hide-overlay transition="dialog-bottom-transition" v-model="$store.state.showDataCreditsDialog">
+  <v-card v-if="$store.state.showDataCreditsDialog" style="padding-top: 32px !important;">
+    <v-toolbar flat color="transparent" style="padding-top: 16px !important;">
+      <v-btn icon @click="goBack">
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
+      <v-toolbar-title>Data Credits</v-toolbar-title>
+    </v-toolbar>
+    <v-card-text>
       <h3>Stars</h3>
       <p>Combination of the following catalogues:
         <ul class="data-credits">
@@ -53,7 +58,6 @@
       <h3>Others</h3>
       <p>Landscape images by Fabien Chereau</p>
       <p>Constellation lines by Fabien Chereau</p>
-      <p>All other graphics by <a href="https://stellarium-labs.com" target="_blank" rel="noopener">Stellarium Labs</a></p>
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer><v-btn text class="blue--text darken-1" @click.native="$store.state.showDataCreditsDialog = false">Close</v-btn>
@@ -63,6 +67,14 @@
 </template>
 
 <script>
+export default {
+  methods: {
+    goBack () {
+      this.$store.state.showDataCreditsDialog = false
+      this.$store.state.showAboutDialog = true
+    }
+  }
+}
 </script>
 
 <style>

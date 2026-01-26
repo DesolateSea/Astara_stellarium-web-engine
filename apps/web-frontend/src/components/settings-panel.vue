@@ -6,6 +6,10 @@
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <span class="settings-title">{{ currentViewTitle }}</span>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="openAboutDialog" class="info-btn" v-if="currentView === 'main'">
+          <v-icon size="22">mdi-information-outline</v-icon>
+        </v-btn>
       </div>
 
       <div class="settings-content">
@@ -768,6 +772,11 @@ export default {
       this.dialogVisible = false
       this.$store.commit('toggleBool', 'showLocationDialog')
     },
+    openAboutDialog: function () {
+      // Close settings panel and open about dialog
+      this.dialogVisible = false
+      this.$store.commit('setValue', { varName: 'showAboutDialog', newValue: true })
+    },
     resetSettings: function () {
       this.sensorsEnabled = false
       if (this.$stel && this.$stel.core) {
@@ -856,6 +865,15 @@ export default {
 }
 
 .back-btn {
+  color: white !important;
+}
+
+.info-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin-right: 8px;
+}
+
+.info-btn:hover {
   color: white !important;
 }
 
@@ -981,6 +999,13 @@ export default {
 }
 .advanced-icon .v-icon {
   color: #90A4AE !important;
+}
+
+.about-icon {
+  background: rgba(100, 181, 246, 0.15);
+}
+.about-icon .v-icon {
+  color: #64B5F6 !important;
 }
 
 .ar-settings-icon {

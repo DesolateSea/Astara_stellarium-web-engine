@@ -31,6 +31,9 @@ export default {
     },
     openSearch: function () {
       this.$store.commit('setValue', { varName: 'showSearchPanel', newValue: true })
+    },
+    openAbout: function () {
+      this.$store.commit('setValue', { varName: 'showAboutDialog', newValue: true })
     }
   }
 }
@@ -52,7 +55,7 @@ export default {
   background: transparent !important;
 }
 
-.menu-btn, .search-btn {
+.menu-btn, .search-btn, .about-btn {
   color: white !important;
 }
 
