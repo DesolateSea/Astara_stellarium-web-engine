@@ -10,6 +10,7 @@ import Vue from 'vue'
 import _ from 'lodash'
 import StelWebEngine from '@/assets/js/stellarium-web-engine.js'
 import { querySkySources as searchEngineQuery } from '@/assets/search_engine.js'
+import i18n, { translateEngine } from '@/i18n'
 
 var DDDate = Date
 DDDate.prototype.getJD = function () {
@@ -33,10 +34,8 @@ const swh = {
     StelWebEngine({
       wasmFile: wasmFile,
       canvas: canvasElem,
-      translateFn: function (domain, str) {
-        return str
-        // return i18next.t(str, {ns: domain});
-      },
+      translateFn: translateEngine,
+      getLangFn: () => i18n.locale.replace(/-/g, '_'),
       onReady: function (lstel) {
         store.commit('replaceStelWebEngine', lstel.getTree())
         // Initial sync of the tree
@@ -373,7 +372,7 @@ const swh = {
     }
     for (const morp in galTab) {
       if (morpho.startsWith(morp)) {
-        return galTab[morp]
+        return i18n.t(galTab[morp])
       }
     }
     return ''

@@ -19,15 +19,15 @@
         <div v-if="currentView === 'main'" class="settings-main">
           <!-- Quick Settings Section -->
           <div class="settings-section">
-            <div class="section-header">Quick Settings</div>
+            <div class="section-header">{{ $t('Quick Settings') }}</div>
             <div class="section-card">
               <div class="settings-item toggle-row" @click="toggleSensors">
                 <div class="item-icon sensors-icon">
                   <v-icon size="22">mdi-compass-outline</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title">Sensors</div>
-                  <div class="item-subtitle" :class="{ 'status-enabled': sensorsEnabled }">{{ sensorsEnabled ? 'Enabled' : 'Disabled' }}</div>
+                  <div class="item-title">{{ $t('Sensors') }}</div>
+                  <div class="item-subtitle" :class="{ 'status-enabled': sensorsEnabled }">{{ $t(sensorsEnabled ? 'Enabled' : 'Disabled') }}</div>
                 </div>
                 <div class="item-action">
                   <v-switch :input-value="sensorsEnabled" @click.stop="toggleSensors" color="#4FC3F7" hide-details class="custom-switch"></v-switch>
@@ -41,8 +41,8 @@
                   <v-icon size="22">mdi-camera</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title">Augmented Reality</div>
-                  <div class="item-subtitle" :class="{ 'status-enabled': arEnabled }">{{ arEnabled ? 'Enabled' : 'Disabled' }}</div>
+                  <div class="item-title">{{ $t('Augmented Reality') }}</div>
+                  <div class="item-subtitle" :class="{ 'status-enabled': arEnabled }">{{ $t(arEnabled ? 'Enabled' : 'Disabled') }}</div>
                 </div>
                 <div class="item-action">
                   <v-switch :input-value="arEnabled" @click.stop="toggleArMode" color="#4FC3F7" hide-details class="custom-switch"></v-switch>
@@ -53,14 +53,14 @@
 
           <!-- Personalization Section -->
           <div class="settings-section">
-            <div class="section-header">Personalization</div>
+            <div class="section-header">{{ $t('Personalization') }}</div>
             <div class="section-card">
               <div class="settings-item nav-row" @click="openLocationDialog">
                 <div class="item-icon location-icon">
                   <v-icon size="22">mdi-map-marker</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title">Location</div>
+                  <div class="item-title">{{ $t('Location') }}</div>
                   <div class="item-subtitle">{{ cityName }}</div>
                 </div>
                 <div class="item-action">
@@ -75,7 +75,7 @@
                   <v-icon size="22">mdi-creation</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title">Sky Culture</div>
+                  <div class="item-title">{{ $t('Sky Culture') }}</div>
                   <div class="item-subtitle">{{ currentSkyCultureName }}</div>
                 </div>
                 <div class="item-action">
@@ -85,12 +85,27 @@
 
               <div class="item-divider"></div>
 
+              <button type="button" class="settings-item nav-row language-nav-row" @click="navigateTo('language')">
+                <span class="item-icon language-icon">
+                  <v-icon size="22">mdi-translate</v-icon>
+                </span>
+                <span class="item-content">
+                  <span class="item-title">{{ $t('Language') }}</span>
+                  <span class="item-subtitle">{{ currentLanguageName }}</span>
+                </span>
+                <span class="item-action">
+                  <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
+                </span>
+              </button>
+
+              <div class="item-divider"></div>
+
               <div class="settings-item nav-row" @click="navigateTo('advanced')">
                 <div class="item-icon advanced-icon">
                   <v-icon size="22">mdi-cog</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title">Advanced</div>
+                  <div class="item-title">{{ $t('Advanced') }}</div>
                 </div>
                 <div class="item-action">
                   <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
@@ -101,15 +116,15 @@
 
           <!-- More Options Section -->
           <div class="settings-section">
-            <div class="section-header">More Options</div>
+            <div class="section-header">{{ $t('More Options') }}</div>
             <div class="section-card danger-card">
               <div class="settings-item danger-row" @click="resetSettings">
                 <div class="item-icon reset-icon">
                   <v-icon size="22">mdi-restore</v-icon>
                 </div>
                 <div class="item-content">
-                  <div class="item-title danger-text">Reset Settings</div>
-                  <div class="item-subtitle">Restore all defaults</div>
+                  <div class="item-title danger-text">{{ $t('Reset Settings') }}</div>
+                  <div class="item-subtitle">{{ $t('Restore all defaults') }}</div>
                 </div>
               </div>
             </div>
@@ -121,7 +136,7 @@
         <v-list dense class="settings-list">
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Use autolocation</v-list-item-title>
+              <v-list-item-title>{{ $t('Use Autolocation') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-switch v-model="useAutoLocation"></v-switch>
@@ -131,7 +146,7 @@
           <template v-if="!useAutoLocation">
             <v-list-item @click="openCoordEditor('latitude')">
               <v-list-item-content>
-                <v-list-item-title>Latitude</v-list-item-title>
+                <v-list-item-title>{{ $t('Latitude') }}</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
                 <span class="location-value">{{ formatLatitudeValue(customLat) }}</span>
@@ -140,7 +155,7 @@
 
             <v-list-item @click="openCoordEditor('longitude')">
               <v-list-item-content>
-                <v-list-item-title>Longitude</v-list-item-title>
+                <v-list-item-title>{{ $t('Longitude') }}</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
                 <span class="location-value">{{ formatLongitudeValue(customLng) }}</span>
@@ -152,7 +167,7 @@
         <template v-else>
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Latitude</v-list-item-title>
+              <v-list-item-title>{{ $t('Latitude') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <span class="location-value">{{ formatLatitude }}</span>
@@ -161,7 +176,7 @@
 
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Longitude</v-list-item-title>
+              <v-list-item-title>{{ $t('Longitude') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <span class="location-value">{{ formatLongitude }}</span>
@@ -171,7 +186,7 @@
 
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-title>Name/City</v-list-item-title>
+            <v-list-item-title>{{ $t('Name/City') }}</v-list-item-title>
           </v-list-item-content>
           <v-list-item-action>
             <span class="location-value">{{ cityName }}</span>
@@ -200,7 +215,7 @@
             :class="{ 'selected-culture': currentSkyCulture === culture.key }"
           >
             <v-list-item-content>
-              <v-list-item-title>{{ culture.name }}</v-list-item-title>
+              <v-list-item-title>{{ $t(culture.name) }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action v-if="currentSkyCulture === culture.key">
               <v-icon color="primary">mdi-check</v-icon>
@@ -209,16 +224,39 @@
         </v-list>
       </div>
 
-      <!-- AR View -->
+       <!-- Language View -->
+       <div v-else-if="currentView === 'language'">
+         <v-list dense class="settings-list language-list" role="listbox" :aria-label="$t('Language')">
+           <v-list-item
+             v-for="option in languageOptions"
+             :key="option.value"
+             role="option"
+             :aria-selected="languagePreference === option.value"
+             :class="{ 'selected-language': languagePreference === option.value }"
+             @click="languagePreference = option.value"
+           >
+             <v-list-item-content>
+               <v-list-item-title :lang="option.value === 'auto' ? $i18n.locale : option.value">{{ option.text }}</v-list-item-title>
+             </v-list-item-content>
+             <v-list-item-action v-if="languagePreference === option.value">
+               <v-icon color="primary">mdi-check</v-icon>
+             </v-list-item-action>
+           </v-list-item>
+         </v-list>
+         <p class="language-hint">{{ $t('Changing language restarts the app.') }}</p>
+         <p v-if="languageSaveError" class="language-hint language-error" role="alert">{{ $t('Could not save language preference.') }}</p>
+       </div>
+
+       <!-- AR View -->
       <div v-else-if="currentView === 'ar'">
         <v-list dense class="settings-list">
-          <v-subheader class="settings-subheader">Field of View</v-subheader>
+          <v-subheader class="settings-subheader">{{ $t('Field of View') }}</v-subheader>
 
           <!-- Fixed Wide FOV Toggle (for Stellarium view) -->
           <v-list-item @click="arFullFov = !arFullFov">
             <v-list-item-content>
-              <v-list-item-title>Fixed Wide FOV</v-list-item-title>
-              <v-list-item-subtitle>Lock Stellarium view to wide angle</v-list-item-subtitle>
+              <v-list-item-title>{{ $t('Fixed Wide FOV') }}</v-list-item-title>
+              <v-list-item-subtitle>{{ $t('Lock Stellarium view to wide angle') }}</v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
               <v-switch :input-value="arFullFov" @click.stop="arFullFov = !arFullFov"></v-switch>
@@ -226,13 +264,13 @@
           </v-list-item>
 
           <v-divider class="my-2"></v-divider>
-          <v-subheader class="settings-subheader">Camera</v-subheader>
+          <v-subheader class="settings-subheader">{{ $t('Camera') }}</v-subheader>
 
           <!-- Camera Zoom Slider (always visible, controls camera zoom) -->
           <v-list-item class="slider-item">
             <v-list-item-content>
               <div class="d-flex justify-space-between align-center">
-                <v-list-item-title>Camera Zoom</v-list-item-title>
+                <v-list-item-title>{{ $t('Camera Zoom') }}</v-list-item-title>
                 <span class="sensitivity-value">{{ arZoom.toFixed(1) }}x</span>
               </div>
               <v-slider
@@ -248,13 +286,13 @@
           </v-list-item>
 
           <v-divider class="my-2"></v-divider>
-          <v-subheader class="settings-subheader">Display</v-subheader>
+          <v-subheader class="settings-subheader">{{ $t('Display') }}</v-subheader>
 
           <!-- Opacity Slider -->
           <v-list-item class="slider-item">
             <v-list-item-content>
               <div class="d-flex justify-space-between align-center">
-                <v-list-item-title>Overlay Opacity</v-list-item-title>
+                <v-list-item-title>{{ $t('Overlay Opacity') }}</v-list-item-title>
                 <span class="sensitivity-value">{{ Math.round(arOpacity * 100) }}%</span>
               </div>
               <v-slider
@@ -277,7 +315,7 @@
           <!-- AR Camera Settings Navigation -->
           <v-list-item @click="navigateTo('ar')">
             <v-list-item-content>
-              <v-list-item-title>AR Camera Settings</v-list-item-title>
+              <v-list-item-title>{{ $t('AR Camera Settings') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>
@@ -287,12 +325,12 @@
           <v-divider class="my-2"></v-divider>
 
           <!-- Touch Controls Section -->
-          <v-subheader class="settings-subheader">Touch Controls</v-subheader>
+          <v-subheader class="settings-subheader">{{ $t('Touch Controls') }}</v-subheader>
 
           <v-list-item class="slider-item">
             <v-list-item-content>
               <div class="d-flex justify-space-between align-center">
-                <v-list-item-title>Mouse Sensitivity</v-list-item-title>
+                <v-list-item-title>{{ $t('Mouse Sensitivity') }}</v-list-item-title>
                 <span class="sensitivity-value">{{ Math.round(touchPanSensitivity * 100) }}%</span>
               </div>
               <v-slider
@@ -309,7 +347,7 @@
 
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title>Invert Y Axis</v-list-item-title>
+              <v-list-item-title>{{ $t('Invert Y Axis') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-switch v-model="touchPanInvertY" hide-details class="mt-0"></v-switch>
@@ -319,11 +357,11 @@
           <v-divider class="my-2"></v-divider>
 
           <!-- Display Section -->
-          <v-subheader class="settings-subheader">Display</v-subheader>
+          <v-subheader class="settings-subheader">{{ $t('Display') }}</v-subheader>
 
           <v-list-item @click="milkyWayOn = !milkyWayOn">
             <v-list-item-content>
-              <v-list-item-title>Milky Way</v-list-item-title>
+              <v-list-item-title>{{ $t('Milky Way') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-checkbox v-model="milkyWayOn" hide-details @click.stop></v-checkbox>
@@ -332,7 +370,7 @@
 
           <v-list-item @click="dssOn = !dssOn">
             <v-list-item-content>
-              <v-list-item-title>DSS (Deep Sky Survey)</v-list-item-title>
+              <v-list-item-title>{{ $t('DSS (Deep Sky Survey)') }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action>
               <v-checkbox v-model="dssOn" hide-details @click.stop></v-checkbox>
@@ -352,6 +390,7 @@
 <script>
 import CoordinateEditor from './coordinate-editor.vue'
 import GyroscopeService from '@/assets/gyroscope-service.js'
+import { languages, getLanguagePreference, saveLanguagePreference, getFontFamily } from '@/locale'
 
 export default {
   components: {
@@ -360,6 +399,7 @@ export default {
   data: function () {
     return {
       currentView: 'main',
+      languageSaveError: false,
       previousView: null,
       transitionDirection: 'forward',
       customLat: 0,
@@ -372,6 +412,24 @@ export default {
     }
   },
   computed: {
+    languageOptions () {
+      return [{ value: 'auto', text: this.$t('System language') }].concat(languages)
+    },
+    currentLanguageName () {
+      const selected = this.languageOptions.find(option => option.value === this.languagePreference)
+      return selected ? selected.text : this.$t('System language')
+    },
+    languagePreference: {
+      get () {
+        return getLanguagePreference()
+      },
+      set (value) {
+        this.languageSaveError = false
+        if (value === getLanguagePreference()) return
+        this.languageSaveError = !saveLanguagePreference(value)
+        if (!this.languageSaveError) window.location.reload()
+      }
+    },
     transitionName () {
       return this.transitionDirection === 'forward' ? 'slide-left' : 'slide-right'
     },
@@ -380,11 +438,12 @@ export default {
         main: 'Settings',
         location: 'Location',
         'sky-culture': 'Sky Culture',
+        language: 'Language',
         advanced: 'Advanced',
         ar: 'AR Camera',
         'edit-coordinate': this.editCoordType === 'latitude' ? 'Latitude' : 'Longitude'
       }
-      return titles[this.currentView] || 'Settings'
+      return this.$t(titles[this.currentView] || 'Settings')
     },
     editCoordValue () {
       return this.editCoordType === 'latitude' ? this.customLat : this.customLng
@@ -504,7 +563,7 @@ export default {
       return deg + '° ' + min + "' " + (lng >= 0 ? 'E' : 'W')
     },
     cityName: function () {
-      return this.currentLocation.short_name || 'Unknown'
+      return this.currentLocation.short_name || this.$t('Unknown')
     },
     currentSkyCulture: {
       get: function () {
@@ -522,15 +581,9 @@ export default {
           this.$store.commit('setCurrentSkyCultureId', newValue)
 
           // Switch font based on culture language requirements
-          if (newValue.includes('chinese')) {
-            // Use Noto Sans SC for Chinese cultures
-            this.$stel.setFont('regular', baseUrl + 'fonts/NotoSansSC-Regular.ttf', 1.38)
-            this.$stel.setFont('bold', baseUrl + 'fonts/NotoSansSC-Bold.ttf', 1.38)
-          } else {
-            // Use Noto Sans for others (covers Latin, Indian, etc.)
-            this.$stel.setFont('regular', baseUrl + 'fonts/NotoSans-Regular.ttf', 1.38)
-            this.$stel.setFont('bold', baseUrl + 'fonts/NotoSans-Bold.ttf', 1.38)
-          }
+          const font = getFontFamily(this.$i18n.locale, newValue)
+          this.$stel.setFont('regular', baseUrl + 'fonts/' + font + '-Regular.ttf', 1.38)
+          this.$stel.setFont('bold', baseUrl + 'fonts/' + font + '-Bold.ttf', 1.38)
 
           // Always ensure Western skyculture is loaded for cross-culture searches
           if (newValue !== 'western') {
@@ -544,7 +597,7 @@ export default {
       const cultureId = this.$store.state.currentSkyCultureId || 'western'
       const culture = this.skyCultureOptions.find(c => c.key === cultureId)
       console.log(cultureId, culture)
-      return culture ? culture.name : 'Western'
+      return this.$t(culture ? culture.name : 'Western')
     },
     dssOn: {
       get: function () {
@@ -934,6 +987,24 @@ export default {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.language-nav-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.language-nav-row .item-title,
+.language-nav-row .item-subtitle {
+  display: block;
+}
+
+.language-nav-row:focus-visible {
+  outline: 2px solid #4FC3F7;
+  outline-offset: -2px;
+}
+
 .toggle-row:hover {
   background: rgba(255, 255, 255, 0.05);
 }
@@ -992,6 +1063,13 @@ export default {
 }
 .culture-icon .v-icon {
   color: #FFB74D !important;
+}
+
+.language-icon {
+  background: rgba(100, 181, 246, 0.15);
+}
+.language-icon .v-icon {
+  color: #64B5F6 !important;
 }
 
 .advanced-icon {
@@ -1128,18 +1206,32 @@ export default {
   padding: 16px;
 }
 
-.sky-culture-list .v-list-item {
+.sky-culture-list .v-list-item,
+.language-list .v-list-item {
   border-left: 3px solid transparent;
   transition: all 0.2s ease;
 }
 
-.sky-culture-list .selected-culture {
+.sky-culture-list .selected-culture,
+.language-list .selected-language {
   background: rgba(33, 150, 243, 0.15) !important;
   border-left-color: #2196F3;
 }
 
-.sky-culture-list .v-list-item:hover {
+.sky-culture-list .v-list-item:hover,
+.language-list .v-list-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.language-hint {
+  margin: 8px 12px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.language-error {
+  color: #EF5350;
 }
 </style>
 

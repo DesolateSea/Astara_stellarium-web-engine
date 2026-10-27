@@ -40,13 +40,9 @@ Module['onRuntimeInitialized'] = function() {
   // Call all the functions registered with Module.afterInit(f)
   for (var i in Module.extendFns) { Module.extendFns[i]() }
 
-  Module._core_init(0, 0, 1);
-  Module.core = Module.getModule('core');
-  Module.observer = Module.core.observer;
-
   // Setup the translation function provided by the client if any.
   if (Module.translateFn) {
-    Module.translationsCache = {};
+    Module.translationsCache = Object.create(null);
     let callback = Module.addFunction(function(user, domain, str) {
       domain = Module.UTF8ToString(domain);
       str = Module.UTF8ToString(str);
@@ -62,6 +58,24 @@ Module['onRuntimeInitialized'] = function() {
     Module._sys_set_translate_function(callback);
   }
 
+  if (Module.getLangFn) {
+    Module.languagesCache = Object.create(null);
+    let callback = Module.addFunction(function() {
+      let lang = Module.getLangFn();
+      if (!Module.languagesCache[lang]) {
+        let size = Module.lengthBytesUTF8(lang) + 1;
+        let value = Module._malloc(size);
+        Module.stringToUTF8(lang, value, size);
+        Module.languagesCache[lang] = value;
+      }
+      return Module.languagesCache[lang];
+    }, 'i');
+    Module._sys_set_lang_function(callback);
+  }
+
+  Module._core_init(0, 0, 1);
+  Module.core = Module.getModule('core');
+  Module.observer = Module.core.observer;
   if (Module.onReady) Module.onReady(Module);
 }
 

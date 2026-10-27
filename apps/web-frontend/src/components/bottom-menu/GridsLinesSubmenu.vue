@@ -1,35 +1,35 @@
 <template>
-  <bottom-menu-submenu title="Grids & Lines" subtitle="Grids & Lines" :in-settings="inSettings" @back="$emit('back')">
+  <bottom-menu-submenu :title="$t('Grids & Lines')" :subtitle="$t('Grids & Lines')" :in-settings="inSettings" @back="$emit('back')">
     <div class="grids-lines-content">
       <div class="column">
-        <div class="column-title">Lines</div>
+        <div class="column-title">{{ $t('Lines') }}</div>
         <div class="toggle-row">
           <v-switch v-model="eclipticVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Ecliptic</span>
+          <span class="toggle-label">{{ $t('Ecliptic') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="meridianVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Meridian</span>
+          <span class="toggle-label">{{ $t('Meridian') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="celestialEquatorVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Celestial Equator</span>
+          <span class="toggle-label">{{ $t('Celestial Equator') }}</span>
         </div>
       </div>
 
       <div class="column">
-        <div class="column-title">Grids</div>
+        <div class="column-title">{{ $t('Grids') }}</div>
         <div class="toggle-row">
           <v-switch v-model="azimuthalVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Azimuthal</span>
+          <span class="toggle-label">{{ $t('Azimuthal') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="equatorialVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Equatorial</span>
+          <span class="toggle-label">{{ $t('Equatorial') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="equatorialJ2000Visible" dense hide-details color="primary" />
-          <span class="toggle-label">Equatorial J2000</span>
+          <span class="toggle-label">{{ $t('Equatorial J2000') }}</span>
         </div>
       </div>
     </div>

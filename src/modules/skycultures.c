@@ -717,7 +717,8 @@ static void roman_to_chinese(const char *roman, char *out, int len)
  *   out            - A text buffer that get filled with the name.
  *   out_size       - size of the out buffer.
  */
-static void skycultures_translate_english_name(const char* name, char *out,
+static void skycultures_translate_english_name(const char* name,
+                                        const char *native_name, char *out,
                                         int out_size)
 {
     const skyculture_t *cult = g_skycultures->current;
@@ -725,11 +726,17 @@ static void skycultures_translate_english_name(const char* name, char *out,
     const char *tr_name;
     const char *added, *number = NULL;
     char tmp[256], chinese_num[128] = {};
+    char domain[256] = "skyculture";
 
     assert(name);
+    // Pass culture/native context so identical English names can differ.
+    if (cult) {
+        snprintf(domain, sizeof(domain), "skyculture/%s%s%s", cult->key,
+                 native_name ? "/" : "", native_name ?: "");
+    }
 
     if (!cult || !cult->has_chinese_star_names) {
-        tr_name = sys_translate("skyculture", name);
+        tr_name = sys_translate(domain, name);
         snprintf(out, out_size, "%s", tr_name);
         return;
     }
@@ -745,19 +752,19 @@ static void skycultures_translate_english_name(const char* name, char *out,
     added = strstr(name, " Added");
     if (added) {
         snprintf(tmp, sizeof(tmp), "%.*s", (int)(added - name), name);
-        tr_name = sys_translate("skyculture", tmp);
+        tr_name = sys_translate(domain, tmp);
         snprintf(out, out_size, "%s %s%s", tr_name,
-                 sys_translate("skyculture", "Added"),
+                 sys_translate(domain, "Added"),
                  number ?: "");
         return;
     } else if (number) {
         snprintf(tmp, sizeof(tmp), "%.*s", (int)m.rm_so, name);
-        tr_name = sys_translate("skyculture", tmp);
+        tr_name = sys_translate(domain, tmp);
         snprintf(out, out_size, "%s%s", tr_name, number);
         return;
     }
 
-    tr_name = sys_translate("skyculture", name);
+    tr_name = sys_translate(domain, name);
     snprintf(out, out_size, "%s", tr_name);
 }
 
@@ -793,12 +800,14 @@ const char *skycultures_get_label(const char* main_id, char *out, int out_size)
                 return out;
             }
         } else if (cult->english_use_native_names && entry->name_native) {
-            skycultures_translate_english_name(entry->name_native, out,
+            skycultures_translate_english_name(entry->name_native,
+                                               entry->name_native, out,
                                                out_size);
             return out;
         }
         if (entry->name_english) {
-            skycultures_translate_english_name(entry->name_english, out,
+            skycultures_translate_english_name(entry->name_english,
+                                               entry->name_native, out,
                                                out_size);
             return out;
         }
@@ -845,7 +854,8 @@ static void add_one_sc_names_(const skyculture_name_t *entry, const obj_t *obj,
             f(obj, user, entry->name_native);
         }
         if (entry->name_english) {
-            skycultures_translate_english_name(entry->name_english, tmp,
+            skycultures_translate_english_name(entry->name_english,
+                                               entry->name_native, tmp,
                                                sizeof(tmp));
             f(obj, user, tmp);
         }
@@ -860,7 +870,8 @@ static void add_one_sc_names_(const skyculture_name_t *entry, const obj_t *obj,
 
     if (cult->english_use_native_names) {
         if (entry->name_native) {
-            skycultures_translate_english_name(entry->name_native, tmp,
+            skycultures_translate_english_name(entry->name_native,
+                                               entry->name_native, tmp,
                                                sizeof(tmp));
             f(obj, user, tmp);
             if (strcmp(tmp, entry->name_native) != 0)
@@ -876,7 +887,8 @@ static void add_one_sc_names_(const skyculture_name_t *entry, const obj_t *obj,
     }
 
     if (entry->name_english) {
-        skycultures_translate_english_name(entry->name_english, tmp,
+        skycultures_translate_english_name(entry->name_english,
+                                           entry->name_native, tmp,
                                            sizeof(tmp));
         f(obj, user, tmp);
     }
@@ -950,14 +962,17 @@ static void add_one_cn(const skyculture_name_t *entry, const obj_t *obj,
     cn.name_english = entry->name_english;
     tmp[0] = '\0';
     if (cult->prefer_native_names && entry->name_english) {
-        skycultures_translate_english_name(entry->name_english, tmp,
+        skycultures_translate_english_name(entry->name_english,
+                                           entry->name_native, tmp,
                                            sizeof(tmp));
     } else if (cult->english_use_native_names && entry->name_native) {
-        skycultures_translate_english_name(entry->name_native, tmp,
+        skycultures_translate_english_name(entry->name_native,
+                                           entry->name_native, tmp,
                                            sizeof(tmp));
     } else {
         if (entry->name_english)
-            skycultures_translate_english_name(entry->name_english, tmp,
+            skycultures_translate_english_name(entry->name_english,
+                                               entry->name_native, tmp,
                                                sizeof(tmp));
     }
     cn.name_translated = tmp[0] ? tmp : NULL;

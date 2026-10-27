@@ -24,6 +24,7 @@ Astara is an advanced mobile planetarium application. Built on the Stellarium We
 | [architecture.md](architecture.md) | System architecture overview |
 | [features.md](features.md) | Complete list of Astara features |
 | [frontend.md](frontend.md) | Vue.js frontend guide |
+| [localization.md](localization.md) | Language selection, translation catalogs, and upstream imports |
 | [upstream.md](upstream.md) | Relationship with Stellarium Web Engine |
 
 ### Design Documents

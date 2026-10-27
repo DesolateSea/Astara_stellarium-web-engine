@@ -7,7 +7,7 @@
       <div class="event-name">{{ event.name }}</div>
       <div class="event-date">{{ formattedDate }}</div>
       <div class="event-category" :style="{ color: categoryColor }">
-        {{ event.category }}
+        {{ $t(event.category) }}
       </div>
     </div>
     <div class="event-action">
@@ -28,7 +28,7 @@ export default {
   computed: {
     formattedDate () {
       const date = new Date(this.event.date)
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(this.$i18n.locale, {
         weekday: 'short',
         month: 'short',
         day: 'numeric',

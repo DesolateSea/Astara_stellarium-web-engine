@@ -65,10 +65,10 @@
       </div>
     </v-container>
     <v-snackbar v-model="gpsErrorSnackbar" :timeout="-1" color="warning">
-      GPS access failed. Using default location.
+      {{ $t('GPS access failed. Using default location.') }}
       <template v-slot:action="{ attrs }">
         <v-btn text v-bind="attrs" @click="gpsErrorSnackbar = false">
-          Close
+          {{ $t('Close') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -91,6 +91,7 @@ import CalendarPanel from '@/components/calendar-panel.vue'
 import swh from '@/assets/sw_helpers.js'
 import Moment from 'moment'
 import FullscreenService from '@/assets/fullscreen-service.js'
+import { getFontFamily } from '@/locale'
 
 export default {
   data (context) {
@@ -329,10 +330,9 @@ export default {
           // Determine base URL: '/' for absolute paths
           const baseUrl = '/'
           console.log('Base URL for fonts:', baseUrl, 'Capacitor:', !!window.Capacitor)
-          that.$stel.setFont('regular', baseUrl + 'fonts/Roboto-Regular.ttf', 1.38)
-          that.$stel.setFont('bold', baseUrl + 'fonts/Roboto-Bold.ttf', 1.38)
-          that.$stel.setFont('regular', baseUrl + 'fonts/NotoSans-Regular.ttf', 1.38)
-          that.$stel.setFont('bold', baseUrl + 'fonts/NotoSans-Bold.ttf', 1.38)
+          const font = getFontFamily(that.$i18n.locale, localStorage.getItem('stellarium-skyculture') || '')
+          that.$stel.setFont('regular', baseUrl + 'fonts/' + font + '-Regular.ttf', 1.38)
+          that.$stel.setFont('bold', baseUrl + 'fonts/' + font + '-Bold.ttf', 1.38)
 
           // Load saved preference for centered-only constellations (defaults to true)
           const savedCenteredOnly = localStorage.getItem('stel_constellations_centered_only')

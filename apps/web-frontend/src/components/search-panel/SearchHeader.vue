@@ -16,7 +16,7 @@
       ref="searchInput"
       :value="searchText"
       @input="$emit('update:searchText', $event)"
-      placeholder="Search"
+      :placeholder="$t('Search...')"
       hide-details
       single-line
       dense

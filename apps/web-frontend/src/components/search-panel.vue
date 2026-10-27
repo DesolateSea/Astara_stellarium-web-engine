@@ -46,7 +46,7 @@
           :get-subtitle="getVisibilityString"
           empty-icon="mdi-heart-outline"
           empty-message="No favorites yet"
-          empty-subtext="Tap the heart icon on any object to add it here"
+          empty-subtext="Tap the heart icon on any object to add it to favorites"
           @select-item="sourceClicked"
           @toggle-favorite="toggleFavourite"
         />
@@ -95,6 +95,7 @@
 
 <script>
 import swh from '@/assets/sw_helpers.js'
+import { translateEngine } from '@/i18n'
 import _ from 'lodash'
 import SearchHeader from './search-panel/SearchHeader.vue'
 import FilterChipsBar from './search-panel/FilterChipsBar.vue'
@@ -371,7 +372,7 @@ export default {
       // Placeholder for visibility calculation shown in screenshot (e.g. "Visible from 21:06 to 06:06")
       // This requires complex astronomical calculation.
       // For now returning type or generic info.
-      return this.typeToName(item.types[0])
+      return translateEngine('gui', this.typeToName(item.types[0]))
     },
     refresh: _.debounce(function () {
       var that = this

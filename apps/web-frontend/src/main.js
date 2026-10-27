@@ -17,13 +17,12 @@ import store from './store'
 import Router from 'vue-router'
 import fullscreen from 'vue-fullscreen'
 import VueCookie from 'vue-cookie'
-import _ from 'lodash'
+import './assets/localization.css'
 
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
-import VueI18n from 'vue-i18n'
-import Moment from 'moment'
+import i18n from './i18n'
 
 Vue.config.productionTip = false
 
@@ -39,8 +38,6 @@ Icon.Default.mergeOptions({
 Vue.use(VueCookie)
 Vue.use(fullscreen)
 
-Vue.use(VueI18n)
-
 // Load all plugins JS modules found in the plugins directory
 var plugins = []
 const ctx = require.context('./plugins/', true, /\.\/\w+\/index\.js$/)
@@ -51,43 +48,6 @@ for (const i in ctx.keys()) {
   plugins.push(mod.default)
 }
 Vue.SWPlugins = plugins
-
-// Loads all GUI translations found in the src/locales/ directory
-var messages = {}
-const guiLocales = require.context('./locales', true, /[A-Za-z0-9-_,\s]+\.json$/i)
-guiLocales.keys().forEach(key => {
-  const matched = key.match(/([A-Za-z0-9-_]+)\./i)
-  if (matched && matched.length > 1) {
-    const locale = matched[1]
-    messages[locale] = guiLocales(key)
-  }
-})
-
-// Loads all GUI translations found in the src/plugins/xxx/locales directories
-const pluginsLocales = require.context('./plugins/', true, /\.\/\w+\/locales\/([A-Za-z0-9-_]+)\.json$/i)
-pluginsLocales.keys().forEach(key => {
-  const matched = key.match(/\.\/\w+\/locales\/([A-Za-z0-9-_]+)\.json/i)
-  if (matched && matched.length > 1) {
-    const locale = matched[1]
-    if (messages[locale] === undefined) {
-      messages[locale] = pluginsLocales(key)
-    } else {
-      _.merge(messages[locale], pluginsLocales(key))
-    }
-  }
-})
-
-const loc = 'en'
-// Un-comment to select user's language automatically
-// loc = (navigator.language || navigator.userLanguage).split('-')[0] || 'en'
-Moment.locale(loc)
-var i18n = new VueI18n({
-  locale: loc,
-  messages: messages,
-  formatFallbackMessages: true,
-  fallbackLocale: 'en',
-  silentTranslationWarn: true
-})
 
 // Setup routes for the app
 Vue.use(Router)

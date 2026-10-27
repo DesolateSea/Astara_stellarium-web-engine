@@ -1,27 +1,27 @@
 <template>
-  <bottom-menu-submenu title="Constellations" subtitle="Constellations" :in-settings="inSettings" @back="$emit('back')">
+  <bottom-menu-submenu :title="$t('Constellations')" :subtitle="$t('Constellations')" :in-settings="inSettings" @back="$emit('back')">
     <div class="constellations-content">
       <div class="toggle-grid">
         <div class="toggle-row">
           <v-switch v-model="linesVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Lines</span>
+          <span class="toggle-label">{{ $t('Lines') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="labelsVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Labels</span>
+          <span class="toggle-label">{{ $t('Labels') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="drawingsVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Drawings</span>
+          <span class="toggle-label">{{ $t('Drawings') }}</span>
         </div>
         <div class="toggle-row">
           <v-switch v-model="boundariesVisible" dense hide-details color="primary" />
-          <span class="toggle-label">Boundaries</span>
+          <span class="toggle-label">{{ $t('Boundaries') }}</span>
         </div>
       </div>
       <div class="toggle-row full-width">
         <v-switch v-model="centeredOnly" dense hide-details color="primary" />
-        <span class="toggle-label">Centered only</span>
+        <span class="toggle-label">{{ $t('Centered only') }}</span>
       </div>
     </div>
   </bottom-menu-submenu>

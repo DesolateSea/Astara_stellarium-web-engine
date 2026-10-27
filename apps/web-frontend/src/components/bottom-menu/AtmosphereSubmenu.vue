@@ -1,8 +1,8 @@
 <template>
-  <bottom-menu-submenu title="Atmosphere" subtitle="Atmosphere" :in-settings="inSettings" @back="$emit('back')">
+  <bottom-menu-submenu :title="$t('Atmosphere')" :subtitle="$t('Atmosphere')" :in-settings="inSettings" @back="$emit('back')">
     <div class="atmosphere-content">
       <div class="slider-section">
-        <div class="slider-label">Light Pollution</div>
+        <div class="slider-label">{{ $t('Light Pollution') }}</div>
         <v-slider
           v-model="lightPollution"
           :min="1"
@@ -18,7 +18,7 @@
 
       <div class="toggle-row">
         <v-switch v-model="fogVisible" dense hide-details color="primary" />
-        <span class="toggle-label">Fog</span>
+        <span class="toggle-label">{{ $t('Fog') }}</span>
       </div>
     </div>
   </bottom-menu-submenu>

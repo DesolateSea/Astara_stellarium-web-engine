@@ -20,7 +20,7 @@
         @click:close="$emit('remove-filter', filter.id)"
       >
         <v-icon left small>{{ filter.icon }}</v-icon>
-        {{ filter.label }}
+        {{ $t(filter.label) }}
       </v-chip>
       <v-btn
         small
@@ -30,7 +30,7 @@
         @click="$emit('add-filter')"
       >
         <v-icon left small>mdi-plus</v-icon>
-        Filter
+        {{ $t('Filter') }}
       </v-btn>
     </div>
   </div>

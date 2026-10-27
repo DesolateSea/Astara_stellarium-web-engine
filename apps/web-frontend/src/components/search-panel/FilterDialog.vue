@@ -11,7 +11,7 @@
     <v-card dark class="filter-selection-card">
       <v-card-title class="text-h6">
         <v-icon left>mdi-filter-variant</v-icon>
-        Add Filter
+        {{ $t('Add Filter') }}
         <v-spacer></v-spacer>
         <v-btn icon @click="$emit('update:visible', false)">
           <v-icon>mdi-close</v-icon>
@@ -30,7 +30,7 @@
               <v-icon>{{ cat.icon }}</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-title>{{ cat.label }}</v-list-item-title>
+              <v-list-item-title>{{ $t(cat.label) }}</v-list-item-title>
             </v-list-item-content>
             <v-list-item-action v-if="isFilterActive(cat)">
               <v-icon color="success">mdi-check</v-icon>
