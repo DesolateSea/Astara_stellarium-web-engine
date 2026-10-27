@@ -1,0 +1,6 @@
+[
+  { "value": "en", "text": "English", "aliases": [], "moment": "en", "vuetify": "en", "font": "NotoSans" },
+  { "value": "de", "text": "Deutsch", "aliases": [], "moment": "de", "vuetify": "de", "font": "NotoSans" },
+  { "value": "fr", "text": "Français", "aliases": [], "moment": "fr", "vuetify": "fr", "font": "NotoSans" },
+  { "value": "zh-Hans", "text": "简体中文", "aliases": ["zh", "zh-CN", "zh-SG"], "moment": "zh-cn", "vuetify": "zh-Hans", "font": "NotoSansSC" }
+]

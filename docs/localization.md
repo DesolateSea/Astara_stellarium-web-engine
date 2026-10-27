@@ -10,6 +10,8 @@ On startup, a saved choice takes precedence over the browser/Android WebView
 language preferences. Unsupported languages fall back to English. Simplified
 Chinese accepts `zh`, `zh-CN`, `zh-SG`, and `zh-Hans`; Traditional Chinese tags
 are not silently mapped to Simplified Chinese.
+`src/languages.json` is the single registry for the selector, locale aliases,
+date-library locale, widget locale, writing direction, and bundled font family.
 
 Open **Settings → Language** to override the device language, or choose
 **System language** to remove the override. A change saves `astara-language`
@@ -32,6 +34,8 @@ The observer's location has no effect on the language.
   rendered as plain text without fetching English HTML.
 - `src/locales/object-types.js`: app-authored supplements for missing upstream object types.
 - `src/locales/sky-names.js`: object-specific names whose English spelling is ambiguous.
+- `src/translations/<locale>.json`: editable overrides and new-language catalogs,
+  automatically bundled; empty draft strings do not suppress English fallback.
 - Plugin catalogs are merged from `src/plugins/*/locales/*.json`.
 
 Wrap visible UI strings in `$t('English source text')`; preserve placeholders
@@ -40,6 +44,8 @@ four catalogs (or all four columns in `ui.js`). Missing keys fall back to Englis
 development builds warn.
 Moment, native date formatting, Vuetify widgets, and document `lang` use the
 selected locale. Chinese UI and engine labels use bundled Noto Sans SC fonts.
+Non-Latin fonts are selected from the language registry for both UI and engine;
+the UI registers the matching local Regular/Bold TTFs automatically.
 
 Settings, all sky-control submenus, search categories/filters/empty states,
 object-detail labels, coordinate editing, calendar weekdays and calculated
@@ -105,6 +111,106 @@ Weblate can maintain these JSON/PO files as an optional self-hosted,
 open-source contributor tool. Machine translation may draft new strings
 offline, but terminology and placeholders must be reviewed before shipping.
 Neither is a runtime dependency.
+
+## Repeatable contributor workflow
+
+Run these commands from `apps/web-frontend`. They use Node/Python and local files,
+not an online translation service. They do **not** invent translations.
+
+### Find and fix missing names
+
+```sh
+npm run l10n -- report zh-Hans --output /tmp/opencode/zh-Hans-gaps.json
+npm run l10n -- template zh-Hans
+```
+
+The report contains English source values and exact domains/keys. It checks
+bundled sky-culture data, human-readable star/deep-sky index names, UI/history/
+credits, engine object types, and landscapes. It excludes recognizable catalog
+numbers and Bayer/Flamsteed/variable-star identifiers. `unchanged` entries are
+listed separately: Sirius in German is not necessarily a missing translation.
+Scoped counts can overlap between cultures and do not mean unique objects.
+Chinese numbered star names are checked by their translated base name, matching
+the engine's numeral formatting rather than reporting thousands of false gaps.
+Data loaded from outside the bundled indexes may still contain additional names.
+
+`template` adds empty keys to `src/translations/zh-Hans.json` without overwriting
+existing values. Supply `--output /tmp/opencode/work.json` for a separate work file.
+The file has three sections:
+
+```json
+{
+  "messages": { "Settings": "设置" },
+  "engine": {
+    "sky": { "Polaris": "北极星" },
+    "skyculture/western/Pyxis": { "Compass": "罗盘座" }
+  },
+  "landscapes": {
+    "ocean": { "title": "海洋", "description": "宁静的海洋地平线。" }
+  }
+}
+```
+
+Use exact source spellings from the report. General international names belong
+in `engine.sky`; culture-specific meanings belong in scoped `skyculture/...`
+domains. Put custom corrections here instead of modifying generated upstream
+JSON, so a later PO reimport cannot erase them. Keep proper names where the
+language convention does; never translate IDs just to eliminate every Latin
+character. Search labels use the translation flag and raw-name lookup, but
+canonical IDs, cached records, favourite matching, and navigation remain intact.
+Translated labels are not automatically new search aliases.
+
+### Add a language
+
+For a Latin-script example:
+
+```sh
+npm run l10n -- init es --name 'Español'
+npm run l10n -- report es --output /tmp/opencode/es-source.json
+```
+
+This registers `es` and creates **one editable catalog** at
+`src/translations/es.json`, including the missing UI/content, object/sky/culture,
+and landscape keys. Fill its empty values using the source report. The selector,
+locale detection, catalog loading, widgets, and date formatting use the registry;
+no new imports or pipe-table columns are required. Empty values remain English
+fallbacks, so adding a draft language does not create blank controls.
+
+For another script, first place licensed font files in
+`public/fonts/<Family>-Regular.ttf` and `<Family>-Bold.ttf`, then choose them:
+
+```sh
+npm run l10n -- init hi --name 'हिन्दी' --font NotoSansDevanagari
+```
+
+`--aliases` accepts comma-separated device tags; `--moment` and `--vuetify`
+select upstream library locale names when they differ (e.g. `zh-cn` vs `zh-Hans`).
+`--dir rtl` selects RTL document/widget direction. Fonts, text shaping, and RTL
+layouts still require testing on the target device. The checker rejects missing
+TTFs; it cannot prove their glyph coverage. If Vuetify has no requested locale,
+its built-in widget wording falls back to English. Existing four-language
+pipe-table catalogs remain supported but are not the recommended way to extend
+the language list.
+
+Reuse reviewed Stellarium PO files with the import commands above. Upstream
+imports and editable overrides are merged, with nonempty overrides taking
+precedence. The nested JSON files can also be maintained with an open-source
+tool such as Weblate; translation tooling is optional and never needed at runtime.
+
+### Validate and ship
+
+```sh
+npm run l10n -- check
+npm run test:localization
+NODE_OPTIONS=--openssl-legacy-provider npm run build
+npx cap sync android
+```
+
+`check` validates the registry, offline fonts, override value types, domains,
+landscape keys, plain-text values, and interpolation placeholders. It allows
+unfinished drafts; `report` is the separate completeness review. Then build the
+Android APK normally. Catalog-only changes require a frontend rebuild/sync,
+**not** a WASM rebuild, and installing an update preserves the saved language.
 
 ## Checks
 

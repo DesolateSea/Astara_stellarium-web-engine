@@ -294,15 +294,20 @@ const swh = {
   },
 
   cleanupOneSkySourceName: function (name, flags) {
-    flags = flags || 4
-    return Vue.prototype.$stel.designationCleanup(name, flags)
+    // Display-only formatting: preserve canonical names in search/favourites data.
+    // DSGN_TRANSLATE (16) was missing from the search/default path.
+    flags = (flags === undefined ? 4 : flags) | 16
+    const cleaned = Vue.prototype.$stel.designationCleanup(name, flags)
+    // Raw names from indexes may not have the engine's "NAME " prefix.
+    return translateEngine('sky', cleaned)
   },
 
   nameForSkySource: function (skySource) {
     if (!skySource || !skySource.names) {
       return '?'
     }
-    return this.cleanupOneSkySourceName(skySource.names[0])
+    const commonName = skySource.names.find(name => name.startsWith('NAME '))
+    return this.cleanupOneSkySourceName(commonName || skySource.names[0])
   },
 
   culturalNameToList: function (cn) {
@@ -345,7 +350,9 @@ const swh = {
         res = res.concat(this.culturalNameToList(ss.culturalNames[i]))
       }
     }
-    res = res.concat(ss.names.map(n => Vue.prototype.$stel.designationCleanup(n, flags)))
+    const commonName = ss.names.find(name => name.startsWith('NAME '))
+    if (commonName) res.push(this.cleanupOneSkySourceName(commonName, flags))
+    res = res.concat(ss.names.map(n => this.cleanupOneSkySourceName(n, flags)))
     // Remove duplicates, this can happen between * and V* catalogs
     res = res.filter(function (v, i) { return res.indexOf(v) === i })
     res = res.filter(function (v, i) { return !v.startsWith('CON ') })

@@ -1,21 +1,21 @@
+import languageRegistry from './languages.json'
+
 // Locale selection is independent of the observer's geographic location.
 export const LANGUAGE_KEY = 'astara-language'
-export const languages = [
-  { value: 'en', text: 'English' },
-  { value: 'de', text: 'Deutsch' },
-  { value: 'fr', text: 'Français' },
-  { value: 'zh-Hans', text: '简体中文' }
-]
+export const languages = languageRegistry
 
 export function normalizeLocale (value) {
-  const tag = String(value || '').replace(/_/g, '-').toLowerCase()
-  if (/^zh(?:-|$)/.test(tag)) {
-    // Do not silently substitute Simplified Chinese for Traditional Chinese.
-    if (/(?:^|-)(hant|tw|hk|mo)(?:-|$)/.test(tag)) return null
-    return 'zh-Hans'
+  let tag = String(value || '').replace(/_/g, '-').toLowerCase()
+  const traditionalChinese = /^zh(?:-|$)/.test(tag) && /(?:^|-)(hant|tw|hk|mo)(?:-|$)/.test(tag)
+  while (tag) {
+    const language = languages.find(language => [language.value, ...(language.aliases || [])]
+      .some(alias => alias.toLowerCase() === tag))
+    // A registered Traditional Chinese locale is allowed, but never substitute Hans.
+    if (language && !(traditionalChinese && language.value === 'zh-Hans')) return language.value
+    const separator = tag.lastIndexOf('-')
+    tag = separator < 0 ? '' : tag.slice(0, separator)
   }
-  const base = tag.split('-')[0]
-  return languages.some(language => language.value === base) ? base : null
+  return null
 }
 
 export function resolveLocale (saved, preferred = []) {
@@ -48,5 +48,7 @@ export function saveLanguagePreference (value) {
 }
 
 export function getFontFamily (locale, culture = '') {
-  return locale === 'zh-Hans' || culture.includes('chinese') ? 'NotoSansSC' : 'NotoSans'
+  if (culture.includes('chinese')) return 'NotoSansSC'
+  const language = languages.find(language => language.value === locale)
+  return (language && language.font) || 'NotoSans'
 }

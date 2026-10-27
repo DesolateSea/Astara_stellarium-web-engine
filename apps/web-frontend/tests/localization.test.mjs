@@ -6,6 +6,7 @@ import { runInNewContext } from 'node:vm'
 
 // Load the dependency-free module without changing the Vue CLI package type.
 const source = readFileSync(new URL('../src/locale.js', import.meta.url), 'utf8')
+  .replace("import languageRegistry from './languages.json'", 'const languageRegistry = ' + readFileSync(new URL('../src/languages.json', import.meta.url), 'utf8'))
 const locale = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
 
 test('normalizes supported BCP 47 and upstream locale tags', () => {
@@ -90,10 +91,10 @@ test('Chinese fonts follow both UI language and sky culture', () => {
   assert.equal(locale.getFontFamily('fr', 'western'), 'NotoSans')
 })
 
-test('all bundled UI catalogs have matching keys and interpolation placeholders', () => {
+test('original bundled UI catalogs have matching keys and interpolation placeholders', () => {
   const load = name => JSON.parse(readFileSync(new URL('../src/locales/' + name + '.json', import.meta.url)))
   const english = load('en')
-  for (const { value } of locale.languages) {
+  for (const value of ['en', 'de', 'fr', 'zh-Hans']) {
     const messages = load(value)
     assert.deepEqual(Object.keys(messages).sort(), Object.keys(english).sort(), value)
     for (const key of Object.keys(english)) {
@@ -101,6 +102,32 @@ test('all bundled UI catalogs have matching keys and interpolation placeholders'
       assert.deepEqual(messages[key].match(/\{[^}]+\}/g), english[key].match(/\{[^}]+\}/g), value + ': ' + key)
     }
   }
+})
+
+test('search and object-name formatting translates named stars, including raw index names, without mutating IDs', () => {
+  const source = readFileSync(new URL('../src/assets/sw_helpers.js', import.meta.url), 'utf8')
+  const helpers = source.slice(source.indexOf('  cleanupOneSkySourceName:'), source.indexOf('  nameForSkySourceType:'))
+  const translations = { Polaris: 'Étoile Polaire', Betelgeuse: 'Bételgeuse' }
+  const seenFlags = []
+  const stel = {
+    designationCleanup: (name, flags) => {
+      seenFlags.push(flags)
+      if (name.startsWith('NAME ')) return flags & 16 ? translations[name.slice(5)] || name.slice(5) : name.slice(5)
+      return name
+    }
+  }
+  const swh = runInNewContext('({' + helpers + '})', {
+    Vue: { prototype: { $stel: stel } },
+    translateEngine: (_, name) => translations[name] || name
+  })
+  const object = { names: ['HIP 11767', 'NAME Polaris'], types: ['*'], model: 'star' }
+  const original = JSON.stringify(object)
+  assert.equal(swh.nameForSkySource(object), 'Étoile Polaire')
+  assert.equal(swh.namesForSkySource(object)[0], 'Étoile Polaire')
+  assert.equal(swh.cleanupOneSkySourceName('Betelgeuse'), 'Bételgeuse')
+  assert.equal(swh.cleanupOneSkySourceName('HIP 11767'), 'HIP 11767')
+  assert.ok(seenFlags.every(flags => flags & 16))
+  assert.equal(JSON.stringify(object), original)
 })
 
 test('engine registers translation and language callbacks before initialization', () => {

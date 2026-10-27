@@ -2,7 +2,9 @@ import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import Moment from 'moment'
 import _ from 'lodash'
-import { getStartupLocale } from './locale'
+import { getStartupLocale, languages } from './locale'
+import { mergeCatalog } from './translations/catalog'
+import { configureLocaleFont } from './translations/fonts'
 import { uiMessages } from './locales/ui'
 import { historyMessages } from './locales/history'
 import { creditMessages } from './locales/credits'
@@ -19,15 +21,27 @@ guiLocales.keys().forEach(key => {
 Object.keys(uiMessages).forEach(locale => {
   messages[locale] = Object.assign({}, objectTypeMessages[locale], creditMessages[locale], historyMessages[locale], uiMessages[locale], messages[locale])
 })
+const contentMessages = {}
+const translationFiles = require.context('./translations', false, /\.json$/)
+translationFiles.keys().forEach(key => {
+  const locale = key.slice(2, -5)
+  contentMessages[locale] = translationFiles(key)
+})
 const pluginLocales = require.context('./plugins/', true, /\.\/\w+\/locales\/([A-Za-z0-9-_]+)\.json$/i)
 pluginLocales.keys().forEach(key => {
   const locale = key.match(/\/locales\/([^/]+)\.json$/)[1]
   messages[locale] = _.merge(messages[locale] || {}, pluginLocales(key))
 })
+Object.keys(contentMessages).forEach(locale => {
+  messages[locale] = mergeCatalog(messages[locale], contentMessages[locale].messages)
+})
 
 const locale = getStartupLocale()
-Moment.locale(locale === 'zh-Hans' ? 'zh-cn' : locale)
+const language = languages.find(language => language.value === locale)
+Moment.locale(language.moment || locale)
 document.documentElement.lang = locale
+document.documentElement.dir = language.dir || 'ltr'
+configureLocaleFont(language, process.env.BASE_URL || '/')
 
 const i18n = new VueI18n({
   locale,
@@ -46,6 +60,14 @@ engineLocales.keys().forEach(key => {
 Object.keys(skyNameMessages).forEach(locale => {
   engineMessages[locale] = Object.assign({}, engineMessages[locale], skyNameMessages[locale])
 })
+Object.keys(contentMessages).forEach(locale => {
+  engineMessages[locale] = mergeCatalog(engineMessages[locale], contentMessages[locale].engine)
+})
+
+export function translateLandscape (key) {
+  const catalog = contentMessages[i18n.locale] || {}
+  return catalog.landscapes && catalog.landscapes[key]
+}
 
 export function translateEngine (domain, text) {
   const catalogs = engineMessages[i18n.locale] || {}

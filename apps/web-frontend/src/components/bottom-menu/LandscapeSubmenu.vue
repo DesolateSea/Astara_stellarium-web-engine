@@ -37,6 +37,7 @@
 <script>
 import BottomMenuSubmenu from './BottomMenuSubmenu.vue'
 import { landscapeMessages } from '@/locales/landscapes'
+import { translateLandscape } from '@/i18n'
 
 export default {
   name: 'LandscapeSubmenu',
@@ -80,7 +81,12 @@ export default {
     localizedDescription () {
       if (!this.currentLandscapeData) return null
       const catalog = landscapeMessages[this.$i18n.locale] || landscapeMessages.en
-      return catalog[this.currentLandscapeData.key] || null
+      const base = catalog[this.currentLandscapeData.key] || landscapeMessages.en[this.currentLandscapeData.key]
+      const translated = translateLandscape(this.currentLandscapeData.key) || {}
+      return base ? {
+        title: translated.title || base.title,
+        description: translated.description || base.description
+      } : null
     }
   },
   mounted () {
