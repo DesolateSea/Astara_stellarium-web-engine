@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <title>Astara — an illuminated world beneath the stars</title>
+  <g id="background">
+    <rect width="108" height="108" fill="#10162E" />
+  </g>
+  <g id="foreground">
+    <circle cx="54" cy="55" r="23" fill="#192340" data-themed="false" />
+    <path d="M 29 69 C 18 60 42 35 65 33 C 81 33 83 43 76 57"
+          fill="none" stroke="#7187D9" stroke-width="3.5" stroke-linecap="round" />
+    <circle cx="54" cy="55" r="17" fill="#7674E8" />
+    <path d="M 58 39 C 70 42 76 60 64 69 C 57 74 46 72 40 65 C 51 68 60 64 63 56 C 65 49 62 43 58 39 Z"
+          fill="#494DAD" data-themed="false" />
+    <path d="M 61 39 C 48 38 39 47 40 58 C 41 65 46 69 51 72 C 41 70 35 61 37 51 C 39 41 50 35 61 39 Z"
+          fill="#FFD794" data-themed="false" />
+    <path d="M 40 51 C 46 45 53 42 58 42"
+          fill="none" stroke="#FFF0CA" stroke-width="1.3" stroke-linecap="round" data-themed="false" />
+    <path d="M 76 57 C 64 71 40 81 30 71"
+          fill="none" stroke="#77DFE5" stroke-width="4" stroke-linecap="round" />
+    <path d="M 32 70 C 42 76 63 66 72 60"
+          fill="none" stroke="#D0FBF2" stroke-width="1.2" stroke-linecap="round" data-themed="false" />
+    <path d="M 74 29 C 75 33 77 35 81 36 C 77 37 75 39 74 43 C 73 39 71 37 67 36 C 71 35 73 33 74 29 Z"
+          fill="#FFF0CA" />
+    <circle cx="33" cy="35" r="2" fill="#B6BCFF" />
+    <circle cx="42" cy="28" r="1.25" fill="#77DFE5" />
+  </g>
+</svg>
