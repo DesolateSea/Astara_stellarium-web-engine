@@ -38,6 +38,21 @@
       <h3>Source Code</h3>
       <p><a href="https://github.com/DesolateSea/Astara_stellarium-web-engine" target="_blank" rel="noopener">https://github.com/DesolateSea/Astara_stellarium-web-engine</a></p>
 
+      <div v-if="!isNativeApp" class="mb-4">
+        <h3>Download Mobile App</h3>
+        <p>Get Astara on your Android device for gyroscope-based sky tracking, AR camera overlay, and offline star maps.</p>
+        <v-btn
+          outlined
+          color="primary"
+          href="https://github.com/DesolateSea/Astara_stellarium-web-engine/releases/download/v1.0.0/app-release.apk"
+          target="_blank"
+          rel="noopener"
+        >
+          <v-icon left size="20">mdi-download</v-icon>
+          Download APK from GitHub
+        </v-btn>
+      </div>
+
       <h3>User Manual</h3>
       <p>For detailed usage instructions, see the <a href="https://github.com/DesolateSea/Astara_stellarium-web-engine/blob/master/docs/user_manual.md" target="_blank" rel="noopener">User Manual</a> in the repository.</p>
 
@@ -61,6 +76,14 @@
 <script>
 export default {
   name: 'AboutDialog',
+  computed: {
+    isNativeApp () {
+      return typeof window !== 'undefined' &&
+        window.Capacitor &&
+        window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform()
+    }
+  },
   methods: {
     goBack () {
       this.$store.state.showAboutDialog = false
