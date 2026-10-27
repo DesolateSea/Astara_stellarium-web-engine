@@ -113,6 +113,7 @@ export async function loadProject (root = defaultRoot) {
 export function findEngineTranslation (catalogs, domain, key, messages) {
   if (Object.hasOwn(catalogs[domain] || {}, key) && catalogs[domain][key]) return catalogs[domain][key]
   if (domain.startsWith('skyculture/')) return findEngineTranslation(catalogs, domain.slice(0, domain.lastIndexOf('/')), key, messages)
+  if (domain === 'skyculture') return findEngineTranslation(catalogs, 'sky', key, messages)
   return domain === 'gui' ? messages[key] : undefined
 }
 

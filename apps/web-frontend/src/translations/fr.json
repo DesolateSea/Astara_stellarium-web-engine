@@ -1,5 +1,6 @@
 {
   "engine": {
+    "sky": { "Spica": "L’Épi", "Polaris": "Étoile polaire" },
     "skyculture/chinese": { "Added": "Ajouté" },
     "skyculture/chinese_contemporary": { "Added": "Ajouté" }
   }

@@ -159,6 +159,12 @@ language convention does; never translate IDs just to eliminate every Latin
 character. Search labels use the translation flag and raw-name lookup, but
 canonical IDs, cached records, favourite matching, and navigation remain intact.
 Translated labels are not automatically new search aliases.
+Chinese display labels omit upstream Latin-name suffixes while retaining those
+aliases in search data. Bayer/Flamsteed names keep their identifying letters and
+numbers but use translated constellation labels, sourced from the existing
+Western culture catalogs through `src/translations/designations.js`. English
+retains the standard IAU form. Established French/German proper names can still
+be identical to the international spelling (e.g. French Arcturus, German Spica).
 
 ### Add a language
 
@@ -211,6 +217,11 @@ landscape keys, plain-text values, and interpolation placeholders. It allows
 unfinished drafts; `report` is the separate completeness review. Then build the
 Android APK normally. Catalog-only changes require a frontend rebuild/sync,
 **not** a WASM rebuild, and installing an update preserves the saved language.
+The localization tests include a native C formatter regression test and require
+`cc` (GCC or Clang). Changes to `src/designation.c`, unlike catalog-only edits,
+require rebuilding the WASM engine and copying its generated JS/WASM assets
+before the frontend build. Raw common names in bundled star tiles must use the
+same translation lookup as `NAME `-prefixed aliases.
 
 ## Checks
 

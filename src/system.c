@@ -103,7 +103,10 @@ const char *sys_translate(const char *domain, const char *str)
     assert(domain);
     assert(strcmp(domain, "gui") == 0 ||
            strcmp(domain, "sky") == 0 ||
-           strcmp(domain, "skyculture") == 0);
+           strcmp(domain, "skyculture") == 0 ||
+           strncmp(domain, "skyculture/", 11) == 0 ||
+           strcmp(domain, "constellation") == 0 ||
+           strcmp(domain, "greek") == 0);
     if (!sys_callbacks.translate) return str;
     return sys_callbacks.translate(sys_callbacks.user, domain, str);
 }

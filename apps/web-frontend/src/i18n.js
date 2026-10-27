@@ -5,6 +5,7 @@ import _ from 'lodash'
 import { getStartupLocale, languages } from './locale'
 import { mergeCatalog } from './translations/catalog'
 import { configureLocaleFont } from './translations/fonts'
+import { translateConstellation, translateStarDesignation, translateGreek, localizedNameOnly } from './translations/designations'
 import { uiMessages } from './locales/ui'
 import { historyMessages } from './locales/history'
 import { creditMessages } from './locales/credits'
@@ -70,13 +71,22 @@ export function translateLandscape (key) {
 }
 
 export function translateEngine (domain, text) {
+  if (domain === 'greek') return translateGreek(text, i18n.locale)
+  if (domain === 'constellation') {
+    return i18n.locale === 'en' ? text : translateConstellation(text, translateEngine)
+  }
+  if (domain === 'sky') {
+    const designation = translateStarDesignation(text, translateEngine, i18n.locale)
+    if (designation !== text) return designation
+  }
   const catalogs = engineMessages[i18n.locale] || {}
   const fallback = engineMessages.en || {}
   const translated = catalogs[domain] && catalogs[domain][text]
   const fallbackText = fallback[domain] && fallback[domain][text]
-  if (typeof translated === 'string' && translated) return translated
+  if (typeof translated === 'string' && translated) return domain === 'gui' ? translated : localizedNameOnly(translated, i18n.locale)
   if (typeof fallbackText === 'string' && fallbackText) return fallbackText
   if (domain.startsWith('skyculture/')) return translateEngine(domain.slice(0, domain.lastIndexOf('/')), text)
+  if (domain === 'skyculture') return translateEngine('sky', text)
   return domain === 'gui' ? String(i18n.t(text)) : text
 }
 

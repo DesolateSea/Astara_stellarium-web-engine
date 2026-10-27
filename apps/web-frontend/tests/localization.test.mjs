@@ -8,6 +8,8 @@ import { runInNewContext } from 'node:vm'
 const source = readFileSync(new URL('../src/locale.js', import.meta.url), 'utf8')
   .replace("import languageRegistry from './languages.json'", 'const languageRegistry = ' + readFileSync(new URL('../src/languages.json', import.meta.url), 'utf8'))
 const locale = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+const designationSource = readFileSync(new URL('../src/translations/designations.js', import.meta.url), 'utf8')
+const designationHelpers = await import('data:text/javascript;base64,' + Buffer.from(designationSource).toString('base64'))
 
 test('normalizes supported BCP 47 and upstream locale tags', () => {
   for (const tag of ['zh', 'zh-CN', 'zh_SG', 'zh_Hans_CN']) {
@@ -175,6 +177,7 @@ test('engine catalogs respect domains and missing names fall back safely', () =>
     .replace('export function', 'function')
   const chinese = JSON.parse(readFileSync(new URL('../src/engine-locales/zh-Hans.json', import.meta.url)))
   const translate = runInNewContext(functionSource + '\ntranslateEngine', {
+    ...designationHelpers,
     engineMessages: { 'zh-Hans': chinese, en: {} },
     i18n: { locale: 'zh-Hans', t: text => text === 'Settings' ? '设置' : text }
   })
@@ -267,6 +270,7 @@ test('culture-specific contexts override global names without leaking across cul
     .replace('export function', 'function')
   const chinese = JSON.parse(readFileSync(new URL('../src/engine-locales/zh-Hans.json', import.meta.url)))
   const translate = runInNewContext(functionSource + '\ntranslateEngine', {
+    ...designationHelpers,
     engineMessages: { 'zh-Hans': { ...chinese, ...skyNameMessages['zh-Hans'] } }, i18n: { locale: 'zh-Hans', t: text => text }
   })
   assert.equal(translate('skyculture/western', 'Maiden'), '室女座')

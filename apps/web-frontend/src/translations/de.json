@@ -1,5 +1,6 @@
 {
   "engine": {
+    "sky": { "Arcturus": "Arktur", "Polaris": "Polarstern" },
     "skyculture/chinese": { "Added": "Zusätzlich" },
     "skyculture/chinese_contemporary": { "Added": "Zusätzlich" }
   }
