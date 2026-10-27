@@ -1,12 +1,16 @@
 <template>
-  <bottom-menu-submenu title="Landscape" subtitle="Select landscape" :in-settings="inSettings" @back="$emit('back')">
+  <bottom-menu-submenu :title="$t('Landscape')" :subtitle="$t('Select landscape')" :in-settings="inSettings" @back="$emit('back')">
     <div class="landscape-content">
       <!-- Landscape Carousel Selector -->
       <div class="landscape-carousel"
         @touchstart="onTouchStart"
         @touchend="onTouchEnd"
       >
-        <div class="landscape-description" v-html="currentDescription"></div>
+        <div v-if="localizedDescription" class="landscape-description">
+          <h2>{{ localizedDescription.title }}</h2>
+          <p>{{ localizedDescription.description }}</p>
+        </div>
+        <div v-else class="landscape-description" v-html="currentDescription"></div>
         <div class="landscape-nav">
           <v-btn icon class="nav-btn" @click="prevLandscape" :disabled="currentIndex <= 0">
             <v-icon>mdi-chevron-left</v-icon>
@@ -32,6 +36,8 @@
 
 <script>
 import BottomMenuSubmenu from './BottomMenuSubmenu.vue'
+import { landscapeMessages } from '@/locales/landscapes'
+import { translateLandscape } from '@/i18n'
 
 export default {
   name: 'LandscapeSubmenu',
@@ -71,6 +77,16 @@ export default {
       if (!this.currentLandscapeData) return ''
       const desc = this.descriptions[this.currentLandscapeData.key]
       return desc || ''
+    },
+    localizedDescription () {
+      if (!this.currentLandscapeData) return null
+      const catalog = landscapeMessages[this.$i18n.locale] || landscapeMessages.en
+      const base = catalog[this.currentLandscapeData.key] || landscapeMessages.en[this.currentLandscapeData.key]
+      const translated = translateLandscape(this.currentLandscapeData.key) || {}
+      return base ? {
+        title: translated.title || base.title,
+        description: translated.description || base.description
+      } : null
     }
   },
   mounted () {
@@ -87,6 +103,8 @@ export default {
         const landscapes = []
         for (const key of keys) {
           landscapes.push({ key })
+          // All bundled landscapes have plain-text offline translations.
+          if (landscapeMessages.en[key]) continue
           // Load description for each landscape
           try {
             const descUrl = '/skydata/landscapes/' + key + '/description.en.html'

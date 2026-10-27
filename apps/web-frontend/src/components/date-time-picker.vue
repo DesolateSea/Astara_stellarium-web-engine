@@ -158,21 +158,21 @@
               <v-btn icon>
                 <v-icon>mdi-skip-previous</v-icon>
               </v-btn>
-              <span class="action-label">Previous night</span>
+              <span class="action-label">{{ $t('Previous night') }}</span>
             </div>
 
             <div class="action-item" @click="resetTime">
               <v-btn icon large class="now-btn">
                 <v-icon>mdi-history</v-icon>
               </v-btn>
-              <span class="action-label">Set time to now</span>
+              <span class="action-label">{{ $t('Set time to now') }}</span>
             </div>
 
             <div class="action-item" @click="addDay(1)">
               <v-btn icon>
                 <v-icon>mdi-skip-next</v-icon>
               </v-btn>
-              <span class="action-label">Next night</span>
+              <span class="action-label">{{ $t('Next night') }}</span>
             </div>
           </div>
         </div>
@@ -190,7 +190,7 @@
           />
         </div>
         <div class="dusk-label text-center mt-1">
-          {{ sliderHint || 'Time' }}
+          {{ sliderHint || $t('Time') }}
         </div>
       </div>
 
@@ -249,10 +249,10 @@ export default {
     speedLabelText: function () {
       const speed = this.$store.state.stel.time_speed
       if (Math.abs(speed - 1) < 0.001) {
-        return 'Real time'
+        return this.$t('Real time')
       }
       if (speed === 0) {
-        return 'Paused'
+        return this.$t('Paused')
       }
       const formatted = Number.isInteger(speed) ? speed : speed.toFixed(1)
       return formatted + 'x'

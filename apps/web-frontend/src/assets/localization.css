@@ -1,0 +1,3 @@
+html[lang] .v-application {
+  font-family: var(--astara-locale-font, Roboto), sans-serif;
+}

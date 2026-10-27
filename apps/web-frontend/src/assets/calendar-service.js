@@ -1,4 +1,6 @@
 import AstronomyService from './astronomy-service.js'
+import i18n from '@/i18n'
+import { localizeEvent } from '@/event-localization'
 
 /**
  * Calendar Service
@@ -120,10 +122,10 @@ const CalendarService = {
     const events = this.getEventsForRange(startDate, endDate)
     const lowerQuery = query.toLowerCase()
 
-    return events.filter(event =>
+    return events.map(localizeEvent).filter(event =>
       event.name.toLowerCase().includes(lowerQuery) ||
       event.description.toLowerCase().includes(lowerQuery) ||
-      event.category.toLowerCase().includes(lowerQuery)
+      String(i18n.t(event.category)).toLowerCase().includes(lowerQuery)
     )
   },
 
@@ -184,7 +186,7 @@ const CalendarService = {
       timeZoneName: 'short'
     }
 
-    return date.toLocaleString(undefined, options)
+    return date.toLocaleString(i18n.locale, options)
   },
 
   /**

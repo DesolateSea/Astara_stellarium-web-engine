@@ -461,6 +461,7 @@ const AstronomyService = {
         emoji: emoji,
         date: eventDate,
         description: item.description + yearsAgoText,
+        sourceDescription: item.description,
         yearOccurred: item.year,
         yearsAgo: yearsAgo,
         canViewInSky: false

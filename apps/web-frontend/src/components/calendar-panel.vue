@@ -7,7 +7,7 @@
         <div class="calendar-header">
           <div class="header-title">
             <v-icon>mdi-calendar-star</v-icon>
-            <span>Astronomical Calendar</span>
+            <span>{{ $t('Astronomical Calendar') }}</span>
           </div>
           <v-btn icon large @click="close">
             <v-icon>mdi-close</v-icon>
@@ -23,7 +23,7 @@
             </v-btn>
             <div class="month-display" @click="goToToday">
               <span class="month-name">{{ currentMonthName }} {{ currentYear }}</span>
-              <span class="today-hint" v-if="!isCurrentMonth">Tap for today</span>
+              <span class="today-hint" v-if="!isCurrentMonth">{{ $t('Tap for today') }}</span>
             </div>
             <v-btn icon large @click="nextMonth">
               <v-icon>mdi-chevron-right</v-icon>
@@ -35,11 +35,11 @@
             <v-btn-toggle v-model="viewMode" mandatory dense>
               <v-btn small value="list">
                 <v-icon small>mdi-format-list-bulleted</v-icon>
-                <span class="ml-1">List</span>
+                <span class="ml-1">{{ $t('List') }}</span>
               </v-btn>
               <v-btn small value="grid">
                 <v-icon small>mdi-calendar-month</v-icon>
-                <span class="ml-1">Grid</span>
+                <span class="ml-1">{{ $t('Grid') }}</span>
               </v-btn>
             </v-btn-toggle>
           </div>
@@ -51,7 +51,7 @@
           <div v-if="viewMode === 'list'" class="event-list">
             <div v-if="filteredEvents.length === 0" class="no-events">
               <v-icon size="48" color="grey">mdi-calendar-blank</v-icon>
-              <p>No events found for this month</p>
+              <p>{{ $t('No events found for this month') }}</p>
             </div>
             <event-list-item
               v-for="(event, index) in filteredEvents"
@@ -96,7 +96,7 @@
         <!-- Loading State -->
         <div v-else class="loading-state">
           <v-progress-circular indeterminate color="primary"></v-progress-circular>
-          <p>Calculating astronomical events...</p>
+          <p>{{ $t('Calculating astronomical events...') }}</p>
         </div>
       </div>
     </div>
@@ -114,6 +114,7 @@
 
 <script>
 import CalendarService from '@/assets/calendar-service.js'
+import { localizeEvent } from '@/event-localization'
 import EventListItem from './event-list-item.vue'
 import EventDetailDialog from './event-detail-dialog.vue'
 
@@ -127,7 +128,6 @@ export default {
     return {
       loading: false,
       selectedEvent: null,
-      weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       categoryColors: {
         'Moon Events': '#4CAF50',
         'Solar Events': '#FF9800',
@@ -138,6 +138,9 @@ export default {
     }
   },
   computed: {
+    weekdays () {
+      return Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(this.$i18n.locale, { weekday: 'short' }).format(new Date(2023, 0, 1 + day)))
+    },
     currentMonth () {
       return this.$store.state.calendarCurrentMonth
     },
@@ -146,7 +149,7 @@ export default {
     },
     currentMonthName () {
       const date = new Date(this.currentYear, this.currentMonth, 1)
-      return date.toLocaleDateString('en-US', { month: 'long' })
+      return date.toLocaleDateString(this.$i18n.locale, { month: 'long' })
     },
     isCurrentMonth () {
       const now = new Date()
@@ -164,7 +167,7 @@ export default {
       return CalendarService.getCategories()
     },
     events () {
-      return this.$store.state.calendarEvents
+      return this.$store.state.calendarEvents.map(localizeEvent)
     },
     filteredEvents () {
       const filters = this.$store.state.calendarFilters

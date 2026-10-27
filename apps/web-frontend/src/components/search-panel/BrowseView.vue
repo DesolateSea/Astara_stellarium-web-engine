@@ -14,7 +14,7 @@
         <v-icon>mdi-arrow-left</v-icon>
       </v-list-item-icon>
       <v-list-item-content>
-        <v-list-item-title>{{ parentCategory.label }}</v-list-item-title>
+        <v-list-item-title>{{ $t(parentCategory.label) }}</v-list-item-title>
       </v-list-item-content>
     </v-list-item>
 
@@ -29,7 +29,7 @@
           <v-icon>{{ cat.icon }}</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>{{ cat.label }}</v-list-item-title>
+          <v-list-item-title>{{ $t(cat.label) }}</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action v-if="cat.subCategories && cat.subCategories.length > 0" @click.stop="drillDown(cat)">
           <v-icon>mdi-chevron-right</v-icon>

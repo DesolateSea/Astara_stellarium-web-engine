@@ -37,7 +37,7 @@
       </div>
     </v-card-text>
     <v-card-actions>
-      <v-spacer></v-spacer><v-btn class="blue--text darken-1" text @click.native="$store.state.showPlanetsVisibilityDialog = false">Close</v-btn>
+      <v-spacer></v-spacer><v-btn class="blue--text darken-1" text @click.native="$store.state.showPlanetsVisibilityDialog = false">{{ $t('Close') }}</v-btn>
     </v-card-actions>
   </v-card>
 </v-dialog>

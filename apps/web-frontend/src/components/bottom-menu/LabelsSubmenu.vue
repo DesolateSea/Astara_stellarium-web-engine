@@ -1,8 +1,8 @@
 <template>
-  <bottom-menu-submenu title="Labels" subtitle="Labels" :in-settings="inSettings" @back="$emit('back')">
+  <bottom-menu-submenu :title="$t('Labels')" :subtitle="$t('Labels')" :in-settings="inSettings" @back="$emit('back')">
     <div class="labels-content">
       <div class="slider-row">
-        <span class="slider-label">Stars</span>
+        <span class="slider-label">{{ $t('Stars') }}</span>
         <v-slider
           v-model="starsLabels"
           :min="0"
@@ -16,7 +16,7 @@
       </div>
 
       <div class="slider-row">
-        <span class="slider-label">Solar System</span>
+        <span class="slider-label">{{ $t('Solar System') }}</span>
         <v-slider
           v-model="planetsLabels"
           :min="0"
@@ -30,7 +30,7 @@
       </div>
 
       <div class="slider-row">
-        <span class="slider-label">Deep sky</span>
+        <span class="slider-label">{{ $t('Deep sky') }}</span>
         <v-slider
           v-model="dsosLabels"
           :min="0"
@@ -44,7 +44,7 @@
       </div>
 
       <div class="slider-row">
-        <span class="slider-label">Satellites</span>
+        <span class="slider-label">{{ $t('Satellites') }}</span>
         <v-slider
           v-model="satellitesLabels"
           :min="0"
@@ -59,7 +59,7 @@
 
       <div class="reset-row" @click="resetLabels">
         <v-icon small class="reset-icon">mdi-refresh</v-icon>
-        <span class="reset-text">Reset</span>
+        <span class="reset-text">{{ $t('Reset') }}</span>
       </div>
     </div>
   </bottom-menu-submenu>

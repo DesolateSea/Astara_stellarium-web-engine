@@ -53,7 +53,7 @@
       <div class="detail-row">
         <div class="detail-label">{{ $t('UTC offset') }}</div>
         <div class="detail-value">
-          <span class="timezone-auto">Auto</span>
+          <span class="timezone-auto">{{ $t('Auto') }}</span>
           <span class="timezone-offset">UTC {{ formattedTimezoneOffset }}</span>
         </div>
         <v-icon small class="detail-arrow">mdi-chevron-right</v-icon>
@@ -475,7 +475,7 @@ export default {
         this.locationCountry = nearest.country
       } else if (nearest && minDist < 500) {
         // Show "Near [city]" if within 500km
-        this.locationName = 'Near ' + nearest.name
+        this.locationName = this.$t('Near {city}', { city: nearest.name })
         this.locationCountry = nearest.country
       } else {
         // Too far from any city, show coordinates

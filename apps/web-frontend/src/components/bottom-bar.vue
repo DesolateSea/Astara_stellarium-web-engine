@@ -91,12 +91,12 @@
         <div class="time-menu">
           <div class="time-menu-item" @click="openTimePicker">
             <v-icon>mdi-clock-outline</v-icon>
-            <span>Time Control</span>
+            <span>{{ $t('Time Control') }}</span>
           </div>
           <v-divider></v-divider>
           <div class="time-menu-item" @click="openCalendar">
             <v-icon>mdi-calendar-star</v-icon>
-            <span>Calendar</span>
+            <span>{{ $t('Calendar') }}</span>
           </div>
         </div>
       </div>
@@ -105,12 +105,12 @@
     <!-- Real Time Confirmation Dialog -->
     <v-dialog v-model="showRealTimeConfirm" max-width="320" :z-index="500">
       <v-card color="#2d325a" class="white--text rounded-xl">
-        <v-card-title class="text-body-1 font-weight-bold" style="word-break: break-word;">Not in real time</v-card-title>
-        <v-card-text class="white--text text-body-2 pt-1">Would you like to go back to real time?</v-card-text>
+        <v-card-title class="text-body-1 font-weight-bold" style="word-break: break-word;">{{ $t('Not in real time') }}</v-card-title>
+        <v-card-text class="white--text text-body-2 pt-1">{{ $t('Would you like to go back to real time?') }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text color="#40d1ff" @click="showRealTimeConfirm = false">CANCEL</v-btn>
-          <v-btn text color="#40d1ff" @click="confirmRealTimeYes">YES</v-btn>
+          <v-btn text color="#40d1ff" @click="showRealTimeConfirm = false">{{ $t('Cancel') }}</v-btn>
+          <v-btn text color="#40d1ff" @click="confirmRealTimeYes">{{ $t('Yes') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -125,7 +125,7 @@
       <div v-if="showGyroDialog" class="gyro-pill-container">
         <div class="gyro-pill" @click.stop>
           <v-icon size="28" color="white">mdi-compass</v-icon>
-          <span class="gyro-pill-text">Point your device up!</span>
+          <span class="gyro-pill-text">{{ $t('Point your device up!') }}</span>
         </div>
       </div>
     </transition>

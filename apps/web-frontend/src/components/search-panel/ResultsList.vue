@@ -11,18 +11,18 @@
     <!-- Empty State -->
     <div v-if="items.length === 0 && !loading" class="empty-state">
       <v-icon size="64" color="grey darken-2">{{ emptyIcon }}</v-icon>
-      <p class="grey--text mt-4">{{ emptyMessage }}</p>
-      <p v-if="emptySubtext" class="text-caption grey--text text--darken-1">{{ emptySubtext }}</p>
+      <p class="grey--text mt-4">{{ $t(emptyMessage) }}</p>
+      <p v-if="emptySubtext" class="text-caption grey--text text--darken-1">{{ $t(emptySubtext) }}</p>
     </div>
 
     <!-- Results List -->
     <v-list dark class="results-list" v-else>
       <div v-if="items.length === 0 && loading" class="text-center mt-5 grey--text">
-        Loading...
+        {{ $t('Loading...') }}
       </div>
       <template v-for="(item, index) in items">
         <v-subheader v-if="item.header" :key="'header-'+item.text" class="text-uppercase text-caption font-weight-bold grey--text text--lighten-1">
-          {{ item.text }}
+          {{ $t(item.text) }}
         </v-subheader>
         <div v-else :key="getItemKey(item, index)">
           <v-list-item :ripple="false" @click="$emit('select-item', item)">

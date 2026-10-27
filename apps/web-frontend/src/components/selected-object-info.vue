@@ -49,7 +49,7 @@
                 <line x1="19" y1="12" x2="22" y2="12"/>
               </svg>
             </div>
-            <span class="center-label">Center</span>
+            <span class="center-label">{{ $t('Center') }}</span>
           </div>
 
           <!-- Zoom Controls (Shows only when centered) -->
@@ -58,7 +58,7 @@
               <button class="icon-btn" @pointerdown.stop="zoomOutButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
-              <span class="zoom-label">Zoom</span>
+              <span class="zoom-label">{{ $t('Zoom') }}</span>
               <button class="icon-btn" @pointerdown.stop="zoomInButtonClicked" @pointerup.stop="stopZoom" @pointercancel.stop="stopZoom">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               </button>
@@ -83,67 +83,67 @@
           <div class="data-table">
             <div v-if="constellation" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-star-cluster</v-icon>Constellation
+                <v-icon small class="mr-2">mdi-star-cluster</v-icon>{{ $t('Constellation') }}
               </span>
               <span class="data-value">{{ constellation }}</span>
             </div>
             <div v-if="magnitude()" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-brightness-5</v-icon>Magnitude
+                <v-icon small class="mr-2">mdi-brightness-5</v-icon>{{ $t('Magnitude') }}
               </span>
               <span class="data-value">{{ magnitude() }}</span>
             </div>
             <div v-if="distance() && !isSatellite" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-ruler</v-icon>Distance
+                <v-icon small class="mr-2">mdi-ruler</v-icon>{{ $t('Distance') }}
               </span>
               <span class="data-value" v-html="distance()"></span>
             </div>
             <div v-if="phase()" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-moon-waning-crescent</v-icon>Phase
+                <v-icon small class="mr-2">mdi-moon-waning-crescent</v-icon>{{ $t('Phase') }}
               </span>
               <span class="data-value">{{ phase() }}</span>
             </div>
             <div v-if="angularSize()" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-unfold-more-horizontal</v-icon>Angular Size
+                <v-icon small class="mr-2">mdi-unfold-more-horizontal</v-icon>{{ $t('Angular Size') }}
               </span>
               <span class="data-value">{{ angularSize() }}</span>
             </div>
             <div v-if="spectralType()" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-palette-swatch-outline</v-icon>Spectral Type
+                <v-icon small class="mr-2">mdi-palette-swatch-outline</v-icon>{{ $t('Spectral Type') }}
               </span>
               <span class="data-value">{{ spectralType() }}</span>
             </div>
             <div class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-rhombus-split</v-icon>RA (J2000)
+                <v-icon small class="mr-2">mdi-rhombus-split</v-icon>{{ $t('RA (J2000)') }}
               </span>
               <span class="data-value mono" v-html="raFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-rhombus-split-outline</v-icon>Dec (J2000)
+                <v-icon small class="mr-2">mdi-rhombus-split-outline</v-icon>{{ $t('Dec (J2000)') }}
               </span>
               <span class="data-value mono" v-html="decFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-compass-outline</v-icon>Az/Alt
+                <v-icon small class="mr-2">mdi-compass-outline</v-icon>{{ $t('Az/Alt') }}
               </span>
               <span class="data-value mono" v-html="azaltFormatted()"></span>
             </div>
             <div class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-eye-outline</v-icon>Visibility
+                <v-icon small class="mr-2">mdi-eye-outline</v-icon>{{ $t('Visibility') }}
               </span>
               <span class="data-value" :class="visibilityClass()">{{ visibility() }}</span>
             </div>
             <div v-if="riseSetTimes()" class="data-row">
               <span class="data-label">
-                <v-icon small class="mr-2">mdi-weather-sunset</v-icon>Rise / Set
+                <v-icon small class="mr-2">mdi-weather-sunset</v-icon>{{ $t('Rise / Set') }}
               </span>
               <span class="data-value">{{ riseSetTimes() }}</span>
             </div>
@@ -152,43 +152,43 @@
             <template v-if="isSatellite">
               <div v-if="nextPassCountdown" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-clock-outline</v-icon>Next Pass
+                  <v-icon small class="mr-2">mdi-clock-outline</v-icon>{{ $t('Next Pass') }}
                 </span>
                 <span class="data-value" :class="{ 'visible-yes': isVisibleNow }">{{ nextPassCountdown }}</span>
               </div>
               <div v-if="satelliteRange" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-map-marker-distance</v-icon>Range
+                  <v-icon small class="mr-2">mdi-map-marker-distance</v-icon>{{ $t('Range') }}
                 </span>
                 <span class="data-value">{{ satelliteRange }} <span class="unit-dim">km</span></span>
               </div>
               <div v-if="satelliteError" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-alert-circle-outline</v-icon>Est. Error (~age)
+                  <v-icon small class="mr-2">mdi-alert-circle-outline</v-icon>{{ $t('Est. Error (~age)') }}
                 </span>
                 <span class="data-value">{{ satelliteError }} <span class="unit-dim">km</span></span>
               </div>
               <div v-if="satelliteInfo.norad_number" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-numeric</v-icon>NORAD ID
+                  <v-icon small class="mr-2">mdi-numeric</v-icon>{{ $t('NORAD ID') }}
                 </span>
                 <span class="data-value">{{ satelliteInfo.norad_number }}</span>
               </div>
               <div v-if="satelliteInfo.designation" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-identifier</v-icon>Designation
+                  <v-icon small class="mr-2">mdi-identifier</v-icon>{{ $t('Designation') }}
                 </span>
                 <span class="data-value">{{ satelliteInfo.designation }}</span>
               </div>
               <div v-if="satelliteInfo.group && satelliteInfo.group.length" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-folder-outline</v-icon>Group
+                  <v-icon small class="mr-2">mdi-folder-outline</v-icon>{{ $t('Group') }}
                 </span>
                 <span class="data-value">{{ satelliteInfo.group.join(', ') }}</span>
               </div>
               <div v-if="satelliteInfo.launch_date && satelliteInfo.launch_date !== 'Unknown'" class="data-row">
                 <span class="data-label">
-                  <v-icon small class="mr-2">mdi-rocket-launch-outline</v-icon>Launch Date
+                  <v-icon small class="mr-2">mdi-rocket-launch-outline</v-icon>{{ $t('Launch Date') }}
                 </span>
                 <span class="data-value">{{ satelliteInfo.launch_date }}</span>
               </div>
@@ -202,6 +202,7 @@
 
 <script>
 import swh from '@/assets/sw_helpers.js'
+import { translateEngine } from '@/i18n'
 import * as satellite from 'satellite.js'
 
 export default {
@@ -224,7 +225,7 @@ export default {
       return this.$store.state.stel && this.$store.state.stel.selection ? this.$store.state.stel.selection : undefined
     },
     title: function () {
-      return this.selectedObject ? swh.namesForSkySource(this.selectedObject, 26)[0] : 'Selection'
+      return this.selectedObject ? swh.namesForSkySource(this.selectedObject, 26)[0] : this.$t('Selection')
     },
     shortName: function () {
       if (!this.selectedObject || !this.selectedObject.names) return null
@@ -234,13 +235,13 @@ export default {
       return null
     },
     type: function () {
-      if (!this.selectedObject) return 'Unknown'
+      if (!this.selectedObject) return this.$t('Unknown')
       let morpho = ''
       if (this.selectedObject.model_data && this.selectedObject.model_data.morpho) {
         morpho = swh.nameForGalaxyMorpho(this.selectedObject.model_data.morpho)
         if (morpho) morpho = morpho + ' '
       }
-      return morpho + swh.nameForSkySourceType(this.selectedObject.types[0])
+      return morpho + translateEngine('gui', swh.nameForSkySourceType(this.selectedObject.types[0]))
     },
     icon: function () {
       return swh.iconForSkySource(this.selectedObject)
@@ -339,13 +340,13 @@ export default {
       }
     },
     nextPassCountdown: function () {
-      if (this.isVisibleNow) return 'VISIBLE NOW'
+      if (this.isVisibleNow) return this.$t('VISIBLE NOW')
       if (!this.nextPassTime) return null
 
       const diff = this.nextPassTime.getTime() - (new Date()).getTime()
       if (diff <= 0) {
         // Trigger a re-calculation soon
-        return 'Starting...'
+        return this.$t('Starting...')
       }
 
       const hours = Math.floor(diff / 3600000)
@@ -457,15 +458,15 @@ export default {
       return this.selectedObject.model_data.spect_type || null
     },
     visibility: function () {
-      if (!this.$stel || !this.$stel.core.selection) return 'Unknown'
+      if (!this.$stel || !this.$stel.core.selection) return this.$t('Unknown')
       const obj = this.$stel.core.selection
       const azalt = this.$stel.c2s(this.$stel.convertFrame(this.$stel.core.observer, 'ICRF', 'OBSERVED', obj.getInfo('radec')))
       const altDeg = this.$stel.anpm(azalt[1]) * 180 / Math.PI
 
       if (altDeg > 0) {
-        return 'Above horizon (' + altDeg.toFixed(1) + '°)'
+        return this.$t('Above horizon') + ' (' + altDeg.toFixed(1) + '°)'
       } else {
-        return 'Below horizon (' + altDeg.toFixed(1) + '°)'
+        return this.$t('Below horizon') + ' (' + altDeg.toFixed(1) + '°)'
       }
     },
     visibilityClass: function () {
@@ -498,10 +499,10 @@ export default {
 
         // Check if object never rises or never sets
         if (cosH < -1) {
-          return 'Circumpolar (always visible)'
+          return this.$t('Circumpolar (always visible)')
         }
         if (cosH > 1) {
-          return 'Never rises'
+          return this.$t('Never rises')
         }
 
         const H = Math.acos(cosH) // Hour angle in radians

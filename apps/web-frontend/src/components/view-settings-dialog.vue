@@ -14,7 +14,7 @@
     <v-select
       v-model="currentSkyCulture"
       :items="skyCultureOptions"
-      item-text="name"
+      :item-text="item => $t(item.name)"
       item-value="key"
       :label="$t('Sky Culture')"
       dark
@@ -28,7 +28,7 @@
     <v-checkbox hide-details :label="$t('Ecliptic Line')" v-model="eclipticOn"></v-checkbox>
   </v-card-text>
   <v-card-actions>
-    <v-spacer></v-spacer><v-btn class="blue--text darken-1" text @click.native="$store.state.showViewSettingsDialog = false">Close</v-btn>
+    <v-spacer></v-spacer><v-btn class="blue--text darken-1" text @click.native="$store.state.showViewSettingsDialog = false">{{ $t('Close') }}</v-btn>
   </v-card-actions>
 </v-card>
 </v-dialog>

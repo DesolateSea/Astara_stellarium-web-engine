@@ -15,9 +15,9 @@
           <v-icon size="20">mdi-heart</v-icon>
         </div>
         <div class="item-content">
-          <div class="item-title">Favorites</div>
+          <div class="item-title">{{ $t('Favorites') }}</div>
           <div v-if="favoritesCount > 0" class="item-subtitle">
-            {{ favoritesCount }} {{ favoritesCount === 1 ? 'item' : 'items' }}
+            {{ $tc('{count} item | {count} items', favoritesCount, { count: favoritesCount }) }}
           </div>
         </div>
       </div>
@@ -30,7 +30,7 @@
           <v-icon size="20">mdi-history</v-icon>
         </div>
         <div class="item-content">
-          <div class="item-title">Recents</div>
+          <div class="item-title">{{ $t('Recents') }}</div>
         </div>
       </div>
 
@@ -42,7 +42,7 @@
           <v-icon size="20">mdi-format-list-bulleted</v-icon>
         </div>
         <div class="item-content">
-          <div class="item-title">Browse</div>
+          <div class="item-title">{{ $t('Browse') }}</div>
         </div>
         <div class="item-action">
           <v-icon size="20" color="rgba(255,255,255,0.4)">mdi-chevron-right</v-icon>

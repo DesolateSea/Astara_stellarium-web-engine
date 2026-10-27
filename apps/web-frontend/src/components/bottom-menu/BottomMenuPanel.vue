@@ -11,7 +11,7 @@
           <div class="menu-icon" :class="{ active: gridsLinesActive }">
             <v-icon large>{{ gridsLinesActive ? 'mdi-grid' : 'mdi-grid-off' }}</v-icon>
           </div>
-          <div class="menu-label">Grids & Lines</div>
+          <div class="menu-label">{{ $t('Grids & Lines') }}</div>
         </div>
 
         <div class="menu-item"
@@ -22,7 +22,7 @@
           <div class="menu-icon" :class="{ active: constellationsActive }">
             <v-icon large>{{ constellationsActive ? 'mdi-creation' : 'mdi-creation-outline' }}</v-icon>
           </div>
-          <div class="menu-label">Constellations</div>
+          <div class="menu-label">{{ $t('Constellations') }}</div>
         </div>
 
         <div class="menu-item"
@@ -33,7 +33,7 @@
           <div class="menu-icon" :class="{ active: landscapeVisible }">
             <v-icon large>{{ landscapeVisible ? 'mdi-image' : 'mdi-image-off-outline' }}</v-icon>
           </div>
-          <div class="menu-label">Landscape</div>
+          <div class="menu-label">{{ $t('Landscape') }}</div>
         </div>
 
         <div class="menu-item"
@@ -44,7 +44,7 @@
           <div class="menu-icon" :class="{ active: atmosphereVisible }">
             <v-icon large>{{ atmosphereVisible ? 'mdi-weather-partly-cloudy' : 'mdi-weather-night' }}</v-icon>
           </div>
-          <div class="menu-label">Atmosphere</div>
+          <div class="menu-label">{{ $t('Atmosphere') }}</div>
         </div>
 
         <div class="menu-item"
@@ -55,7 +55,7 @@
           <div class="menu-icon" :class="{ active: labelsActive }">
             <v-icon large>{{ labelsActive ? 'mdi-label' : 'mdi-label-off-outline' }}</v-icon>
           </div>
-          <div class="menu-label">Labels</div>
+          <div class="menu-label">{{ $t('Labels') }}</div>
         </div>
 
         <!-- Night Mode: Simple toggle only -->
@@ -63,7 +63,7 @@
           <div class="menu-icon" :class="{ active: nightModeActive }">
             <v-icon large>{{ nightModeActive ? 'mdi-eye' : 'mdi-eye-off-outline' }}</v-icon>
           </div>
-          <div class="menu-label">Night mode</div>
+          <div class="menu-label">{{ $t('Night Mode') }}</div>
         </div>
       </div>
 

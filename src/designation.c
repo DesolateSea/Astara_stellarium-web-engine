@@ -366,6 +366,7 @@ void designation_cleanup(const char *dsgn, char *out, int size, int flags)
             greek = (flags & BAYER_LATIN_SHORT) ? GREEK[g - 1][2] :
                     (flags & BAYER_LATIN_LONG) ? GREEK[g - 1][3] :
                     GREEK[g - 1][0];
+            if (flags & DSGN_TRANSLATE) greek = sys_translate("greek", greek);
         }
         if (nb) {
             snprintf(tmp, sizeof(tmp), "%d", nb);
@@ -375,6 +376,10 @@ void designation_cleanup(const char *dsgn, char *out, int size, int flags)
         }
         if (flags & BAYER_CONST_SHORT || flags & BAYER_CONST_LONG) {
             cstname = (flags & BAYER_CONST_SHORT) ? CSTS[cst][0] : CSTS[cst][1];
+            if (flags & DSGN_TRANSLATE) {
+                const char *translated = sys_translate("constellation", CSTS[cst][1]);
+                if (strcmp(translated, CSTS[cst][1]) != 0) cstname = translated;
+            }
             snprintf(out, size, "%s%s %s%s", greek, exponent, cstname, suffix);
         } else
             snprintf(out, size, "%s%s%s", greek, exponent, suffix);
@@ -383,6 +388,10 @@ void designation_cleanup(const char *dsgn, char *out, int size, int flags)
     if (designation_parse_flamsteed(dsgn, &cst, &g, &suffix)) {
         if (flags & BAYER_CONST_SHORT || flags & BAYER_CONST_LONG) {
             cstname = (flags & BAYER_CONST_SHORT) ? CSTS[cst][0] : CSTS[cst][1];
+            if (flags & DSGN_TRANSLATE) {
+                const char *translated = sys_translate("constellation", CSTS[cst][1]);
+                if (strcmp(translated, CSTS[cst][1]) != 0) cstname = translated;
+            }
             snprintf(out, size, "%d %s%s", g, cstname, suffix);
         } else
             snprintf(out, size, "%d%s", g, suffix);
@@ -391,6 +400,10 @@ void designation_cleanup(const char *dsgn, char *out, int size, int flags)
     if (designation_parse_variable_star(dsgn, &cst, var, &suffix)) {
         if (flags & (BAYER_CONST_SHORT | BAYER_CONST_LONG)) {
             cstname = (flags & BAYER_CONST_LONG) ? CSTS[cst][1] : CSTS[cst][0];
+            if (flags & DSGN_TRANSLATE) {
+                const char *translated = sys_translate("constellation", CSTS[cst][1]);
+                if (strcmp(translated, CSTS[cst][1]) != 0) cstname = translated;
+            }
             snprintf(out, size, "%s %s%s", var, cstname, suffix);
         } else {
             snprintf(out, size, "%s%s", var, suffix);
@@ -427,7 +440,11 @@ void designation_cleanup(const char *dsgn, char *out, int size, int flags)
         }
     }
 
-    snprintf(out, size, "%s", dsgn);
+    // Bundled star tiles also contain bare common names (e.g. Arcturus),
+    // unlike the prefixed NAME designations used by other catalogs. Translate
+    // these display labels too; unknown scientific IDs fall back unchanged.
+    snprintf(out, size, "%s", (flags & DSGN_TRANSLATE) ?
+             sys_translate("sky", dsgn) : dsgn);
 }
 
 /*

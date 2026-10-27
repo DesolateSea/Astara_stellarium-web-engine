@@ -11,7 +11,7 @@
 <div class="secondary" style="position:absolute; width: 100%; height: 100%;">
   <v-container style="width: 100%; height: 100%;">
     <v-layout column align-center style="width: 100%; height: 100%;">
-      <div class="text-h2" style="padding-top: 10%;"><img src="@/assets/images/logo.svg" width="92" height="92" alt="Astara Logo"/> Astara</div>
+      <div class="text-h2" style="padding-top: 10%;"><img src="@/assets/images/logo.svg" width="92" height="92" :alt="$t('Astara Logo')"/> Astara</div>
       <div v-if="$store.state.wasmSupport" style="margin: auto;">
         <div style="display:flex; justify-content: center;">
           <p class="grey--text"><i18n path="Loading {0}, the online Star Map"><span>Astara</span></i18n></p>

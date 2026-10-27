@@ -103,7 +103,10 @@ const char *sys_translate(const char *domain, const char *str)
     assert(domain);
     assert(strcmp(domain, "gui") == 0 ||
            strcmp(domain, "sky") == 0 ||
-           strcmp(domain, "skyculture") == 0);
+           strcmp(domain, "skyculture") == 0 ||
+           strncmp(domain, "skyculture/", 11) == 0 ||
+           strcmp(domain, "constellation") == 0 ||
+           strcmp(domain, "greek") == 0);
     if (!sys_callbacks.translate) return str;
     return sys_callbacks.translate(sys_callbacks.user, domain, str);
 }
@@ -116,10 +119,7 @@ const char *sys_get_lang()
 
 bool sys_lang_supports_spacing()
 {
-    static int lang_has_spacing = -1;
-    if (lang_has_spacing != -1)
-        return lang_has_spacing;
-    lang_has_spacing = strncmp(sys_get_lang(), "ar", 2) != 0 &&
+    bool lang_has_spacing = strncmp(sys_get_lang(), "ar", 2) != 0 &&
                        strncmp(sys_get_lang(), "zh", 2) != 0 &&
                        strncmp(sys_get_lang(), "ja", 2) != 0 &&
                        strncmp(sys_get_lang(), "ko", 2) != 0;
@@ -140,4 +140,10 @@ void sys_set_translate_function(
     const char *(*callback)(void *user, const char *domain, const char *str))
 {
     sys_callbacks.translate = callback;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void sys_set_lang_function(const char *(*callback)())
+{
+    sys_callbacks.get_lang = callback;
 }

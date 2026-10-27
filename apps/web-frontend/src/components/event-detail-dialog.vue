@@ -6,7 +6,7 @@
         <div class="event-title-text">
           <h3>{{ event.name }}</h3>
           <span class="event-category-badge" :style="{ backgroundColor: categoryColor }">
-            {{ event.category }}
+            {{ $t(event.category) }}
           </span>
         </div>
         <v-spacer></v-spacer>
@@ -18,7 +18,7 @@
         <div class="detail-section">
           <div class="detail-label">
             <v-icon small>mdi-clock-outline</v-icon>
-            <span>Date & Time</span>
+            <span>{{ $t('Date & Time') }}</span>
           </div>
           <div class="detail-value">{{ formattedDateTime }}</div>
         </div>
@@ -27,7 +27,7 @@
         <div class="detail-section">
           <div class="detail-label">
             <v-icon small>mdi-information-outline</v-icon>
-            <span>Description</span>
+            <span>{{ $t('Description') }}</span>
           </div>
           <div class="detail-value">{{ event.description }}</div>
         </div>
@@ -36,7 +36,7 @@
         <div class="detail-section" v-if="additionalInfo">
           <div class="detail-label">
             <v-icon small>mdi-star-outline</v-icon>
-            <span>Details</span>
+            <span>{{ $t('Details') }}</span>
           </div>
           <div class="detail-value">{{ additionalInfo }}</div>
         </div>
@@ -44,7 +44,7 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text @click="close">Close</v-btn>
+        <v-btn text @click="close">{{ $t('Close') }}</v-btn>
         <v-tooltip top v-if="event.canViewInSky">
           <template v-slot:activator="{ on, attrs }">
             <v-btn
@@ -54,10 +54,10 @@
               v-on="on"
             >
               <v-icon left>mdi-crosshairs-gps</v-icon>
-              View in Sky
+              {{ $t('View in Sky') }}
             </v-btn>
           </template>
-          <span>Jump to {{ event.objectName }} in the sky at this event's time</span>
+          <span>{{ $t('Jump to {object} in the sky at this event’s time', { object: bodyName(event.objectName) }) }}</span>
         </v-tooltip>
       </v-card-actions>
     </v-card>
@@ -65,6 +65,7 @@
 </template>
 
 <script>
+import { translateEngine } from '@/i18n'
 export default {
   name: 'EventDetailDialog',
   props: {
@@ -81,7 +82,7 @@ export default {
   computed: {
     formattedDateTime () {
       const date = new Date(this.event.date)
-      return date.toLocaleString('en-US', {
+      return date.toLocaleString(this.$i18n.locale, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -105,25 +106,28 @@ export default {
       const info = []
 
       if (this.event.distance) {
-        info.push('Distance: ' + this.event.distance.toFixed(0) + ' km')
+        info.push(this.$t('Distance: {distance} km', { distance: this.event.distance.toFixed(0) }))
       }
 
       if (this.event.elongation) {
-        info.push('Elongation: ' + Math.abs(this.event.elongation).toFixed(1) + '°')
+        info.push(this.$t('Elongation: {degrees}°', { degrees: Math.abs(this.event.elongation).toFixed(1) }))
       }
 
       if (this.event.visibility) {
-        info.push('Best seen: ' + this.event.visibility + ' sky')
+        info.push(this.$t('Best seen: {sky} sky', { sky: this.$t(this.event.visibility) }))
       }
 
       if (this.event.bodies && this.event.bodies.length > 0) {
-        info.push('Involving: ' + this.event.bodies.join(' and '))
+        info.push(this.$t('Involving: {bodies}', { bodies: new Intl.ListFormat(this.$i18n.locale).format(this.event.bodies.map(this.bodyName)) }))
       }
 
       return info.length > 0 ? info.join(' • ') : null
     }
   },
   methods: {
+    bodyName (name) {
+      return translateEngine('sky', name)
+    },
     close () {
       this.show = false
       this.$emit('close')

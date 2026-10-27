@@ -4,9 +4,9 @@
       <v-btn icon @click="$emit('back')" class="back-btn">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
-      <span class="editor-title text-capitalize">{{ type }}</span>
+      <span class="editor-title text-capitalize">{{ $t(type === 'latitude' ? 'Latitude' : 'Longitude') }}</span>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" @click="$emit('back')">Done</v-btn>
+      <v-btn text color="primary" @click="$emit('back')">{{ $t('Done') }}</v-btn>
     </div>
 
     <div class="editor-body">
